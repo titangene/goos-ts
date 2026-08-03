@@ -8,8 +8,8 @@ Auction Sniper — TypeScript + Nuxt + Redis + WebSocket 版本，改寫自 [Gro
 
 ### 使用技術比較
 
-| 項目 | 《GOOS》Java 版 | goos-ts（本專案） |
-| --- | --- | --- |
+| 項目              | 《GOOS》Java 版                                                         | goos-ts（本專案）                                                                      |
+| ----------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | 語言              | Java                                                                    | TypeScript                                                                             |
 | UI                | Swing（桌面 GUI）                                                       | Vue 3 + Nuxt 4（瀏覽器）                                                               |
 | 拍賣訊息協定      | XMPP（Smack library，需搭配 Openfire server）                           | Redis Pub/Sub（`redis` client）                                                        |
@@ -26,8 +26,8 @@ Auction Sniper — TypeScript + Nuxt + Redis + WebSocket 版本，改寫自 [Gro
 
 ### 專案結構比較
 
-| 用途 | 《GOOS》Java 版 | goos-ts（本專案） |
-| --- | --- | --- |
+| 用途                 | 《GOOS》Java 版                                                                                   | goos-ts（本專案）                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | 拍賣領域核心邏輯     | `src/auctionsniper/*.java`（`AuctionSniper`、`SniperState`、`SniperPortfolio`…）                  | `server/auctionsniper/*.ts`                                                                                                              |
 | 使用者需求輸入       | `src/auctionsniper/UserRequestListener.java`                                                      | `server/auctionsniper/UserRequestListener.ts`                                                                                            |
 | 程式進入點           | `src/auctionsniper/Main.java`                                                                     | `server/plugins/init-sniper-launcher.ts`（啟動）+ `server/routes/ws.ts`（即時通道）+ `server/api/*`（HTTP API）                          |
@@ -36,7 +36,7 @@ Auction Sniper — TypeScript + Nuxt + Redis + WebSocket 版本，改寫自 [Gro
 | 共用工具             | `src/auctionsniper/util/*.java`（`Announcer`、`Defect`）                                          | `server/auctionsniper/util/*.ts`                                                                                                         |
 | 單元測試             | `test/unit/test/auctionsniper/**`                                                                 | `test/unit/**`                                                                                                                           |
 | 整合測試             | `test/integration/test/integration/auctionsniper/**`                                              | `test/integration/**`                                                                                                                    |
-| E2E 測試      | `test/end-to-end/test/endtoend/auctionsniper/**`                                                  | `test/e2e/**`                                                                                                                            |
+| E2E 測試             | `test/end-to-end/test/endtoend/auctionsniper/**`                                                  | `test/e2e/**`                                                                                                                            |
 | 手動模擬拍賣現場工具 | 無對應（僅有測試用的 `FakeAuctionServer.java`）                                                   | `tools/fake-auction.ts`（互動式，另見下方「手動模擬完整拍賣流程」）                                                                      |
 | 建置設定             | `build.xml`（Ant）、`.classpath`（Eclipse）                                                       | `package.json`、`nuxt.config.ts`、`tsconfig.json`、`vite`（透過 Nuxt）                                                                   |
 
