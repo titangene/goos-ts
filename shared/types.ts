@@ -1,11 +1,5 @@
 export type SniperStateName =
-  | 'Joining'
-  | 'Bidding'
-  | 'Winning'
-  | 'Losing'
-  | 'Lost'
-  | 'Won'
-  | 'Failed';
+  'Joining' | 'Bidding' | 'Winning' | 'Losing' | 'Lost' | 'Won' | 'Failed';
 
 export interface SniperSnapshotData {
   itemId: string;

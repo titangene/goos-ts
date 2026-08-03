@@ -11,7 +11,11 @@ function stubAuction(): Auction {
   return { bid: vi.fn(), join: vi.fn(), addAuctionEventListener: vi.fn() };
 }
 
-function assertRowMatchesSnapshot(model: SnipersTableModel, row: number, snapshot: SniperSnapshot): void {
+function assertRowMatchesSnapshot(
+  model: SnipersTableModel,
+  row: number,
+  snapshot: SniperSnapshot,
+): void {
   const actual = model.getSnapshots()[row];
   expect(Column.ITEM_IDENTIFIER.valueIn(actual)).toBe(Column.ITEM_IDENTIFIER.valueIn(snapshot));
   expect(Column.LAST_PRICE.valueIn(actual)).toBe(Column.LAST_PRICE.valueIn(snapshot));

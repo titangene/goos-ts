@@ -23,7 +23,11 @@ export class RedisAuction implements Auction {
     failureReporter: RedisFailureReporter,
   ) {
     const topic = `auction-${itemId}`;
-    this.translator = new AuctionMessageTranslator(bidder, this.listeners.announce(), failureReporter);
+    this.translator = new AuctionMessageTranslator(
+      bidder,
+      this.listeners.announce(),
+      failureReporter,
+    );
     this.chat = new RedisChat(publisher, subscriber, topic, (rawMessage) =>
       this.translator.processMessage(rawMessage),
     );

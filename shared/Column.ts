@@ -12,7 +12,11 @@ export class Column {
   }
 
   static readonly ITEM_IDENTIFIER = new Column('Item', 'itemId', (snapshot) => snapshot.itemId);
-  static readonly LAST_PRICE = new Column('Last Price', 'lastPrice', (snapshot) => snapshot.lastPrice);
+  static readonly LAST_PRICE = new Column(
+    'Last Price',
+    'lastPrice',
+    (snapshot) => snapshot.lastPrice,
+  );
   static readonly LAST_BID = new Column('Last Bid', 'lastBid', (snapshot) => snapshot.lastBid);
   static readonly SNIPER_STATE = new Column('State', 'state', (snapshot) => snapshot.state);
 

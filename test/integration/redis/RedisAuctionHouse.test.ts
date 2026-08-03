@@ -25,29 +25,25 @@ describe('RedisAuctionHouse', () => {
     await auctionServer.stop();
   });
 
-  it(
-    'receives events from auction server after joining',
-    async () => {
-      let resolveClosed: () => void;
-      const auctionWasClosed = new Promise<void>((resolve) => {
-        resolveClosed = resolve;
-      });
+  it('receives events from auction server after joining', async () => {
+    let resolveClosed: () => void;
+    const auctionWasClosed = new Promise<void>((resolve) => {
+      resolveClosed = resolve;
+    });
 
-      const listener: AuctionEventListener = {
-        auctionClosed: () => resolveClosed(),
-        auctionFailed: () => {},
-        currentPrice: () => {},
-      };
+    const listener: AuctionEventListener = {
+      auctionClosed: () => resolveClosed(),
+      auctionFailed: () => {},
+      currentPrice: () => {},
+    };
 
-      const auction = auctionHouse.auctionFor(new Item(auctionServer.itemId, 567));
-      auction.addAuctionEventListener(listener);
-      auction.join();
+    const auction = auctionHouse.auctionFor(new Item(auctionServer.itemId, 567));
+    auction.addAuctionEventListener(listener);
+    auction.join();
 
-      await auctionServer.hasReceivedJoinRequestFrom(SNIPER_ID);
-      await auctionServer.announceClosed();
+    await auctionServer.hasReceivedJoinRequestFrom(SNIPER_ID);
+    await auctionServer.announceClosed();
 
-      await expect(auctionWasClosed).resolves.toBeUndefined();
-    },
-    10_000,
-  );
+    await expect(auctionWasClosed).resolves.toBeUndefined();
+  }, 10_000);
 });

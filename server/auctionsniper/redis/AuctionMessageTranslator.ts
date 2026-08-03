@@ -49,7 +49,8 @@ export class AuctionMessageTranslator {
       const currentPrice = requireNumber(event.currentPrice, 'currentPrice');
       const increment = requireNumber(event.increment, 'increment');
       const bidder = requireString(event.bidder, 'bidder');
-      const priceSource = bidder === this.sniperId ? PriceSource.FromSniper : PriceSource.FromOtherBidder;
+      const priceSource =
+        bidder === this.sniperId ? PriceSource.FromSniper : PriceSource.FromOtherBidder;
       this.listener.currentPrice(currentPrice, increment, priceSource);
     }
   }

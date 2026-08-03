@@ -14,9 +14,7 @@ describe('SniperSnapshot', () => {
 
     expect(bidding.losing(456)).toEqual(new SniperSnapshot(itemId, 456, 234, SniperState.LOSING));
 
-    expect(bidding.winning(456)).toEqual(
-      new SniperSnapshot(itemId, 456, 234, SniperState.WINNING),
-    );
+    expect(bidding.winning(456)).toEqual(new SniperSnapshot(itemId, 456, 234, SniperState.WINNING));
 
     expect(bidding.closed()).toEqual(new SniperSnapshot(itemId, 123, 234, SniperState.LOST));
 
@@ -29,8 +27,8 @@ describe('SniperSnapshot', () => {
     expect(SniperSnapshot.joining('item 1').isForSameItemAs(SniperSnapshot.joining('item 1'))).toBe(
       true,
     );
-    expect(
-      SniperSnapshot.joining('item 1').isForSameItemAs(SniperSnapshot.joining('item 2')),
-    ).toBe(false);
+    expect(SniperSnapshot.joining('item 1').isForSameItemAs(SniperSnapshot.joining('item 2'))).toBe(
+      false,
+    );
   });
 });
