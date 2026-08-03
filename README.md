@@ -136,28 +136,6 @@ quit
 
 想同時跑 `item-65432` 那組流程，開另一個終端機分頁執行 `npm run fake-auction -- item-65432`，瀏覽器那邊也輸入對應的 item id 加入即可，兩組可以同時跑，互不影響。
 
-### 針對已部署環境模擬（`--remote`）
+## 部署
 
-如果要驗證部署到雲端（例如 Render）的環境能不能跑完整拍賣流程，`tools/fake-auction.ts` 支援 `--remote` 參數，改連 `REDIS_URL` 環境變數指定的 Redis，而不是本機 Redis：
-
-**1. 複製 `.env.example` 成 `.env.local`，填入部署環境的 Redis 連線字串**（例如 Render Key Value 的 External Key Value URL）：
-
-```bash
-cp .env.example .env.local
-```
-
-```
-REDIS_URL=rediss://<user>:<password>@<host>:<port>
-```
-
-`.env.local` 已被 `.gitignore` 排除，不會進版控。
-
-**2. 啟動假拍賣現場，連到部署環境的 Redis：**
-
-```bash
-npm run fake-auction:remote -- item-54321
-```
-
-**3. 打開部署環境的網址**，後續操作跟上面「手動模擬完整拍賣流程」步驟 3～8 完全一樣。
-
-> 若 Redis 服務有限制外部連線來源（例如 Render Key Value 預設關閉外部流量），需要先到該服務的 Networking 設定加入你的公網 IP 白名單，才能連得上。
+部署平台、CD 流程、針對已部署環境模擬（`--remote`）、重置已部署環境狀態等說明，見 [`docs/deploy.md`](docs/deploy.md)。
