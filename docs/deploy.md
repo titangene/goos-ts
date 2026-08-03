@@ -89,7 +89,7 @@ REDIS_URL=rediss://<user>:<password>@<host>:<port>
 npm run fake-auction:remote -- item-54321
 ```
 
-**3. 打開部署環境的網址**，後續操作跟 [README](../README.md)「手動模擬完整拍賣流程」步驟 3～8 完全一樣。
+**3. 打開部署環境的網址**，後續操作跟 [`docs/fake-auction.md`](fake-auction.md) 步驟 3～8 完全一樣。
 
 ## 重置已部署環境的狀態
 
