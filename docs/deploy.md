@@ -45,7 +45,21 @@ Render Dashboard → **New** → **Web Service**：
 
   > 這個環境變數要 `server/auctionsniper/redis/RedisAuctionHouse.ts` 有用 `createClient({ url: process.env.REDIS_URL })` 才讀得到——`createClient()` 沒帶參數時固定連 `localhost:6379`，不會自動讀環境變數。
 
-按 **Deploy Web Service**，Render 會自動 pull 該分支的 commit 並在雲端建置、啟動。之後 push 到該分支就會依 `.github/workflows/cd.yml` 觸發重新部署。
+按 **Deploy Web Service**，Render 會自動 pull 該分支的 commit 並在雲端建置、啟動。
+
+### 關閉 Auto-Deploy，交給 cd.yml 全權負責
+
+Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到該分支都會自動觸發部署。但部署現在要交給 `.github/workflows/cd.yml`（等 `ci.yml` 跑完且成功才部署，見下方「CD 流程」），所以要把 Render 內建的 Auto-Deploy 關掉，避免兩邊搶著部署：
+
+進到該 Web Service 頁面 → **Settings** → **Deploy** 區塊 → **Auto-Deploy** 旁的 **Edit** → 選 **Off** → **Save changes**。
+
+### CD 流程
+
+`.github/workflows/cd.yml` 用 [Render CLI](https://render.com/docs/cli) 觸發部署：
+
+- 觸發時機：`ci.yml`（`CI` 這個 workflow）跑完且結論是 `success` 時（`workflow_run` 事件），而不是每次 push 就跑，避免 CI 沒過還部署
+- 用 `render deploys create <serviceID> --commit <sha> --wait --confirm` 部署該次觸發 CI 的 commit，`--wait` 是 CLI 原生支援的阻塞等待，部署失敗會讓這個 job 失敗（非 0 exit code）
+- 需要的兩個 GitHub Actions secrets：`RENDER_API_KEY`（Render Account Settings → API Keys 產生）、`RENDER_SERVICE_ID`（該 Web Service 的 ID，例如 `srv-xxxxx`）
 
 ## 開放 Redis 外部連線（IP 白名單）
 
