@@ -1,0 +1,27 @@
+name: CD
+
+on:
+  push:
+    branches: [main, poc]
+
+jobs:
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Render CLI
+        run: |
+          url=$(curl -fsSL https://api.github.com/repos/render-oss/cli/releases/latest \
+            | jq -r '.assets[] | select(.name | test("linux_amd64\\.zip$")) | .browser_download_url')
+          curl -fsSL -o render-cli.zip "$url"
+          unzip -o render-cli.zip -d render-cli
+          install -m 755 render-cli/cli_v* /usr/local/bin/render
+          render --version
+
+      - name: Deploy
+        run: render deploys create "$RENDER_SERVICE_ID" --commit "$GITHUB_SHA" --wait --confirm --output text
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          GITHUB_SHA: ${{ github.sha }}
