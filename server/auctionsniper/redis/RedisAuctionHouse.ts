@@ -9,8 +9,8 @@ import type { Auction } from '../Auction.ts';
 import type { Item } from '../UserRequestListener.ts';
 
 export class RedisAuctionHouse implements AuctionHouse {
-  private readonly subscriber = createClient();
-  private readonly publisher = createClient();
+  private readonly subscriber = createClient({ url: process.env.REDIS_URL });
+  private readonly publisher = createClient({ url: process.env.REDIS_URL });
   private readonly failureReporter: RedisFailureReporter = new LoggingFailureReporter();
 
   private constructor(private readonly sniperId: Bidder) {}
