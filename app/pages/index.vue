@@ -31,3 +31,11 @@ async function joinAuction(): Promise<void> {
     <SnipersTable />
   </div>
 </template>
+
+<style lang="css" scoped>
+form {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+}
+</style>

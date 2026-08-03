@@ -37,3 +37,13 @@ onMounted(connect);
     </tbody>
   </table>
 </template>
+
+<style lang="css" scoped>
+table {
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #000;
+  padding: 2px 6px;
+}
+</style>
