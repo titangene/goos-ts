@@ -42,7 +42,8 @@ onMounted(connect);
 table {
   border-collapse: collapse;
 }
-th, td {
+th,
+td {
   border: 1px solid #000;
   padding: 2px 6px;
 }
