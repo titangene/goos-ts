@@ -5,7 +5,10 @@
  * uses -- see test/e2e/FakeAuctionServer.ts.
  *
  * Usage:
- *   npm run fake-auction -- <itemId>
+ *   npm run fake-auction -- <itemId>            connect to local Redis
+ *   npm run fake-auction:remote -- <itemId>     connect to REDIS_URL
+ *                                                (e.g. a deployed Redis;
+ *                                                 set REDIS_URL in .env.local)
  *
  * Commands (typed at the prompt once a sniper has joined):
  *   price <currentPrice> <increment> [bidder]   send a Price event
@@ -21,15 +24,23 @@ import { Message } from '../server/auctionsniper/redis/Message.ts';
 import type { AuctionMessage } from '../server/auctionsniper/redis/Message.ts';
 
 async function main(): Promise<void> {
-  const itemId = process.argv[2];
+  const args = process.argv.slice(2);
+  const remote = args.includes('--remote');
+  const itemId = args.find((arg) => !arg.startsWith('--'));
   if (!itemId) {
-    console.error('usage: npm run fake-auction -- <itemId>');
+    console.error('usage: npm run fake-auction -- <itemId> [--remote]');
     process.exit(1);
   }
 
+  if (remote && !process.env.REDIS_URL) {
+    console.error('--remote requires REDIS_URL to be set (e.g. via --env-file=.env.local)');
+    process.exit(1);
+  }
+  const redisUrl = remote ? process.env.REDIS_URL : undefined;
+
   const topic = `auction-${itemId}`;
-  const publisher = createClient();
-  const subscriber = createClient();
+  const publisher = createClient({ url: redisUrl });
+  const subscriber = createClient({ url: redisUrl });
   await Promise.all([publisher.connect(), subscriber.connect()]);
 
   let sniperJoined = false;
