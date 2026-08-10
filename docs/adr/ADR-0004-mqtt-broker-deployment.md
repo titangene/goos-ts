@@ -43,7 +43,7 @@ Mosquitto 部署為**獨立於 Nuxt server 的 Render Web Service**（Docker 建
 
 實際在 Render Dashboard 建立 `goos-ts-mosquitto` 服務時，查證 [Render 私有網路文件](https://render.com/docs/private-network) 才發現：**Free web service 可以發起私有網路連線，但無法接收**（"Free web services can send private network requests, but they can't receive them"）。Mosquitto 服務本身是 Free 方案，代表它完全無法接收私有網路的入站連線——第 1 點原規劃的「Nuxt server 透過私有網路連內部 1883 listener」在 Free 方案組合下不成立，不是設定問題，是方案本身的硬限制。
 
-依 [ADR-0001](ADR-0001-decision-principles.md) 準則 3（優先選免費部署方案），選擇讓 Nuxt server 也改用第 2 點的對外 `wss://` listener連線（`MQTT_BROKER_URL=wss://goos-ts-mosquitto.onrender.com`），跟 `fake-auction.ts --remote` 走同一條路徑，而不是把 Mosquitto 升級成付費方案來換取私有網路收件能力。內部 TCP listener（1883）保留給本機/CI 用，不再是 production 唯一預期連線路徑。
+依 [ADR-0001](ADR-0001-decision-principles.md) 準則 3（優先選免費部署方案），選擇讓 Nuxt server 也改用第 2 點的對外 `wss://` listener 連線（`MQTT_BROKER_URL=wss://<mosquitto-service-name>.onrender.com`），跟 `fake-auction.ts --remote` 走同一條路徑，而不是把 Mosquitto 升級成付費方案來換取私有網路收件能力。內部 TCP listener（1883）保留給本機/CI 用，不再是 production 唯一預期連線路徑。
 
 ## Consequences
 
