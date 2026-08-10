@@ -1,10 +1,5 @@
-// ADR-0007: 拍賣協定訊息格式維持書中 XMPP 純文字格式（SOL），對應
-// Java 版 XMPPAuction.JOIN_COMMAND_FORMAT/BID_COMMAND_FORMAT。
-//
-// 解析（decode）刻意不放在這裡：Java 版對應的 AuctionEvent 是
-// AuctionMessageTranslator 的 private inner class，只服務 Event:
-// 方向（PRICE/CLOSE），從不解析自己送出去的 Command:（JOIN/BID）——
-// 見 AuctionMessageTranslator.ts。
+// ADR-0007。解析（decode）在 AuctionMessageTranslator.ts 的 AuctionEvent，
+// 不在這裡。
 export type Bidder = string;
 
 export interface JoinMessage {

@@ -17,7 +17,7 @@
 
 ## Decision Outcome
 
-拍賣協定的連線層**不做真實密碼驗證**，改用一個 TS 常數陣列列出已知合法的 username（放在對應 `XMPPAuctionHouse.connect()` 的連線層），傳入的 username 若不在名單內，拋出一個對應 `XMPPAuctionException` 角色的自訂例外。
+拍賣協定的連線層**不做真實密碼驗證**，改用一個 TS 常數陣列列出已知合法的 username。傳入的 username 若不在名單內，白名單比對本身只拋出一般的例外，不直接拋出對應 `XMPPAuctionException` 角色的自訂例外——對應 Java 版 `connection.login()` 拋出的是 Smack 底層的 `XMPPException`，包裝成 `XMPPAuctionException` 是 `XMPPAuctionHouse.connect()` 外層 try/catch 的責任，不是 `login()` 自己的責任。TS 版維持同樣的兩層結構。
 
 這個替換只影響連線建立的邊界程式碼，MUST NOT 影響 `Auction`/`AuctionHouse` 介面以下的業務邏輯，且保留了「connect 可能失敗、失敗要包裝成自訂例外」這個書中既有的錯誤處理結構——因此仍能練習「處理第三方系統連線失敗」的 TDD 情境，即使書中 `test/integration/.../XMPPAuctionHouseTest.java` 本身沒有測試連線失敗的案例，這個結構在 Java 原始碼中完全支援、只是沒被測試覆蓋到。
 
@@ -38,7 +38,7 @@ Non-goals：本決定不涉及任何形式的密碼、token、或外部帳號系
 
 1. **不做密碼驗證**：拍賣協定連線層 MUST NOT 對傳入的密碼做任何驗證邏輯。
 2. **白名單比對**：傳入的 username MUST 對照一份靜態的已知名單（TS 常數陣列）比對，MUST NOT 引入外部帳號系統或資料庫查詢。
-3. **失敗需包裝例外**：username 不在名單內時，MUST 拋出一個包裝過的自訂例外（對應 Java 版 `XMPPAuctionException` 的角色），MUST NOT 讓底層錯誤未經包裝直接往外拋。
+3. **失敗需在外層包裝例外**：username 不在名單內時，白名單比對本身 MUST 拋出例外；拍賣協定連線的最外層（對應 Java 版 `XMPPAuctionHouse.connect()`）MUST 攔截這個例外並包裝成對應 `XMPPAuctionException` 角色的自訂例外，MUST NOT 讓底層錯誤未經包裝直接往呼叫端拋。
 4. **不持久化帳號資料**：合法 username 名單 MUST NOT 需要任何形式的持久化儲存或外部服務查詢。
 
 ## Alternatives Considered

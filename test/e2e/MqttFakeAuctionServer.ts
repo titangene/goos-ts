@@ -5,13 +5,7 @@ import type { Bidder } from '../../server/auctionsniper/mqtt/Message.ts';
 import { MqttChat } from '../../server/auctionsniper/mqtt/MqttChat.ts';
 import { commandsTopic, eventsTopic } from '../../server/auctionsniper/mqtt/Topic.ts';
 
-// Java 版 FakeAuctionServer 從不解析收到的 JOIN/BID——它靠字串相等比對固定的
-// XMPPAuction.JOIN_COMMAND_FORMAT/BID_COMMAND_FORMAT，送出者是誰則靠
-// currentChat.getParticipant()（XMPP 連線層級的身分）另外檢查，完全不靠訊息
-// 內容。MQTT 沒有這種連線層級身分，Bidder 只能放進訊息內容裡（見 Message.ts
-// 開頭的說明），所以這裡沒辦法照 Java 做純字串相等比對，需要一個只服務這個
-// 測試替身的最小解析（跟 AuctionMessageTranslator.ts 的 AuctionEvent 分開、
-// 不共用程式碼，因為 Java 本來就沒有共用——它根本不解析 Command 方向）。
+// 見 docs/differences-from-java.md #3。
 interface ReceivedCommand {
   command: string;
   bidder: Bidder;
@@ -61,14 +55,7 @@ class BlockingQueue {
   }
 }
 
-// MQTT 版的 test/e2e/FakeAuctionServer.ts，對照 goos-code 的
-// test/end-to-end/.../FakeAuctionServer.java。跟 Java 版一樣，所有發送出去
-// 的訊息都透過同一個 Chat（這裡是 MqttChat）送出——對應
-// currentChat.sendMessage(...)。跟書中/Redis 版不同的地方：訂閱 commands
-// topic（sniper 發佈 JOIN/BID）、發佈到 events topic（PRICE/CLOSE），跟
-// MqttAuction 的發佈/訂閱方向相反，對應 ADR-0006 的 topic 拓樸。
 export class MqttFakeAuctionServer {
-  // 對應 Java 版 FakeAuctionServer.XMPP_HOSTNAME。
   static readonly BROKER_URL = process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 
   private client!: MqttClient;
@@ -92,10 +79,6 @@ export class MqttFakeAuctionServer {
     );
   }
 
-  async announceClosed(): Promise<void> {
-    this.chat.sendMessage(Message.encode(Message.Close()));
-  }
-
   async sendInvalidMessage(rawMessage: string): Promise<void> {
     this.chat.sendMessage(rawMessage);
   }
@@ -116,6 +99,10 @@ export class MqttFakeAuctionServer {
     if (command.command !== 'BID' || command.price !== bid) {
       throw new Error(`expected a BID message for ${bid}, got ${JSON.stringify(command)}`);
     }
+  }
+
+  async announceClosed(): Promise<void> {
+    this.chat.sendMessage(Message.encode(Message.Close()));
   }
 
   async stop(): Promise<void> {

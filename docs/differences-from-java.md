@@ -67,22 +67,25 @@ private AuctionMessageTranslator translatorFor(XMPPConnection connection) {
 }
 ```
 
-`MqttClient`（mqtt.js 的原生型別）沒有 `getUser()` 這種東西可以隨時查——這個能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `MqttConnection.ts`，把 `MqttClient` 跟 `sniperId` 包在一起，補上一個 `getUser(): Bidder`：
+`MqttClient`（mqtt.js 的原生型別）沒有 `getUser()`、也沒有 `connect()`/`login()` 這種分階段的連線流程——這些能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `MqttConnection.ts`，包住 `MqttClient`，補上 `connect()`／`login()`／`getUser()`／`disconnect()`，讓 `MqttAuctionHouse.connect()` 可以用跟 Java 幾乎一樣的順序操作：
 
 ```ts
-export class MqttConnection {
-  constructor(
-    readonly client: MqttClient,
-    private readonly sniperId: Bidder,
-  ) {}
-
-  getUser(): Bidder {
-    return this.sniperId;
-  }
-}
+const connection = new MqttConnection(brokerUrl);
+await connection.connect();
+connection.login(sniperId);
 ```
 
-有了這層包裝，`MqttAuctionHouse`／`MqttAuction` 就能用跟 Java 幾乎一樣的方式取得身分——`MqttAuctionHouse` 只存一個 `connection: MqttConnection`（不再另外存 `sniperId`），`MqttAuction` 的 `translatorFor(connection)` 也改成跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不再是額外傳一個 `sniperId` 參數進建構子。差異被收斂到 `MqttConnection` 這一個檔案裡：它存在的唯一理由，就是 `MqttClient` 本身沒有身分查詢能力，這件事只需要解釋一次。
+對照 Java：
+
+```java
+XMPPConnection connection = new XMPPConnection(hostname);
+connection.connect();
+connection.login(username, password, AUCTION_RESOURCE);
+```
+
+`login()` 找不到 username 時只拋一般的 `Error`（對應 Smack `connection.login()` 拋出的 `XMPPException`，屬於連線失敗的其中一種），不是直接拋 `MqttAuctionException`——包裝成 `MqttAuctionException` 是 `MqttAuctionHouse.connect()` 外層 try/catch 的責任，這點也跟 Java 的兩層結構一致（見 [ADR-0003](adr/ADR-0003-username-only-identity.md) Compliance #3）。
+
+有了這層包裝，`MqttAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
 
 ## 5. 非同步 API：`connect()`/`disconnect()`/`processMessage()` 的簽章差異
 
