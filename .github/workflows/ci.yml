@@ -25,6 +25,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ADR-0005: GitHub Actions `services:` 容器會在 checkout 之前啟動，無法掛載
+      # repo 裡的 mosquitto/mosquitto.conf，所以改在 checkout 之後手動啟動，
+      # 並等待兩個 listener（1883 內部 TCP、9001 對外 WS）都能連上才繼續。
+      - name: Build and start Mosquitto
+        run: |
+          docker build -t goos-mosquitto ./mosquitto
+          docker run -d --name goos-mosquitto -p 1883:1883 -p 9001:9001 goos-mosquitto
+          timeout 30 bash -c 'until echo > /dev/tcp/127.0.0.1/1883; do sleep 1; done'
+          timeout 30 bash -c 'until echo > /dev/tcp/127.0.0.1/9001; do sleep 1; done'
+
       - uses: actions/setup-node@v4
         with:
           node-version: 26
