@@ -54,7 +54,9 @@ export class MqttFakeAuctionServer {
   }
 
   async stop(): Promise<void> {
-    await this.connection.disconnect();
+    if (this.connection.client) {
+      await this.connection.disconnect();
+    }
   }
 }
 
