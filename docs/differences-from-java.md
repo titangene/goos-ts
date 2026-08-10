@@ -57,6 +57,10 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 public Auction auctionFor(Item item) {
     return new XMPPAuction(connection, auctionId(item.identifier, connection), failureReporter);
 }
+
+private static String auctionId(String itemId, XMPPConnection connection) {
+    return String.format(AUCTION_ID_FORMAT, itemId, connection.getServiceName());
+}
 ```
 
 只傳 `connection` 跟算好的 `auctionId(...)`（跟 sniper 身分無關，只用 `item.identifier` 跟 `connection.getServiceName()`）。`XMPPAuction` 要用到「我是誰」時，是在自己的 `translatorFor(connection)` 裡用 `connection.getUser()` 現查：
@@ -87,10 +91,11 @@ connection.login(username, password, AUCTION_RESOURCE);
 
 有了這層包裝，`MqttAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
 
-## 5. 非同步 API：`connect()`/`disconnect()`/`processMessage()` 的簽章差異
+## 5. 非同步 API：`connect()`/`disconnect()` 的簽章差異
 
-- `XMPPAuctionHouse.disconnect()` 是同步的 `void` 方法；`MqttAuctionHouse.disconnect()` 是 `async`，回傳 `Promise<void>`——因為 Node.js 的 I/O（包含 mqtt.js 的斷線）本來就是非同步的，Smack 提供同步 API，這點沒有辦法讓 TS 版變成同步，是平台本身的差異。
-- `AuctionMessageTranslator.processMessage(Chat chat, Message message)` 接收 Smack 的 `Chat`/`Message` 物件，內部呼叫 `message.getBody()` 取出字串；TS 版 `processMessage(messageBody: string)` 直接接收字串——因為 mqtt.js 沒有對應 Smack `Message` 的物件模型，拿到的就是原始 payload。
+`XMPPAuctionHouse.disconnect()` 是同步的 `void` 方法；`MqttAuctionHouse.disconnect()` 是 `async`，回傳 `Promise<void>`——因為 Node.js 的 I/O（包含 mqtt.js 的斷線）本來就是非同步的，Smack 提供同步 API，這點沒有辦法讓 TS 版變成同步，是平台本身的差異。`connection.connect()`/`connection.login()` 同理。
+
+`AuctionMessageTranslator.processMessage(Chat chat, Message message)` 接收 Smack 的 `Message` 物件，內部呼叫 `message.getBody()` 取出字串；TS 版 `processMessage(chat: MqttChat, messageBody: string)` 的 `chat` 參數維持（跟 Java 一樣沒被用到），但第二個參數直接是字串——因為 mqtt.js 沒有對應 Smack `Message` 的物件模型，拿到的就是原始 payload，沒有 `.getBody()` 這一步可以省。
 
 ## 6. 循序保證要靠明確設定 QoS，不是天生就有
 

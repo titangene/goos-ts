@@ -3,6 +3,7 @@ import type { MqttClient } from 'mqtt';
 import { Message } from '../../server/auctionsniper/mqtt/Message.ts';
 import type { Bidder } from '../../server/auctionsniper/mqtt/Message.ts';
 import { MqttChat } from '../../server/auctionsniper/mqtt/MqttChat.ts';
+import type { MessageListener } from '../../server/auctionsniper/mqtt/MessageListener.ts';
 import { commandsTopic, eventsTopic } from '../../server/auctionsniper/mqtt/Topic.ts';
 
 // 見 docs/differences-from-java.md #3。
@@ -66,16 +67,19 @@ export class MqttFakeAuctionServer {
 
   async startSellingItem(): Promise<void> {
     this.client = await connectAsync(MqttFakeAuctionServer.BROKER_URL);
-    this.chat = new MqttChat(
-      this.client,
-      eventsTopic(this.itemId),
-      commandsTopic(this.itemId),
-      (rawMessage) => {
+    const listener: MessageListener = {
+      processMessage: (_chat, rawMessage) => {
         const command = parseCommand(rawMessage);
         if (command) {
           this.messageQueue.push(command);
         }
       },
+    };
+    this.chat = new MqttChat(
+      this.client,
+      eventsTopic(this.itemId),
+      commandsTopic(this.itemId),
+      listener,
     );
   }
 

@@ -17,7 +17,7 @@ export class MqttAuctionHouse implements AuctionHouse {
 
   private constructor(connection: MqttConnection) {
     this.connection = connection;
-    this.failureReporter = new LoggingMqttFailureReporter(fileLogger());
+    this.failureReporter = new LoggingMqttFailureReporter(this.makeLogger());
   }
 
   auctionFor(item: Item): Auction {
@@ -38,10 +38,10 @@ export class MqttAuctionHouse implements AuctionHouse {
       throw new MqttAuctionException(`Could not connect to auction: ${String(cause)}`, cause);
     }
   }
-}
 
-function fileLogger(): Logger {
-  return {
-    severe: (message) => appendFileSync(MqttAuctionHouse.LOG_FILE_NAME, `${message}\n`),
-  };
+  private makeLogger(): Logger {
+    return {
+      severe: (message) => appendFileSync(MqttAuctionHouse.LOG_FILE_NAME, `${message}\n`),
+    };
+  }
 }

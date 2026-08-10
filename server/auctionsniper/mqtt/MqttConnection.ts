@@ -1,6 +1,9 @@
 import { connectAsync } from 'mqtt';
 import type { MqttClient } from 'mqtt';
 import type { Bidder } from './Message.ts';
+import { MqttChat } from './MqttChat.ts';
+import type { MessageListener } from './MessageListener.ts';
+import { commandsTopic, eventsTopic } from './Topic.ts';
 
 const KNOWN_USERNAMES: readonly string[] = ['sniper'];
 
@@ -23,6 +26,10 @@ export class MqttConnection {
 
   getUser(): Bidder {
     return this.sniperId;
+  }
+
+  createChat(itemId: string, listener: MessageListener): MqttChat {
+    return new MqttChat(this.client, commandsTopic(itemId), eventsTopic(itemId), listener);
   }
 
   async disconnect(): Promise<void> {

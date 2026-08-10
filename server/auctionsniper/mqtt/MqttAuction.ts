@@ -1,13 +1,12 @@
 import { Announcer } from '../util/Announcer.ts';
 import { Message } from './Message.ts';
 import type { Bidder } from './Message.ts';
-import { MqttChat } from './MqttChat.ts';
+import type { MqttChat } from './MqttChat.ts';
 import type { MqttConnection } from './MqttConnection.ts';
 import { AuctionMessageTranslator } from './AuctionMessageTranslator.ts';
 import type { AuctionEventListener, PriceSource } from '../AuctionEventListener.ts';
 import type { MqttFailureReporter } from './MqttFailureReporter.ts';
 import type { Auction } from '../Auction.ts';
-import { commandsTopic, eventsTopic } from './Topic.ts';
 
 export class MqttAuction implements Auction {
   private readonly auctionEventListeners = Announcer.to<AuctionEventListener>();
@@ -19,13 +18,8 @@ export class MqttAuction implements Auction {
     this.failureReporter = failureReporter;
     this.sniperId = connection.getUser();
     const translator = this.translatorFor(connection);
-    this.chat = new MqttChat(
-      connection.client,
-      commandsTopic(itemId),
-      eventsTopic(itemId),
-      (messageBody) => translator.processMessage(messageBody),
-    );
-    this.addAuctionEventListener(this.chatDisconnectorFor());
+    this.chat = connection.createChat(itemId, translator);
+    this.addAuctionEventListener(this.chatDisconnectorFor(translator));
   }
 
   bid(amount: number): void {
@@ -48,9 +42,9 @@ export class MqttAuction implements Auction {
     );
   }
 
-  private chatDisconnectorFor(): AuctionEventListener {
+  private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
     return {
-      auctionFailed: () => this.chat.unsubscribe(),
+      auctionFailed: () => this.chat.removeMessageListener(translator),
       auctionClosed: () => {},
       currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {},
     };
