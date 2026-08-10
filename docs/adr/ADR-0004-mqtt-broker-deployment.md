@@ -36,8 +36,14 @@ Chosen option：**Render**，因為 Mosquitto 的資源需求已經小到 Render
 
 Mosquitto 部署為**獨立於 Nuxt server 的 Render Web Service**（Docker 建置），開兩個 listener：
 
-1. **內部 MQTT TCP listener**（例如 1883 port）——供 Nuxt server 透過 Render 私有網路連線，比照現有 `REDIS_URL` internal URL 模式。
-2. **對外 MQTT-over-WS listener**——綁定 Render 的 `PORT` 環境變數。`tools/fake-auction.ts` 依照 [ADR-0002](ADR-0002-mqtt-replaces-redis.md) 會改用 MQTT client（`mqtt.js`），改寫完成後，在本機加上 `--remote` 參數執行時，就會透過 `wss://` 連到這個對外 listener，藉此驗證已部署到 Render 上的完整拍賣流程能否正常運作。此 listener 使用 Mosquitto 原生的 `protocol websockets` 設定（純設定檔，零程式碼），不與 `server/routes/ws.ts`（瀏覽器 UI 推播、使用 crossws）共用任何程式碼或連線機制——兩者是服務不同協定（MQTT binary framing vs. 應用層 JSON）的獨立端點。
+1. **內部 MQTT TCP listener**（例如 1883 port）——本機開發、CI 用 `docker run`／`docker-compose` 直連。原規劃是部署後 Nuxt server 也透過 Render 私有網路連線（比照現有 `REDIS_URL` internal URL 模式），但實際建立服務後發現這條路徑在 Free 方案上不可行（見下方「部署後修正」），production 環境改用第 2 點的對外 listener。
+2. **對外 MQTT-over-WS listener**——綁定 Render 的 `PORT` 環境變數。`tools/fake-auction.ts` 依照 [ADR-0002](ADR-0002-mqtt-replaces-redis.md) 改用 MQTT client（`mqtt.js`）後，本機加 `--remote` 參數執行時透過 `wss://` 連到這個對外 listener；部署後 Nuxt server 的 `MQTT_BROKER_URL` 也指向同一個 `wss://` 位址（見下方「部署後修正」）。此 listener 使用 Mosquitto 原生的 `protocol websockets` 設定（純設定檔，零程式碼），不與 `server/routes/ws.ts`（瀏覽器 UI 推播、使用 crossws）共用任何程式碼或連線機制——兩者是服務不同協定（MQTT binary framing vs. 應用層 JSON）的獨立端點。
+
+### 部署後修正：Nuxt server 改連公開 `wss://`，不走私有網路
+
+實際在 Render Dashboard 建立 `goos-ts-mosquitto` 服務時，查證 [Render 私有網路文件](https://render.com/docs/private-network) 才發現：**Free web service 可以發起私有網路連線，但無法接收**（"Free web services can send private network requests, but they can't receive them"）。Mosquitto 服務本身是 Free 方案，代表它完全無法接收私有網路的入站連線——第 1 點原規劃的「Nuxt server 透過私有網路連內部 1883 listener」在 Free 方案組合下不成立，不是設定問題，是方案本身的硬限制。
+
+依 [ADR-0001](ADR-0001-decision-principles.md) 準則 3（優先選免費部署方案），選擇讓 Nuxt server 也改用第 2 點的對外 `wss://` listener連線（`MQTT_BROKER_URL=wss://goos-ts-mosquitto.onrender.com`），跟 `fake-auction.ts --remote` 走同一條路徑，而不是把 Mosquitto 升級成付費方案來換取私有網路收件能力。內部 TCP listener（1883）保留給本機/CI 用，不再是 production 唯一預期連線路徑。
 
 ## Consequences
 
@@ -49,7 +55,7 @@ Mosquitto 部署為**獨立於 Nuxt server 的 Render Web Service**（Docker 建
 **Negative:**
 
 - 需要撰寫並維護一份簡單的 Dockerfile（`FROM eclipse-mosquitto` + COPY 設定檔）。
-- 本機與 `--remote` 的連線字串會不同（本機用 `mqtt://`，`--remote` 用 `wss://`），雖可共用同一套 `mqtt.js` client 程式碼，但需要在 `fake-auction.ts` 內維護這個分支邏輯。
+- 本機用 `mqtt://`，部署環境（Nuxt server 跟 `--remote`）都用 `wss://`，連線字串不同；共用同一套 `mqtt.js` client 程式碼（`connectAsync(url)` 依 URL scheme 自動切換協定），不需要額外分支邏輯，只是 brokerUrl 的值來源不同（本機預設值 vs. `MQTT_BROKER_URL` 環境變數）。
 - 需要在 Render Dashboard 額外建立一個新服務，並設定對應環境變數（例如 `MQTT_BROKER_URL`）。
 
 **Neutral:**
@@ -59,7 +65,7 @@ Mosquitto 部署為**獨立於 Nuxt server 的 Render Web Service**（Docker 建
 ## Compliance
 
 1. **Broker 部署獨立性**：MQTT broker MUST 部署為獨立於 Nuxt server 的 Render 服務，MUST NOT 與 Nuxt server 共用同一個 container 或 process（呼應 [ADR-0002](ADR-0002-mqtt-replaces-redis.md) Compliance 第 2 條）。
-2. **雙 Listener 架構**：Broker MUST 提供至少兩個 listener——一個限定 Render 私有網路的 MQTT TCP listener、一個綁定公開 `PORT` 環境變數的 MQTT-over-WS listener。
+2. **雙 Listener 架構**：Broker MUST 提供至少兩個 listener——一個內部 MQTT TCP listener（本機/CI 用，固定 port）、一個綁定公開 `PORT` 環境變數的 MQTT-over-WS listener。內部 listener MUST NOT 被假設為 Nuxt server 在 production 環境的連線路徑（見「部署後修正」，Free 方案的私有網路限制使其不可行）。
 3. **WS Listener 隔離**：公開的 MQTT-over-WS listener MUST NOT 與 `server/routes/ws.ts`（瀏覽器 UI 推播）共用連線邏輯、程式碼路徑、或底層函式庫（crossws vs. broker 原生的 WS 支援須保持各自獨立）。
 4. **不掛載 Persistent Disk**：MQTT broker 服務 MUST NOT 掛載 persistent disk，因應本決策不需要持久化任何帳號或訊息資料。
 
