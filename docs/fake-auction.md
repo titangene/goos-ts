@@ -1,6 +1,6 @@
 # 手動模擬完整拍賣流程
 
-`tools/fake-auction.ts` 是一個互動式的假拍賣現場，用跟 `test/e2e/MqttFakeAuctionServer.ts` 一樣的協定（MQTT + SOL 純文字格式）訂閱 `auction/<itemId>/commands`、發布到 `auction/<itemId>/events`，讓你在終端機手動打指令、即時觀察 app 畫面的反應。
+`tools/fake-auction.ts` 是一個互動式的假拍賣現場，用跟 `test/e2e/FakeAuctionServer.ts` 一樣的協定（MQTT + SOL 純文字格式）訂閱 `auction/<itemId>/commands`、發布到 `auction/<itemId>/events`，讓你在終端機手動打指令、即時觀察 app 畫面的反應。
 
 **1. 確認 Mosquitto 跟 app 都已啟動**（見 [README](../README.md)「環境需求」「開發」或「建置與正式執行」）。
 

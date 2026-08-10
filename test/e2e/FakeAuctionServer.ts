@@ -5,7 +5,7 @@ import type { Bidder } from '../../server/auctionsniper/mqtt/Message.ts';
 import type { MessageListener } from '../../server/auctionsniper/mqtt/MessageListener.ts';
 import { commandsTopic, eventsTopic } from '../../server/auctionsniper/mqtt/Topic.ts';
 
-export class MqttFakeAuctionServer {
+export class FakeAuctionServer {
   static readonly BROKER_URL = process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
 
   private readonly messageListener = new SingleMessageListener();
@@ -13,7 +13,7 @@ export class MqttFakeAuctionServer {
   private chat!: MqttChat;
 
   constructor(public readonly itemId: string) {
-    this.connection = new MqttConnection(MqttFakeAuctionServer.BROKER_URL);
+    this.connection = new MqttConnection(FakeAuctionServer.BROKER_URL);
   }
 
   async startSellingItem(): Promise<void> {

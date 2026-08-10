@@ -21,7 +21,7 @@ Auction Sniper — TypeScript + Nuxt + MQTT + WebSocket 版本，改寫自 [Grow
 | Matcher           | Hamcrest                                                                | Vitest 內建 `expect`                                                                                    |
 | 整合測試          | `test/integration`（Swing `MainWindow`、XMPP `XMPPAuctionHouse`）       | `test/integration`（Nuxt app、MQTT `MqttAuctionHouse`），另加 `test/integration/app`                    |
 | End-to-end 測試   | `test/end-to-end`（`ApplicationRunner` + WindowLicker 驅動 Swing 元件） | `test/e2e`（Playwright 驅動瀏覽器）                                                                     |
-| 假拍賣現場        | `FakeAuctionServer.java`（連 XMPP）                                     | `test/e2e/MqttFakeAuctionServer.ts` + `tools/fake-auction.ts`（連 MQTT）                                |
+| 假拍賣現場        | `FakeAuctionServer.java`（連 XMPP）                                     | `test/e2e/FakeAuctionServer.ts` + `tools/fake-auction.ts`（連 MQTT）                                    |
 | CI 測試用依賴服務 | Openfire（XMPP server）                                                 | Mosquitto（CI 用自建 image 啟動，見 [ADR-0005](docs/adr/ADR-0005-ci-local-dev-workflow.md)）            |
 
 ### 專案結構比較

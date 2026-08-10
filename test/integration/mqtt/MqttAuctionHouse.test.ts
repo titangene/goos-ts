@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MqttAuctionHouse } from '../../../server/auctionsniper/mqtt/MqttAuctionHouse.ts';
 import { Item } from '../../../server/auctionsniper/UserRequestListener.ts';
 import type { AuctionEventListener } from '../../../server/auctionsniper/AuctionEventListener.ts';
-import { MqttFakeAuctionServer } from '../../e2e/MqttFakeAuctionServer.ts';
+import { FakeAuctionServer } from '../../e2e/FakeAuctionServer.ts';
 
 // 對照 goos-code 的
 // test/integration/test/integration/auctionsniper/xmpp/XMPPAuctionHouseTest.java
@@ -16,12 +16,12 @@ function uniqueItemId(name: string): string {
 }
 
 describe('MqttAuctionHouse', () => {
-  let auctionServer: MqttFakeAuctionServer;
+  let auctionServer: FakeAuctionServer;
   let auctionHouse: MqttAuctionHouse;
 
   beforeEach(async () => {
-    auctionServer = new MqttFakeAuctionServer(uniqueItemId('item-54321'));
-    auctionHouse = await MqttAuctionHouse.connect(MqttFakeAuctionServer.BROKER_URL, SNIPER_ID);
+    auctionServer = new FakeAuctionServer(uniqueItemId('item-54321'));
+    auctionHouse = await MqttAuctionHouse.connect(FakeAuctionServer.BROKER_URL, SNIPER_ID);
     await auctionServer.startSellingItem();
   });
 

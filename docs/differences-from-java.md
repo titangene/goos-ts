@@ -29,9 +29,9 @@ SOLVersion: 1.1; Command: JOIN; Bidder: sniper;
 SOLVersion: 1.1; Command: BID; Price: 95; Bidder: sniper;
 ```
 
-這個差異會連帶影響到第 3 節提到的 `MqttFakeAuctionServer.ts`。
+這個差異會連帶影響到第 3 節提到的 `FakeAuctionServer.ts`。
 
-## 3. `MqttFakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
+## 3. `FakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
 
 `FakeAuctionServer.java` 從不解析收到的 JOIN/BID 訊息內容，靠的是**兩件事分開檢查**：
 
@@ -47,7 +47,7 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 
 訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查——`JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 是固定字串／格式樣板，跟 sniperId 無關，因為身分已經由連線層級保證。
 
-因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `MqttAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數，所以 `test/e2e/MqttFakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`／`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
+因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `MqttAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數，所以 `test/e2e/FakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`／`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
 
 ## 4. `MqttClient` 沒有 `getUser()`，所以包了一個 `MqttConnection`
 
@@ -91,7 +91,7 @@ connection.login(username, password, AUCTION_RESOURCE);
 
 有了這層包裝，`MqttAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
 
-`MqttConnection` 也不只服務 sniper 端：`test/e2e/MqttFakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。但 `FakeAuctionServer` 建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`；`MqttFakeAuctionServer` 對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChat`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`／`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChat()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境，因此 `MqttConnection` 沒有另外提供反向的 `createChat()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
+`MqttConnection` 也不只服務 sniper 端：TS 版 `test/e2e/FakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。但 Java 版建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`；TS 版對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChat`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`／`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChat()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境，因此 `MqttConnection` 沒有另外提供反向的 `createChat()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
 
 ## 5. 非同步 API：`connect()`/`disconnect()` 的簽章差異
 
@@ -101,7 +101,7 @@ connection.login(username, password, AUCTION_RESOURCE);
 
 ## 6. 循序保證要靠明確設定 QoS，不是天生就有
 
-書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChat`／`MqttFakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
+書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChat`／`FakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
 
 ## 7. `MqttChat` 要自己過濾 topic，Smack 的 `Chat` 天生只收自己的訊息
 

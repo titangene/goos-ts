@@ -2,8 +2,8 @@
  * Interactive stand-in for a real auction house, so you can drive the
  * Auction Sniper app's UI by hand. Publishes/subscribes on the same
  * `auction/<itemId>/commands` and `auction/<itemId>/events` MQTT topics and
- * SOL text protocol the tests' MqttFakeAuctionServer uses -- see
- * test/e2e/MqttFakeAuctionServer.ts.
+ * SOL text protocol the tests' FakeAuctionServer uses -- see
+ * test/e2e/FakeAuctionServer.ts.
  *
  * Usage:
  *   npm run fake-auction -- <itemId>            connect to local Mosquitto
