@@ -43,7 +43,14 @@ Auction Sniper — TypeScript + Nuxt + Redis + WebSocket 版本，改寫自 [Gro
 ## 環境需求
 
 - Node.js
-- Redis（本機或 Docker 皆可）
+- Mosquitto（app 現在跑在這上面，本機或 Docker 皆可）
+- Redis（`server/auctionsniper/redis` 仍在，`test:integration` 的 Redis 測試需要）
+
+啟動 Mosquitto：
+
+```bash
+./mosquitto/start.sh
+```
 
 啟動 Redis（例如用 Docker）：
 
@@ -74,9 +81,9 @@ node .output/server/index.mjs
 
 ```bash
 npm run test:unit           # 單元測試
-npm run test:integration    # 整合測試（接真實 Redis）
+npm run test:integration    # 整合測試（接真實 Mosquitto、Redis）
 npm run test:integration:app # UI 元件測試
-npm run test:e2e            # e2e 測試（Playwright，需要真實 Redis）
+npm run test:e2e            # e2e 測試（Playwright，需要真實 Mosquitto）
 npm test                    # 全部跑一遍
 ```
 

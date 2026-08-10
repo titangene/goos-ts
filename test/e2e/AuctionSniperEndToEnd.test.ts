@@ -1,18 +1,18 @@
 import { test } from '@playwright/test';
 import { ApplicationRunner, SNIPER_ID } from './ApplicationRunner.ts';
-import { FakeAuctionServer } from './FakeAuctionServer.ts';
+import { MqttFakeAuctionServer } from './MqttFakeAuctionServer.ts';
 
 function uniqueItemId(name: string): string {
   return `${name}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
 
 test.describe('the auction sniper', () => {
-  let auction: FakeAuctionServer;
-  let auction2: FakeAuctionServer;
+  let auction: MqttFakeAuctionServer;
+  let auction2: MqttFakeAuctionServer;
 
   test.beforeEach(() => {
-    auction = new FakeAuctionServer(uniqueItemId('item-54321'));
-    auction2 = new FakeAuctionServer(uniqueItemId('item-65432'));
+    auction = new MqttFakeAuctionServer(uniqueItemId('item-54321'));
+    auction2 = new MqttFakeAuctionServer(uniqueItemId('item-65432'));
   });
 
   test.afterEach(async () => {
@@ -133,7 +133,7 @@ test.describe('the auction sniper', () => {
     await auction.reportPrice(500, 20, 'other bidder');
     await auction.hasReceivedBid(520, SNIPER_ID);
 
-    await auction.sendInvalidMessage(brokenMessage);
+    await auction.sendInvalidMessageContaining(brokenMessage);
     await application.hasShownSniperHasFailed(auction);
 
     await auction.reportPrice(520, 21, 'other bidder');

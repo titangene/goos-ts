@@ -1,27 +1,40 @@
 /**
  * Interactive stand-in for a real auction house, so you can drive the
  * Auction Sniper app's UI by hand. Publishes/subscribes on the same
- * `auction-<itemId>` Redis topic and JSON protocol the tests' FakeAuctionServer
- * uses -- see test/e2e/FakeAuctionServer.ts.
+ * `auction/<itemId>/commands` and `auction/<itemId>/events` MQTT topics and
+ * SOL text protocol the tests' MqttFakeAuctionServer uses -- see
+ * test/e2e/MqttFakeAuctionServer.ts.
  *
  * Usage:
- *   npm run fake-auction -- <itemId>            connect to local Redis
- *   npm run fake-auction:remote -- <itemId>     connect to REDIS_URL
- *                                                (e.g. a deployed Redis;
- *                                                 set REDIS_URL in .env.local)
+ *   npm run fake-auction -- <itemId>            connect to local Mosquitto
+ *   npm run fake-auction:remote -- <itemId>     connect to MQTT_BROKER_URL
+ *                                                (e.g. a deployed Mosquitto;
+ *                                                 set MQTT_BROKER_URL in .env.local)
  *
  * Commands (typed at the prompt once a sniper has joined):
  *   price <currentPrice> <increment> [bidder]   send a Price event
  *                                                (bidder defaults to "other bidder";
- *                                                 use "sniper@localhost" to simulate
+ *                                                 use "sniper" to simulate
  *                                                 the sniper's own bid landing)
  *   close                                        send a Close event
  *   quit                                         disconnect and exit
  */
 import { createInterface } from 'node:readline';
-import { createClient } from 'redis';
-import { Message } from '../server/auctionsniper/redis/Message.ts';
-import type { AuctionMessage } from '../server/auctionsniper/redis/Message.ts';
+import { connectAsync } from 'mqtt';
+import { Message } from '../server/auctionsniper/mqtt/Message.ts';
+import { commandsTopic, eventsTopic } from '../server/auctionsniper/mqtt/Topic.ts';
+
+function parseCommand(messageBody: string): Map<string, string> {
+  const fields = new Map<string, string>();
+  for (const field of messageBody.split(';')) {
+    const trimmed = field.trim();
+    if (!trimmed) continue;
+    const colonIndex = trimmed.indexOf(':');
+    if (colonIndex === -1) continue;
+    fields.set(trimmed.slice(0, colonIndex).trim(), trimmed.slice(colonIndex + 1).trim());
+  }
+  return fields;
+}
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -32,36 +45,35 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  if (remote && !process.env.REDIS_URL) {
-    console.error('--remote requires REDIS_URL to be set (e.g. via --env-file=.env.local)');
+  if (remote && !process.env.MQTT_BROKER_URL) {
+    console.error('--remote requires MQTT_BROKER_URL to be set (e.g. via --env-file=.env.local)');
     process.exit(1);
   }
-  const redisUrl = remote ? process.env.REDIS_URL : undefined;
+  const brokerUrl = remote ? process.env.MQTT_BROKER_URL! : 'mqtt://localhost:1883';
 
-  const topic = `auction-${itemId}`;
-  const publisher = createClient({ url: redisUrl });
-  const subscriber = createClient({ url: redisUrl });
-  await Promise.all([publisher.connect(), subscriber.connect()]);
+  const client = await connectAsync(brokerUrl);
+  const commands = commandsTopic(itemId);
+  const events = eventsTopic(itemId);
 
   let sniperJoined = false;
 
-  await subscriber.subscribe(topic, (rawMessage) => {
-    let message: AuctionMessage;
-    try {
-      message = JSON.parse(rawMessage) as AuctionMessage;
-    } catch {
-      return;
-    }
+  client.on('message', (topic, payload) => {
+    if (topic !== commands) return;
 
-    if (message.command === 'Join') {
+    const fields = parseCommand(payload.toString());
+    const command = fields.get('Command');
+    const bidder = fields.get('Bidder');
+
+    if (command === 'JOIN') {
       sniperJoined = true;
-      console.log(`Sniper joined: ${message.bidder}`);
-    } else if (message.command === 'Bid') {
-      console.log(`< received: Bid ${message.bid} from ${message.bidder}`);
+      console.log(`Sniper joined: ${bidder}`);
+    } else if (command === 'BID') {
+      console.log(`< received: Bid ${fields.get('Price')} from ${bidder}`);
     }
   });
+  await client.subscribeAsync(commands, { qos: 1 });
 
-  console.log(`Logged in as auction-${itemId}. Waiting for a sniper to join...`);
+  console.log(`Selling item ${itemId} on ${brokerUrl}. Waiting for a sniper to join...`);
   console.log('Commands: price <currentPrice> <increment> [bidder] | close | quit');
 
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '> ' });
@@ -91,15 +103,15 @@ async function main(): Promise<void> {
           const currentPrice = Number(parts[1]);
           const increment = Number(parts[2]);
           const bidder = parts[3] ?? 'other bidder';
-          const message = Message.Price(currentPrice, increment, bidder);
-          await publisher.publish(topic, JSON.stringify(message));
-          console.log(`> sent: ${JSON.stringify(message)}`);
+          const rawMessage = Message.encode(Message.Price(currentPrice, increment, bidder));
+          await client.publishAsync(events, rawMessage, { qos: 1 });
+          console.log(`> sent: ${rawMessage}`);
           break;
         }
         case 'close': {
-          const message = Message.Close();
-          await publisher.publish(topic, JSON.stringify(message));
-          console.log(`> sent: ${JSON.stringify(message)}`);
+          const rawMessage = Message.encode(Message.Close());
+          await client.publishAsync(events, rawMessage, { qos: 1 });
+          console.log(`> sent: ${rawMessage}`);
           break;
         }
         case 'quit':
@@ -113,7 +125,7 @@ async function main(): Promise<void> {
   });
 
   rl.on('close', () => {
-    void Promise.all([publisher.quit(), subscriber.quit()]).then(() => process.exit(0));
+    void client.endAsync().then(() => process.exit(0));
   });
 }
 

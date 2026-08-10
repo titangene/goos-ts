@@ -9,6 +9,6 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    sniperId: 'sniper@localhost',
+    sniperId: 'sniper',
   },
 });
