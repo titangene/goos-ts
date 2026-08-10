@@ -21,9 +21,11 @@ MQTT payload 採用書中純文字 SOL 格式（`Field: Value;` 分號分隔）�
 ## Consequences
 
 **Positive:**
+
 - 能原汁原味練習對應 Java 版 `AuctionMessageTranslator`/`AuctionEvent` 的純文字 parsing 邏輯，這是本次重構想練習的 TDD 情境之一。
 
 **Negative:**
+
 - `tools/fake-auction.ts` 的訊息建構/解析邏輯需要從 `JSON.parse`/`JSON.stringify` 改寫為純文字格式的 parse/format。
 - 拍賣協定與 UI 推播不共用序列化邏輯，未來維護者需要理解這是有意為之的設計決定，不是不一致的疏漏（本 ADR 即為該說明的落地依據）。
 

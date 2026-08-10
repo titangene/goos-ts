@@ -42,15 +42,18 @@ Mosquitto 部署為**獨立於 Nuxt server 的 Render Web Service**（Docker 建
 ## Consequences
 
 **Positive:**
+
 - 維運心力最少：延續現有 Render 部署流程（git push 觸發 CI/CD、自動 TLS、自訂網域），不需要新增自行管理 VM 的維運責任。
 - Mosquitto 不需要 persistent volume，避開了先前讓 Matrix 破局的 Render Free 方案硬限制。
 
 **Negative:**
+
 - 需要撰寫並維護一份簡單的 Dockerfile（`FROM eclipse-mosquitto` + COPY 設定檔）。
 - 本機與 `--remote` 的連線字串會不同（本機用 `mqtt://`，`--remote` 用 `wss://`），雖可共用同一套 `mqtt.js` client 程式碼，但需要在 `fake-auction.ts` 內維護這個分支邏輯。
 - 需要在 Render Dashboard 額外建立一個新服務，並設定對應環境變數（例如 `MQTT_BROKER_URL`）。
 
 **Neutral:**
+
 - 若未來需要水平擴展多個 Nuxt server instance，或 Mosquitto 的資源需求意外超出預期，Oracle Cloud Always Free 是已評估過、可行的備案（見 More Information）。
 
 ## Compliance

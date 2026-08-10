@@ -42,16 +42,19 @@ Chosen option：**MQTT + Mosquitto（Docker，獨立服務）**，因為它是�
 ## Consequences
 
 **Positive:**
+
 - broker 是真正的第三方系統（獨立 Docker process，非 app 自己寫的 wrapper），恢復「跟不可控外部系統整合」這個書中核心的 TDD 練習情境（見 [ADR-0001](ADR-0001-decision-principles.md) 準則 3）。
 - MQTT 是通過 OASIS/ISO/IEC 20922 認證的開放標準，恢復書中「既有開放標準」這項性質（雖非本次決策的必要條件，但屬額外收穫）。
 
 **Negative:**
+
 - `tools/fake-auction.ts` 需要重寫為使用 MQTT client（`mqtt.js`），訊息序列化邏輯也要跟著調整（見 [ADR-0007: 拍賣協定訊息格式維持書中 XMPP 純文字格式](ADR-0007-message-format.md)）。
 - `server/auctionsniper/redis/*`（`RedisAuctionHouse`、`RedisAuction`、`RedisChat` 等）需要被對應的 MQTT 實作取代並移除，這是一次性的遷移工作。
 - CI 的 `redis:7-alpine` service container 需要替換成 Mosquitto image（見 [ADR-0005: 本機/CI 開發流程改用 Docker Service Container 模式](ADR-0005-ci-local-dev-workflow.md)）。
 - 需要額外部署一個獨立的 MQTT broker 服務（見 [ADR-0004: MQTT Broker 部署為獨立 Render Web Service](ADR-0004-mqtt-broker-deployment.md)）。
 
 **Neutral:**
+
 - README、`docs/deploy.md`、`docs/fake-auction.md` 需要更新協定說明，反映 Redis → MQTT 的變更。
 
 ## Compliance

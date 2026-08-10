@@ -22,10 +22,12 @@ PRICE 事件中「這是我出的價還是別人出的」的判斷，沿用書�
 ## Consequences
 
 **Positive:**
+
 - 訊息可見範圍跟 XMPP 1:1 chat 模型對等（sniper 之間互相看不到彼此的命令），且零額外過濾程式碼。
 - PRICE/CLOSE 事件的廣播語意（所有 bidder 都看到最新價格）符合拍賣網域本身的真實需求，不需要特殊處理。
 
 **Negative:**
+
 - `RedisAuctionHouse`/`RedisAuction` 對應的 MQTT 版本實作，需要維護兩個 topic 名稱常數而非一個 topic。
 - `tools/fake-auction.ts` 也要對應調整訂閱/發佈的 topic（訂閱 `commands`、發佈到 `events`）。
 

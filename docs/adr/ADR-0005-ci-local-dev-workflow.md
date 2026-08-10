@@ -21,10 +21,12 @@
 ## Consequences
 
 **Positive:**
+
 - 啟動 broker 用 Docker 容器，是有明確生命週期、可查詢狀態的獨立單位，比自行撰寫等待邏輯更穩定。
 - `docker` 需要的權限完全不會波及 npm/node 工具鏈的任何一段程式碼。
 
 **Negative:**
+
 - CI 沒辦法直接沿用 Redis 那種單純的 `services:` YAML 設定，需要多寫一個「build → docker run → 等待就緒」的步驟。
 - 本機開發者需要先安裝 Docker，且 broker 與 dev server 要開兩個終端機分頁分別啟動，沒有「一個指令啟動全部」的便利性。
 

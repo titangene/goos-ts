@@ -26,10 +26,12 @@ Non-goals：本決定不涉及任何形式的密碼、token、或外部帳號系
 ## Consequences
 
 **Positive:**
+
 - 不需要任何持久化的帳號資料庫，簡化了部署（呼應 [ADR-0004: MQTT Broker 部署為獨立 Render Web Service](ADR-0004-mqtt-broker-deployment.md) 不需要 persistent volume 的結論）。
 - 保留了「連線可能因未知身分而失敗」這個可測試的錯誤路徑，維持跟書中 `XMPPAuctionException` 對應的錯誤處理練習價值。
 
 **Negative:**
+
 - 未來若需要新增合法帳號，需要修改程式碼中的常數陣列並重新部署，不像真實帳號系統可以動態註冊。
 
 ## Compliance

@@ -26,10 +26,12 @@ goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS
 ## Consequences
 
 **Positive:**
+
 - 後續每篇 ADR 的 Context/Decision 可以直接引用本 ADR，不需要重複解釋一次判斷邏輯。
 - 未來若有人質疑某個技術選擇「為什麼不選更方便的 X」，可以直接對照本 ADR 的優先順序回答。
 
 **Negative:**
+
 - 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0002: 拍賣協定改用 MQTT（Mosquitto）取代 Redis Pub/Sub](ADR-0002-mqtt-replaces-redis.md)、[ADR-0004: MQTT Broker 部署為獨立 Render Web Service](ADR-0004-mqtt-broker-deployment.md) 等已接受的結論。
 
 ## Compliance
