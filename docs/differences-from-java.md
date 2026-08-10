@@ -31,7 +31,7 @@ SOLVersion: 1.1; Command: BID; Price: 95; Bidder: sniper;
 
 這個差異會連帶影響到第 3 節提到的 `MqttFakeAuctionServer.ts`。
 
-## 3. `MqttFakeAuctionServer.ts` 沒辦法照 Java 做純字串相等比對
+## 3. `MqttFakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
 
 `FakeAuctionServer.java` 從不解析收到的 JOIN/BID 訊息內容，靠的是**兩件事分開檢查**：
 
@@ -45,9 +45,9 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 }
 ```
 
-訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查。
+訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查——`JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 是固定字串／格式樣板，跟 sniperId 無關，因為身分已經由連線層級保證。
 
-因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不再是固定字串，沒辦法直接字串相等比對。`test/e2e/MqttFakeAuctionServer.ts` 因此自己寫了一個獨立的 `parseCommand()`，從訊息內容裡取出 `Command`/`Bidder`/`Price` 欄位。這個解析邏輯**刻意不跟** `AuctionMessageTranslator.ts` 的私有 `AuctionEvent` 共用程式碼——因為 Java 本來就沒有共用：`AuctionEvent` 只服務「Event:」方向（PRICE/CLOSE），`FakeAuctionServer` 從不解析「Command:」方向，兩者在 Java 原始碼裡根本沒有交集。
+因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `MqttAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數，所以 `test/e2e/MqttFakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`／`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
 
 ## 4. `MqttClient` 沒有 `getUser()`，所以包了一個 `MqttConnection`
 
@@ -90,6 +90,8 @@ connection.login(username, password, AUCTION_RESOURCE);
 `login()` 找不到 username 時只拋一般的 `Error`（對應 Smack `connection.login()` 拋出的 `XMPPException`，屬於連線失敗的其中一種），不是直接拋 `MqttAuctionException`——包裝成 `MqttAuctionException` 是 `MqttAuctionHouse.connect()` 外層 try/catch 的責任，這點也跟 Java 的兩層結構一致（見 [ADR-0003](adr/ADR-0003-username-only-identity.md) Compliance #3）。
 
 有了這層包裝，`MqttAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
+
+`MqttConnection` 也不只服務 sniper 端：`test/e2e/MqttFakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。但 `FakeAuctionServer` 建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`；`MqttFakeAuctionServer` 對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChat`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`／`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChat()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境，因此 `MqttConnection` 沒有另外提供反向的 `createChat()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
 
 ## 5. 非同步 API：`connect()`/`disconnect()` 的簽章差異
 
