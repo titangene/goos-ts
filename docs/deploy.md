@@ -5,7 +5,7 @@
 - **Web Service**：跑 Nuxt server（`npm run build` 建置、`node .output/server/index.mjs` 啟動）
 - **Key Value（Redis）**：僅作為 pub/sub 訊息通道，不需要資料持久化
 
-兩者都選在 Singapore region，同區內可用 internal URL 互連。CD 流程見 `.github/workflows/deploy.yml`。
+兩者都選在 Singapore region，同區內可用 internal URL 互連。CD 流程見 `.github/workflows/cd.yml`。
 
 ## 建立 Web Service 和 Key Value（Redis）
 
@@ -47,15 +47,15 @@ Render Dashboard → **New** → **Web Service**：
 
 按 **Deploy Web Service**，Render 會自動 pull 該分支的 commit 並在雲端建置、啟動。
 
-### 關閉 Auto-Deploy，交給 deploy.yml 全權負責
+### 關閉 Auto-Deploy，交給 cd.yml 全權負責
 
-Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到該分支都會自動觸發部署。但部署現在要交給 `.github/workflows/deploy.yml`（等 `ci.yml` 跑完且成功才部署，見下方「CD 流程」），所以要把 Render 內建的 Auto-Deploy 關掉，避免兩邊搶著部署：
+Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到該分支都會自動觸發部署。但部署現在要交給 `.github/workflows/cd.yml`（等 `ci.yml` 跑完且成功才部署，見下方「CD 流程」），所以要把 Render 內建的 Auto-Deploy 關掉，避免兩邊搶著部署：
 
 進到該 Web Service 頁面 → **Settings** → **Deploy** 區塊 → **Auto-Deploy** 旁的 **Edit** → 選 **Off** → **Save changes**。
 
 ### CD 流程
 
-`.github/workflows/deploy.yml` 用 [Render CLI](https://render.com/docs/cli) 觸發部署：
+`.github/workflows/cd.yml` 用 [Render CLI](https://render.com/docs/cli) 觸發部署：
 
 - 觸發時機：`ci.yml`（`CI` 這個 workflow）跑完且結論是 `success` 時（`workflow_run` 事件），而不是每次 push 就跑，避免 CI 沒過還部署
 - 用 `render deploys create <serviceID> --commit <sha> --wait --confirm` 部署該次觸發 CI 的 commit，`--wait` 是 CLI 原生支援的阻塞等待，部署失敗會讓這個 job 失敗（非 0 exit code）
