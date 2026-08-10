@@ -4,12 +4,12 @@
 
 ## 1. 協定與架構層級（見對應 ADR）
 
-| 差異                                                | 理由          | 對應 ADR                                           |
-| --------------------------------------------------- | ------------- | -------------------------------------------------- |
-| 拍賣協定改用 MQTT（Mosquitto），不是 XMPP           | 詳見 ADR-0002 | [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)    |
-| 身分識別改用 username-only 白名單，不做真實密碼驗證 | 詳見 ADR-0003 | [ADR-0003](adr/ADR-0003-username-only-identity.md) |
-| 拍賣協定分成 `commands`/`events` 兩個 topic         | 詳見 ADR-0006 | [ADR-0006](adr/ADR-0006-mqtt-topic-topology.md)    |
-| 訊息格式維持書中純文字 SOL 格式（非 JSON）          | 詳見 ADR-0007 | [ADR-0007](adr/ADR-0007-message-format.md)         |
+| 差異                                                | 對應 ADR                                           |
+| --------------------------------------------------- | -------------------------------------------------- |
+| 拍賣協定改用 MQTT（Mosquitto），不是 XMPP           | [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)    |
+| 身分識別改用 username-only 白名單，不做真實密碼驗證 | [ADR-0003](adr/ADR-0003-username-only-identity.md) |
+| 拍賣協定分成 `commands`/`events` 兩個 topic         | [ADR-0006](adr/ADR-0006-mqtt-topic-topology.md)    |
+| 訊息格式維持書中純文字 SOL 格式（非 JSON）          | [ADR-0007](adr/ADR-0007-message-format.md)         |
 
 ## 2. MQTT 沒有 XMPP「連線層級身分」，訊息內容要多帶一個 Bidder 欄位
 
@@ -49,7 +49,7 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 
 因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不再是固定字串，沒辦法直接字串相等比對。`test/e2e/MqttFakeAuctionServer.ts` 因此自己寫了一個獨立的 `parseCommand()`，從訊息內容裡取出 `Command`/`Bidder`/`Price` 欄位。這個解析邏輯**刻意不跟** `AuctionMessageTranslator.ts` 的私有 `AuctionEvent` 共用程式碼——因為 Java 本來就沒有共用：`AuctionEvent` 只服務「Event:」方向（PRICE/CLOSE），`FakeAuctionServer` 從不解析「Command:」方向，兩者在 Java 原始碼裡根本沒有交集。
 
-## 4. `MqttAuctionHouse` 得把 `sniperId` 存成欄位、往下傳
+## 4. `MqttClient` 沒有 `getUser()`，所以包了一個 `MqttConnection`
 
 `XMPPAuctionHouse` 完全不存 sniper 的身分：
 
@@ -67,13 +67,22 @@ private AuctionMessageTranslator translatorFor(XMPPConnection connection) {
 }
 ```
 
-`MqttClient` 沒有 `getUser()` 這種東西可以隨時查——整個系統裡，`sniperId` 這個值唯一出現的地方，只有呼叫 `MqttAuctionHouse.connect(brokerUrl, sniperId)` 的當下。過了這個點就沒有任何物件能重新查出它，只能：
+`MqttClient`（mqtt.js 的原生型別）沒有 `getUser()` 這種東西可以隨時查——這個能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `MqttConnection.ts`，把 `MqttClient` 跟 `sniperId` 包在一起，補上一個 `getUser(): Bidder`：
 
-1. `MqttAuctionHouse` 建構子把它存成欄位
-2. `auctionFor()` 明確傳給 `MqttAuction`
-3. `MqttAuction` 建構子再存成自己的欄位，傳給 `translatorFor()`
+```ts
+export class MqttConnection {
+  constructor(
+    readonly client: MqttClient,
+    private readonly sniperId: Bidder,
+  ) {}
 
-這是同一個必要分歧在三個轉手點的呈現，根因都是「MQTT client 沒有連線層級的身分查詢」。
+  getUser(): Bidder {
+    return this.sniperId;
+  }
+}
+```
+
+有了這層包裝，`MqttAuctionHouse`／`MqttAuction` 就能用跟 Java 幾乎一樣的方式取得身分——`MqttAuctionHouse` 只存一個 `connection: MqttConnection`（不再另外存 `sniperId`），`MqttAuction` 的 `translatorFor(connection)` 也改成跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不再是額外傳一個 `sniperId` 參數進建構子。差異被收斂到 `MqttConnection` 這一個檔案裡：它存在的唯一理由，就是 `MqttClient` 本身沒有身分查詢能力，這件事只需要解釋一次。
 
 ## 5. 非同步 API：`connect()`/`disconnect()`/`processMessage()` 的簽章差異
 
