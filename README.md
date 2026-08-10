@@ -40,24 +40,15 @@ Auction Sniper — TypeScript + Nuxt + MQTT + WebSocket 版本，改寫自 [Grow
 | 手動模擬拍賣現場工具 | 無對應（僅有測試用的 `FakeAuctionServer.java`）                                                   | `tools/fake-auction.ts`（互動式，另見下方「手動模擬完整拍賣流程」）                                                                                                                       |
 | 建置設定             | `build.xml`（Ant）、`.classpath`（Eclipse）                                                       | `package.json`、`nuxt.config.ts`、`tsconfig.json`、`vite`（透過 Nuxt）                                                                                                                    |
 
-> `server/auctionsniper/redis/*.ts` 是拍賣協定從 Redis Pub/Sub 換成 MQTT 之前的舊實作，目前只剩它自己的 `test/integration/redis/RedisAuctionHouse.test.ts` 還在用，app 本身已經不會再連 Redis 了，之後會整組移除。
-
 ## 環境需求
 
 - Node.js
-- Mosquitto（app 現在跑在這上面，本機或 Docker 皆可）
-- Redis（`server/auctionsniper/redis` 仍在，`test:integration` 的 Redis 測試需要）
+- Mosquitto（本機或 Docker 皆可）
 
 啟動 Mosquitto：
 
 ```bash
 ./mosquitto/start.sh
-```
-
-啟動 Redis（例如用 Docker）：
-
-```bash
-docker run -d --name goos-redis -p 6379:6379 redis:7-alpine
 ```
 
 ## 安裝
@@ -83,7 +74,7 @@ node .output/server/index.mjs
 
 ```bash
 npm run test:unit           # 單元測試
-npm run test:integration    # 整合測試（接真實 Mosquitto、Redis）
+npm run test:integration    # 整合測試（接真實 Mosquitto）
 npm run test:integration:app # UI 元件測試
 npm run test:e2e            # e2e 測試（Playwright，需要真實 Mosquitto）
 npm test                    # 全部跑一遍
