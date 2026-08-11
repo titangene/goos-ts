@@ -2,6 +2,8 @@
 
 `tools/fake-auction.ts` 是一個互動式的假拍賣現場，用跟 `test/e2e/RedisFakeAuctionServer.ts` 一樣的協定（Redis Pub/Sub + SOL 純文字格式）訂閱 `auction:<itemId>:commands`、發布到 `auction:<itemId>:events`，讓你在終端機手動打指令、即時觀察 app 畫面的反應。
 
+輸入格式是 SOL 訊息本身的內容，只省略固定不變的 `SOLVersion: 1.1; ` 前綴（工具會自動幫你補上），例如輸入 `Event: CLOSE;` 實際發出的就是 `SOLVersion: 1.1; Event: CLOSE;`。
+
 **1. 確認 Redis 跟 app 都已啟動**（見 [README](../README.md)「環境需求」「開發」或「建置與正式執行」）。
 
 **2. 開一個新的終端機分頁，啟動假拍賣現場（扮演 `item-54321` 的賣家）：**
@@ -17,15 +19,15 @@ npm run fake-auction -- item-54321
 **4. 模擬別人喊價**，在 `fake-auction` 的終端機輸入：
 
 ```
-price 90 5 other bidder
+Event: PRICE; CurrentPrice: 90; Increment: 5; Bidder: other bidder;
 ```
 
 畫面 State 應該變成 **Bidding**（90 沒超過停止價 100，`AuctionSniper` 會自動幫你出價 `90+5=95`），終端機也會印出收到的訊息 `< received: Bid 95 from sniper`。
 
-**5. 模擬你出的價成交**（把價格回報成你剛剛出的價、bidder 標成你自己）：
+**5. 模擬你出的價成交**（把價格回報成你剛剛出的價、Bidder 標成你自己）：
 
 ```
-price 95 10 sniper
+Event: PRICE; CurrentPrice: 95; Increment: 10; Bidder: sniper;
 ```
 
 State 應該變成 **Winning**。
@@ -33,7 +35,7 @@ State 應該變成 **Winning**。
 **6. 模擬別人加價超過你的停止價，讓你輸掉：**
 
 ```
-price 105 5 other bidder
+Event: PRICE; CurrentPrice: 105; Increment: 5; Bidder: other bidder;
 ```
 
 105 超過停止價 100，`AuctionSniper` 不會再出價，State 會變 **Losing**。
@@ -41,7 +43,7 @@ price 105 5 other bidder
 **7. 結束拍賣：**
 
 ```
-close
+Event: CLOSE;
 ```
 
 目前是 Winning 就會變 **Won**，是 Losing 就會變 **Lost**。

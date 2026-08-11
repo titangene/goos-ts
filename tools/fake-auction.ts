@@ -1,28 +1,27 @@
 /**
- * Interactive stand-in for a real auction house, so you can drive the
- * Auction Sniper app's UI by hand. Publishes/subscribes on the same
- * `auction:<itemId>:commands` and `auction:<itemId>:events` Redis channels
- * and SOL text protocol the tests' RedisFakeAuctionServer uses -- see
- * test/e2e/RedisFakeAuctionServer.ts.
+ * 互動式的假拍賣現場，讓你可以手動操作 Auction Sniper app 的 UI。跟
+ * test/e2e/RedisFakeAuctionServer.ts 用同一套 `auction:<itemId>:commands`／
+ * `auction:<itemId>:events` Redis channel 與 SOL 純文字協定收發訊息。
  *
- * Usage:
- *   npm run fake-auction -- <itemId>            connect to local Redis
- *   npm run fake-auction:remote -- <itemId>     connect to REDIS_URL
- *                                                (e.g. a deployed Redis;
- *                                                 set REDIS_URL in .env.local)
+ * 用法：
+ *   npm run fake-auction -- <itemId>            連本機 Redis
+ *   npm run fake-auction:remote -- <itemId>     連 REDIS_URL 指定的 Redis
+ *                                                （例如已部署的 Redis；
+ *                                                 在 .env.local 設定 REDIS_URL）
  *
- * Commands (typed at the prompt once a sniper has joined):
- *   price <currentPrice> <increment> [bidder]   send a Price event
- *                                                (bidder defaults to "other bidder";
- *                                                 use "sniper" to simulate
- *                                                 the sniper's own bid landing)
- *   close                                        send a Close event
- *   quit                                         disconnect and exit
+ * sniper 加入後，直接輸入要發布的 SOL 訊息本文即可——只省略固定會自動幫你
+ * 補上的 "SOLVersion: 1.1; " 前綴。例如：
+ *   Event: PRICE; CurrentPrice: 90; Increment: 5; Bidder: other bidder;
+ *   Event: CLOSE;
+ * 輸入 "quit" 中斷連線並結束程式。
  */
-import { clearLine, createInterface, cursorTo } from 'node:readline';
-import { createClient } from 'redis';
-import { Message } from '../server/auctionsniper/redis/Message.ts';
+import { clearLine, createInterface, cursorTo, moveCursor } from 'node:readline';
+import { RedisChannel } from '../server/auctionsniper/redis/RedisChannel.ts';
+import { RedisConnection } from '../server/auctionsniper/redis/RedisConnection.ts';
 import { commandsChannel, eventsChannel } from '../server/auctionsniper/redis/Topic.ts';
+import type { MessageListener } from '../server/auctionsniper/redis/MessageListener.ts';
+
+const SOL_VERSION_PREFIX = 'SOLVersion: 1.1; ';
 
 function parseCommand(messageBody: string): Map<string, string> {
   const fields = new Map<string, string>();
@@ -51,93 +50,99 @@ async function main(): Promise<void> {
   }
   const redisUrl = remote ? process.env.REDIS_URL! : 'redis://localhost:6379';
 
-  const publisher = createClient({ url: redisUrl });
-  const subscriber = createClient({ url: redisUrl });
-  await Promise.all([publisher.connect(), subscriber.connect()]);
-  const commands = commandsChannel(itemId);
-  const events = eventsChannel(itemId);
+  const connection = new RedisConnection(redisUrl);
+  await connection.connect();
 
   let sniperJoined = false;
 
-  const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '> ' });
+  const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '>>> ' });
 
-  // Redis pub/sub messages arrive whenever the sniper feels like sending
-  // them, independent of the readline prompt. Without clearing the
-  // in-progress "> " line first, an async message lands mid-prompt and
-  // swallows it, leaving the next line the user types with no visible
-  // prompt at all.
+  // 每次顯示提示字元前先印一個空白行，讓這一輪的輸出跟下一次輸入之間有
+  // 視覺區隔，">>> " 才不會緊接著上一行輸出。
+  function promptAgain(preserveCursor = false): void {
+    console.log();
+    rl.prompt(preserveCursor);
+  }
+
+  // Redis pub/sub 訊息什麼時候到達完全由 sniper 決定，跟 readline 的提示
+  // 字元無關。清掉的不只是目前這行 ">>> "，還要連同上面 promptAgain() 留
+  // 下的空白行一起清掉，這樣像「sent」後面緊接著到的「received」才會直接
+  // 接在上一行輸出下面，不會被硬插一個空白行；同時也避免非同步訊息直接疊
+  // 印在還沒被清掉的提示字元上，導致下一行使用者輸入看起來沒有提示字元。
   function printAsync(message: string): void {
     clearLine(process.stdout, 0);
     cursorTo(process.stdout, 0);
+    moveCursor(process.stdout, 0, -1);
+    clearLine(process.stdout, 0);
     console.log(message);
-    rl.prompt(true);
+    promptAgain(true);
   }
 
-  await subscriber.subscribe(commands, (rawMessage) => {
-    const fields = parseCommand(rawMessage);
-    const command = fields.get('Command');
-    const bidder = fields.get('Bidder');
+  // fake-auction 這裡扮演拍賣現場，不是 sniper，所以不呼叫
+  // RedisConnection.login()／getUser()（不需要身分白名單）。channel 也直接
+  // 用 connection.publisher／connection.subscriber 反向建構——發布到
+  // events channel、訂閱 commands channel，跟 RedisConnection.createChannel()
+  // 內建給 sniper 端用的方向正好相反，作法對照
+  // test/e2e/RedisFakeAuctionServer.ts。
+  const listener: MessageListener = {
+    processMessage(_channel: RedisChannel, rawMessage: string): void {
+      const fields = parseCommand(rawMessage);
+      const command = fields.get('Command');
+      const bidder = fields.get('Bidder');
 
-    if (command === 'JOIN') {
-      sniperJoined = true;
-      printAsync(`Sniper joined: ${bidder}`);
-    } else if (command === 'BID') {
-      printAsync(`< received: Bid ${fields.get('Price')} from ${bidder}`);
-    }
-  });
+      if (command === 'JOIN') {
+        sniperJoined = true;
+        printAsync(`Sniper joined: ${bidder}`);
+      } else if (command === 'BID') {
+        printAsync(`< received: Bid ${fields.get('Price')} from ${bidder}`);
+      }
+    },
+  };
+
+  const channel = new RedisChannel(
+    connection.publisher,
+    connection.subscriber,
+    eventsChannel(itemId),
+    commandsChannel(itemId),
+    listener,
+  );
 
   console.log(`Selling item ${itemId} on ${redisUrl}. Waiting for a sniper to join...`);
-  console.log('Commands: price <currentPrice> <increment> [bidder] | close | quit');
+  console.log(
+    `Type a SOL message body (without the "${SOL_VERSION_PREFIX}" prefix) to send it, e.g.:`,
+  );
+  console.log('  Event: PRICE; CurrentPrice: 90; Increment: 5; Bidder: other bidder;');
+  console.log('  Event: CLOSE;');
+  console.log('Type "quit" to disconnect and exit.');
 
-  rl.prompt();
+  promptAgain();
 
   rl.on('line', (line) => {
-    void (async () => {
-      const trimmed = line.trim();
-      if (!trimmed) {
-        rl.prompt();
-        return;
-      }
+    const trimmed = line.trim();
+    if (!trimmed) {
+      promptAgain();
+      return;
+    }
 
-      if (!sniperJoined && trimmed !== 'quit') {
-        console.log('(no sniper has joined yet)');
-        rl.prompt();
-        return;
-      }
+    if (trimmed === 'quit') {
+      rl.close();
+      return;
+    }
 
-      const parts = trimmed.split(/\s+/);
-      switch (parts[0]) {
-        case 'price': {
-          if (parts.length < 3) {
-            console.log('usage: price <currentPrice> <increment> [bidder]');
-            break;
-          }
-          const currentPrice = Number(parts[1]);
-          const increment = Number(parts[2]);
-          const bidder = parts[3] ?? 'other bidder';
-          const rawMessage = Message.encode(Message.Price(currentPrice, increment, bidder));
-          await publisher.publish(events, rawMessage);
-          console.log(`> sent: ${rawMessage}`);
-          break;
-        }
-        case 'close': {
-          const rawMessage = Message.encode(Message.Close());
-          await publisher.publish(events, rawMessage);
-          console.log(`> sent: ${rawMessage}`);
-          break;
-        }
-        case 'quit':
-          rl.close();
-          return;
-        default:
-          console.log(`unknown command: ${parts[0]}`);
-      }
-      rl.prompt();
-    })();
+    if (!sniperJoined) {
+      console.log('(no sniper has joined yet)');
+      promptAgain();
+      return;
+    }
+
+    const rawMessage = `${SOL_VERSION_PREFIX}${trimmed}`;
+    channel.sendMessage(rawMessage);
+    console.log(`> sent: ${rawMessage}`);
+    promptAgain();
   });
 
   rl.on('close', () => {
-    void Promise.all([publisher.quit(), subscriber.quit()]).then(() => process.exit(0));
+    void connection.disconnect().then(() => process.exit(0));
   });
 }
 
