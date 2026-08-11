@@ -1,9 +1,8 @@
 import type { RedisClientType } from 'redis';
 import type { MessageListener } from './MessageListener.ts';
 
-// 見 docs/redis-vs-mqtt-implementation.md 第 5 節：node-redis 的
-// subscribe(channel, listener) 是 per-channel 各自的 callback，不像 mqtt.js
-// 共用單一 client 級事件，因此不需要 MqttChannel 那段手動過濾 topic 的邏輯。
+// node-redis 的 subscribe(channel, listener) 是 per-channel 各自的 callback，
+// 每次訂閱都拿到專屬的 callback，不需要自己判斷收到的訊息屬於哪個 channel。
 export class RedisChannel {
   constructor(
     private readonly publisher: RedisClientType,
