@@ -1,6 +1,6 @@
 import { connectAsync } from 'mqtt';
 import type { MqttClient } from 'mqtt';
-import { MqttChat } from './MqttChat.ts';
+import { MqttChannel } from './MqttChannel.ts';
 import type { MessageListener } from './MessageListener.ts';
 import { commandsTopic, eventsTopic } from './Topic.ts';
 
@@ -27,8 +27,8 @@ export class MqttConnection {
     return this.sniperId;
   }
 
-  createChat(itemId: string, listener: MessageListener): MqttChat {
-    return new MqttChat(this.client, commandsTopic(itemId), eventsTopic(itemId), listener);
+  createChannel(itemId: string, listener: MessageListener): MqttChannel {
+    return new MqttChannel(this.client, commandsTopic(itemId), eventsTopic(itemId), listener);
   }
 
   async disconnect(): Promise<void> {

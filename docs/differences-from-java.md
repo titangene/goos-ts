@@ -99,21 +99,23 @@ connection.login(username, password, AUCTION_RESOURCE);
 
 - TS 版 `test/e2e/FakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。
 - 但 Java 版建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`。
-- TS 版對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChat`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`/`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChat()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
-- 因此 `MqttConnection` 沒有另外提供反向的 `createChat()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
+- TS 版對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChannel`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`/`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChannel()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
+- 因此 `MqttConnection` 沒有另外提供反向的 `createChannel()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
 
 ## 5. 非同步 API：`connect()`/`disconnect()` 的簽章差異
 
 - `XMPPAuctionHouse.disconnect()` 是同步的 `void` 方法；`MqttAuctionHouse.disconnect()` 是 `async`，回傳 `Promise<void>`——因為 Node.js 的 I/O（包含 mqtt.js 的斷線）本來就是非同步的，Smack 提供同步 API，這點沒有辦法讓 TS 版變成同步，是平台本身的差異。`connection.connect()`/`connection.login()` 同理。
-- `AuctionMessageTranslator.processMessage(Chat chat, Message message)` 接收 Smack 的 `Message` 物件，內部呼叫 `message.getBody()` 取出字串；TS 版 `processMessage(chat: MqttChat, messageBody: string)` 的 `chat` 參數維持（跟 Java 一樣沒被用到），但第二個參數直接是字串——因為 mqtt.js 沒有對應 Smack `Message` 的物件模型，拿到的就是原始 payload，沒有 `.getBody()` 這一步可以省。
+- `AuctionMessageTranslator.processMessage(Chat chat, Message message)` 接收 Smack 的 `Message` 物件，內部呼叫 `message.getBody()` 取出字串；TS 版 `processMessage(channel: MqttChannel, messageBody: string)` 的 `channel` 參數維持（跟 Java 一樣沒被用到），但第二個參數直接是字串——因為 mqtt.js 沒有對應 Smack `Message` 的物件模型，拿到的就是原始 payload，沒有 `.getBody()` 這一步可以省。
 
 ## 6. 循序保證要靠明確設定 QoS，不是天生就有
 
-書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChat`/`FakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
+書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChannel`/`FakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
 
-## 7. `MqttChat` 要自己過濾 topic，Smack 的 `Chat` 天生只收自己的訊息
+## 7. `MqttChannel` 要自己過濾 topic，Smack 的 `Chat` 天生只收自己的訊息
 
-Smack 的 `Chat` 物件，`addMessageListener()` 註冊的 listener 天生只會收到「這個 chat」的訊息——因為每個 `Chat` 對應到一個特定的 JID 對話。mqtt.js 的 `client.on('message', ...)` 是**整個 client 共用**的單一事件，訂閱多個 topic 時，所有 topic 的訊息都會觸發同一個 handler。`MqttChat` 的建構子因此得自己判斷 `topic === this.subscribeTopic` 才呼叫 `receive()`，這段過濾邏輯在 Java 版完全不需要，是 mqtt.js API 設計本身的差異。
+Smack 的 `Chat` 物件，`addMessageListener()` 註冊的 listener 天生只會收到「這個 chat」的訊息——因為每個 `Chat` 對應到一個特定的 JID 對話。mqtt.js 的 `client.on('message', ...)` 是**整個 client 共用**的單一事件，訂閱多個 topic 時，所有 topic 的訊息都會觸發同一個 handler。`MqttChannel` 的建構子因此得自己判斷 `topic === this.subscribeTopic` 才呼叫 `receive()`，這段過濾邏輯在 Java 版完全不需要，是 mqtt.js API 設計本身的差異。
+
+`MqttChannel` 這層抽象要對齊的是 `XMPPAuction`/`MqttAuction` 呼叫端的介面形狀（`sendMessage(...)`、`removeMessageListener(listener)`），不是底層 wire 語意本身的點對點保證：`events` topic 對單一 sniper 而言，其實是廣播頻道的其中一個訂閱者（[ADR-0006](adr/ADR-0006-mqtt-topic-topology.md) 的 `commands`/`events` topic 拆分加上本節的過濾邏輯工程出來的效果），跟 Smack `Chat` 協定天生保證的專屬點對點通道性質不同——這也是為什麼這個類別沒有沿用 Java 的 `Chat` 命名，改叫 `MqttChannel`，見[第 8 節](#8-命名上刻意不逐字沿用-java-的地方)。
 
 ## 8. 命名上刻意不逐字沿用 Java 的地方
 
@@ -126,6 +128,10 @@ public interface XMPPFailureReporter {
 ```
 
 - 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`MqttFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `MqttAuctionHouse`/`MqttAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
+
+### `Chat` 改名叫 `MqttChannel`
+
+Java 的 `org.jivesoftware.smack.Chat`、`XMPPAuction.chat` 欄位、`chatDisconnectorFor()` 方法，這幾個命名 TS 版沒有逐字沿用——對應的 `MqttChat`/`chat`/`chatDisconnectorFor()` 已改名為 `MqttChannel`/`channel`/`channelDisconnectorFor()`。`Chat` 在 Smack 裡是協定天生保證的點對點通道，`MqttChannel` 底下其實是一個私有的 publish topic 加一個廣播的 subscribe topic（見[第 7 節](#7-mqttchannel-要自己過濾-topicsmack-的-chat-天生只收自己的訊息)），沿用 `Chat` 這個名字會讓讀者誤以為兩者有一樣的協定層保證，屬於 Clean Code「避免誤導性命名」（Avoid Disinformation）要處理的情況，跟上面 `sniperId`/`auctionId` 那個例子屬於同一類——書中命名不能直接沿用時，準則 2（貼近書中精神）要對齊的是介面形狀跟呼叫端寫法（`XMPPAuction.java` 圍繞一個 `Chat` collaborator 設計，`MqttAuction.ts` 也圍繞一個 `MqttChannel` collaborator 設計，兩者結構一致），不是連已經不成立的命名語意也要照搬。
 
 ### `Message.ts` 的訊息內容欄位跟 `sniperId` 都用 `string`，不另外宣告型別
 

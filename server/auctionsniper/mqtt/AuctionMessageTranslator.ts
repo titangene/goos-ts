@@ -1,6 +1,6 @@
 import { PriceSource } from '../AuctionEventListener.ts';
 import type { AuctionEventListener } from '../AuctionEventListener.ts';
-import type { MqttChat } from './MqttChat.ts';
+import type { MqttChannel } from './MqttChannel.ts';
 import type { MessageListener } from './MessageListener.ts';
 import type { MqttFailureReporter } from './MqttFailureReporter.ts';
 
@@ -19,7 +19,7 @@ export class AuctionMessageTranslator implements MessageListener {
     this.failureReporter = failureReporter;
   }
 
-  processMessage(_chat: MqttChat, messageBody: string): void {
+  processMessage(_channel: MqttChannel, messageBody: string): void {
     try {
       this.translate(messageBody);
     } catch (parseException) {

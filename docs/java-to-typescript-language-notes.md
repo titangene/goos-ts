@@ -157,9 +157,9 @@ private AuctionEventListener chatDisconnectorFor(final AuctionMessageTranslator 
 **TS（`MqttAuction.ts`）：**
 
 ```ts
-private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
+private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
   return {
-    auctionFailed: () => this.chat.removeMessageListener(translator),
+    auctionFailed: () => this.channel.removeMessageListener(translator),
     auctionClosed: () => {},
     currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {},
   };
@@ -168,9 +168,11 @@ private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventL
 
 TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。
 
+方法名稱從 `chatDisconnectorFor` 改成 `channelDisconnectorFor`（`chat` 欄位也改成 `channel`），是這份文件少數**刻意**不逐字沿用 Java 名稱的地方——原因見 [`differences-from-java.md` 第 7 節](differences-from-java.md#7-mqttchannel-要自己過濾-topicsmack-的-chat-天生只收自己的訊息)，`Chat` 這個名字在 MQTT 版底下會誤導讀者以為有 Smack `Chat` 那種協定天生的點對點保證。
+
 其他同樣模式的例子（Java 用匿名類別，對應的 TS 檔案改用物件字面量或箭頭函式）：
 
-- `FakeAuctionServer.java` 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { ... })`——這段邏輯本身在 TS 版因為 `MqttConnection.createChat()` 直接建構 `MqttChat`（不需要「等對方建立 chat 才能拿到」這個非同步通知），整段被省略，細節見 [`differences-from-java.md` 第 4 節](differences-from-java.md#4-mqttclient-沒有-getuser所以包了一個-mqttconnection)。
+- `FakeAuctionServer.java` 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { ... })`——這段邏輯本身在 TS 版因為 `MqttConnection.createChannel()` 直接建構 `MqttChannel`（不需要「等對方建立 chat 才能拿到」這個非同步通知），整段被省略，細節見 [`differences-from-java.md` 第 4 節](differences-from-java.md#4-mqttclient-沒有-getuser所以包了一個-mqttconnection)。
 - `Main.java` 的 `SwingUtilities.invokeAndWait(new Runnable() { public void run() { ... } })`、`ui.addWindowListener(new WindowAdapter() { ... })`——這兩處都沒有 TS 對應物，因為 `Main.java` 整個檔案的職責（啟動 Swing UI、視窗關閉時斷線）被 Nuxt 的 plugin 生命週期（`server/plugins/init-sniper-launcher.ts`）取代，不是逐行對應的翻譯關係。這裡列出來只是作為「Java 匿名類別 → TS 箭頭函式/物件字面量」這個一般性模式的示範。
 
 ## 4. Checked Exception（受檢例外）
@@ -234,9 +236,9 @@ private AuctionEventListener chatDisconnectorFor(final AuctionMessageTranslator 
 TypeScript/JavaScript 的閉包沒有這個限制：**任何**區域變數，不管是 `const` 還是 `let`，都可以被內層函式自由捕獲，不需要任何特殊標記：
 
 ```ts
-private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
+private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
   return {
-    auctionFailed: () => this.chat.removeMessageListener(translator),
+    auctionFailed: () => this.channel.removeMessageListener(translator),
     ...
   };
 }

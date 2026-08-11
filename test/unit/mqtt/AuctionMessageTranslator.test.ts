@@ -2,20 +2,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuctionMessageTranslator } from '../../../server/auctionsniper/mqtt/AuctionMessageTranslator.ts';
 import { PriceSource } from '../../../server/auctionsniper/AuctionEventListener.ts';
 import type { AuctionEventListener } from '../../../server/auctionsniper/AuctionEventListener.ts';
-import type { MqttChat } from '../../../server/auctionsniper/mqtt/MqttChat.ts';
+import type { MqttChannel } from '../../../server/auctionsniper/mqtt/MqttChannel.ts';
 import type { MqttFailureReporter } from '../../../server/auctionsniper/mqtt/MqttFailureReporter.ts';
 
 // 1:1 對照 goos-code 的 test/unit/test/auctionsniper/xmpp/AuctionMessageTranslatorTest.java
-// （5 個測項、SNIPER_ID、UNUSED_CHAT、輸入的 SOL 字串皆沿用該檔案）。
+// （5 個測項、SNIPER_ID、輸入的 SOL 字串皆沿用該檔案）。
 const SNIPER_ID = 'sniper id';
-const UNUSED_CHAT = null as unknown as MqttChat;
+const UNUSED_CHANNEL = null as unknown as MqttChannel;
 
 describe('AuctionMessageTranslator', () => {
   it('notifies auction closed when close message received', () => {
     const listener = stubListener();
     const translator = new AuctionMessageTranslator(SNIPER_ID, listener, stubFailureReporter());
 
-    translator.processMessage(UNUSED_CHAT, 'SOLVersion: 1.1; Event: CLOSE;');
+    translator.processMessage(UNUSED_CHANNEL, 'SOLVersion: 1.1; Event: CLOSE;');
 
     expect(listener.auctionClosed).toHaveBeenCalledTimes(1);
   });
@@ -25,7 +25,7 @@ describe('AuctionMessageTranslator', () => {
     const translator = new AuctionMessageTranslator(SNIPER_ID, listener, stubFailureReporter());
 
     translator.processMessage(
-      UNUSED_CHAT,
+      UNUSED_CHANNEL,
       'SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: Someone else;',
     );
 
@@ -37,7 +37,7 @@ describe('AuctionMessageTranslator', () => {
     const translator = new AuctionMessageTranslator(SNIPER_ID, listener, stubFailureReporter());
 
     translator.processMessage(
-      UNUSED_CHAT,
+      UNUSED_CHANNEL,
       `SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: ${SNIPER_ID};`,
     );
 
@@ -50,7 +50,7 @@ describe('AuctionMessageTranslator', () => {
     const translator = new AuctionMessageTranslator(SNIPER_ID, listener, failureReporter);
     const badMessage = 'a bad message';
 
-    translator.processMessage(UNUSED_CHAT, badMessage);
+    translator.processMessage(UNUSED_CHANNEL, badMessage);
 
     expectFailureWithMessage(listener, failureReporter, badMessage);
   });
@@ -61,7 +61,7 @@ describe('AuctionMessageTranslator', () => {
     const translator = new AuctionMessageTranslator(SNIPER_ID, listener, failureReporter);
     const badMessage = `SOLVersion: 1.1; CurrentPrice: 234; Increment: 5; Bidder: ${SNIPER_ID};`;
 
-    translator.processMessage(UNUSED_CHAT, badMessage);
+    translator.processMessage(UNUSED_CHANNEL, badMessage);
 
     expectFailureWithMessage(listener, failureReporter, badMessage);
   });

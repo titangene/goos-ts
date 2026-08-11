@@ -2,7 +2,7 @@ import type { MqttClient } from 'mqtt';
 import type { MessageListener } from './MessageListener.ts';
 
 // 見 docs/differences-from-java.md #6、#7。
-export class MqttChat {
+export class MqttChannel {
   private readonly onMessage: (topic: string, payload: Buffer) => void;
 
   constructor(

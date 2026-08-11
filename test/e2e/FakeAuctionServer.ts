@@ -1,4 +1,4 @@
-import { MqttChat } from '../../server/auctionsniper/mqtt/MqttChat.ts';
+import { MqttChannel } from '../../server/auctionsniper/mqtt/MqttChannel.ts';
 import { MqttConnection } from '../../server/auctionsniper/mqtt/MqttConnection.ts';
 import { Message } from '../../server/auctionsniper/mqtt/Message.ts';
 import type { MessageListener } from '../../server/auctionsniper/mqtt/MessageListener.ts';
@@ -9,7 +9,7 @@ export class FakeAuctionServer {
 
   private readonly messageListener = new SingleMessageListener();
   private readonly connection: MqttConnection;
-  private chat!: MqttChat;
+  private channel!: MqttChannel;
 
   constructor(public readonly itemId: string) {
     this.connection = new MqttConnection(FakeAuctionServer.BROKER_URL);
@@ -17,7 +17,7 @@ export class FakeAuctionServer {
 
   async startSellingItem(): Promise<void> {
     await this.connection.connect();
-    this.chat = new MqttChat(
+    this.channel = new MqttChannel(
       this.connection.client,
       eventsTopic(this.itemId),
       commandsTopic(this.itemId),
@@ -26,11 +26,11 @@ export class FakeAuctionServer {
   }
 
   async sendInvalidMessageContaining(brokenMessage: string): Promise<void> {
-    this.chat.sendMessage(brokenMessage);
+    this.channel.sendMessage(brokenMessage);
   }
 
   async reportPrice(price: number, increment: number, bidder: string): Promise<void> {
-    this.chat.sendMessage(Message.encode(Message.Price(price, increment, bidder)));
+    this.channel.sendMessage(Message.encode(Message.Price(price, increment, bidder)));
   }
 
   async hasReceivedJoinRequestFrom(sniperId: string): Promise<void> {
@@ -49,7 +49,7 @@ export class FakeAuctionServer {
   }
 
   async announceClosed(): Promise<void> {
-    this.chat.sendMessage(Message.encode(Message.Close()));
+    this.channel.sendMessage(Message.encode(Message.Close()));
   }
 
   async stop(): Promise<void> {
@@ -62,7 +62,7 @@ export class FakeAuctionServer {
 class SingleMessageListener implements MessageListener {
   private readonly messages: string[] = [];
 
-  processMessage(_chat: MqttChat, messageBody: string): void {
+  processMessage(_channel: MqttChannel, messageBody: string): void {
     this.messages.push(messageBody);
   }
 

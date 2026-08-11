@@ -1,6 +1,6 @@
 import { Announcer } from '../util/Announcer.ts';
 import { Message } from './Message.ts';
-import type { MqttChat } from './MqttChat.ts';
+import type { MqttChannel } from './MqttChannel.ts';
 import type { MqttConnection } from './MqttConnection.ts';
 import { AuctionMessageTranslator } from './AuctionMessageTranslator.ts';
 import type { AuctionEventListener, PriceSource } from '../AuctionEventListener.ts';
@@ -9,7 +9,7 @@ import type { Auction } from '../Auction.ts';
 
 export class MqttAuction implements Auction {
   private readonly auctionEventListeners = Announcer.to<AuctionEventListener>();
-  private readonly chat: MqttChat;
+  private readonly channel: MqttChannel;
   private readonly failureReporter: MqttFailureReporter;
   private readonly sniperId: string;
 
@@ -17,8 +17,8 @@ export class MqttAuction implements Auction {
     this.failureReporter = failureReporter;
     this.sniperId = connection.getUser();
     const translator = this.translatorFor(connection);
-    this.chat = connection.createChat(itemId, translator);
-    this.addAuctionEventListener(this.chatDisconnectorFor(translator));
+    this.channel = connection.createChannel(itemId, translator);
+    this.addAuctionEventListener(this.channelDisconnectorFor(translator));
   }
 
   bid(amount: number): void {
@@ -41,9 +41,9 @@ export class MqttAuction implements Auction {
     );
   }
 
-  private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
+  private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
     return {
-      auctionFailed: () => this.chat.removeMessageListener(translator),
+      auctionFailed: () => this.channel.removeMessageListener(translator),
       auctionClosed: () => {},
       currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {},
     };
@@ -51,7 +51,7 @@ export class MqttAuction implements Auction {
 
   private sendMessage(message: string): void {
     try {
-      this.chat.sendMessage(message);
+      this.channel.sendMessage(message);
     } catch (error) {
       console.error(error);
     }
