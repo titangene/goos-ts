@@ -8,14 +8,14 @@ import type { Item } from './UserRequestListener.ts';
 
 export class AuctionSniper implements AuctionEventListener {
   private readonly listeners = Announcer.to<SniperListener>();
+  private readonly auction: Auction;
   private snapshot: SniperSnapshot;
+  private readonly item: Item;
 
-  constructor(
-    private readonly item: Item,
-    private readonly auction: Auction,
-  ) {
+  constructor(item: Item, auction: Auction) {
+    this.item = item;
+    this.auction = auction;
     this.snapshot = SniperSnapshot.joining(item.identifier);
-    this.notifyChange();
   }
 
   addSniperListener(listener: SniperListener): void {

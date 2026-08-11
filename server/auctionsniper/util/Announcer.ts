@@ -1,6 +1,6 @@
 export class Announcer<T extends object> {
-  private readonly listeners: T[] = [];
   private readonly proxy: T;
+  private readonly listeners: T[] = [];
 
   private constructor() {
     this.proxy = new Proxy({} as T, {

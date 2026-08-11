@@ -120,3 +120,17 @@ public interface XMPPFailureReporter {
 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`MqttFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `MqttAuctionHouse`/`MqttAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
 
 `Message.ts` 的 `Bidder` 型別維持獨立，不跟 `sniperId` 統一——因為它代表的是「某則訊息裡記載的出價者」，可能是目前這個 sniper 自己，也可能是別人（`PriceMessage.bidder` 可以是 `"Someone else"`），跟「我自己是誰」是不同的概念，Java 原始碼裡也是分開處理的（`isFrom(sniperId)` 拿訊息裡的 bidder 去跟自己的 sniperId 比對）。
+
+## 9. Domain／util 層的框架轉換差異
+
+以下是 `server/auctionsniper/*.ts`（非 mqtt 部分，即 `AuctionSniper`、`SniperSnapshot`、`SniperState`、`SnipersTableModel`、`util/Announcer` 等對應書中 `src/auctionsniper/*.java` 核心邏輯）跟 Java 版逐檔比對後，確認屬於**必要**的框架/語言轉換差異，不是漏改：
+
+**`equals()`/`hashCode()`/`toString()` 省略**：Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。TS 版沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`／`hashCode()` 在 TS 測試或執行流程中也沒有被用到。
+
+**`SniperState.whenAuctionClosed()` 的多型改用查表**：Java `SniperState` 是列舉，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`、其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
+
+**`Column` 的多型改用 class + 具名靜態實例**：Java `ui/Column` 也是列舉、每個常數各自 `@Override` `valueIn()`。`shared/Column.ts` 改用另一種譯法：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`／`Column.at()` 對應 Java 的 `values()`／`at(offset)`。跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，前端（`SnipersTable.vue`）還需要把它當一個可迭代集合直接渲染表頭／欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
+
+**`Announcer` 用 JS `Proxy` 取代 `java.lang.reflect.Proxy`**：兩者概念一致——回傳一個實作了目標介面的動態代理物件，呼叫代理物件的任何方法都會廣播給所有已註冊的 listener。Java 版靠 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler`，還得手動處理 `InvocationTargetException` 把底層例外重新拋出；TS 版用語言原生的 `Proxy`（`get` trap 攔截任意屬性存取、回傳一個會遍歷 `listeners` 呼叫同名方法的函式），不需要 Java 反射那套例外包裝，呼叫端的例外會原生往上拋，行為等價但機制更直接。
+
+**`SnipersTableModel` 從 Swing `AbstractTableModel` 改成陣列 + 整包通知**：Java 版繼承 `AbstractTableModel`，用 `fireTableRowsInserted(row, row)`／`fireTableRowsUpdated(row, row)` 精確通知 Swing 是「哪一列」變了；TS 版沒有 Swing，`SnipersTableModel.ts` 自己維護 `snapshots` 陣列，`sniperAdded()`／`sniperStateChanged()` 都是呼叫同一個 `notifyChange()`，把**整包**陣列透過 `SnipersTableListener.onSnapshotsChanged(snapshots)` 傳給監聽者，不區分是新增還是更新、也不指出是哪一列——因為下游的 `server/routes/ws.ts` 只是把整包 snapshots 序列化成 WebSocket 訊息推給瀏覽器，瀏覽器端 `SnipersTable.vue` 直接用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量，也就不需要 Java 版那樣的行號精細度。

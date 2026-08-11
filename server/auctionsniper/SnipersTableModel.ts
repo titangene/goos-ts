@@ -2,6 +2,7 @@ import type { AuctionSniper } from './AuctionSniper.ts';
 import type { SniperListener } from './SniperListener.ts';
 import type { SniperSnapshot } from './SniperSnapshot.ts';
 import type { PortfolioListener } from './SniperPortfolio.ts';
+import { Defect } from './util/Defect.ts';
 
 export interface SnipersTableListener {
   onSnapshotsChanged(snapshots: SniperSnapshot[]): void;
@@ -24,7 +25,7 @@ export class SnipersTableModel implements PortfolioListener, SniperListener {
   sniperStateChanged(snapshot: SniperSnapshot): void {
     const index = this.snapshots.findIndex((s) => s.isForSameItemAs(snapshot));
     if (index === -1) {
-      throw new Error(`No such snapshot: ${snapshot.itemId}`);
+      throw new Defect(`No existing Sniper state for ${snapshot.itemId}`);
     }
     this.snapshots[index] = snapshot;
     this.notifyChange();

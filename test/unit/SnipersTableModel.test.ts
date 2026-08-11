@@ -3,6 +3,7 @@ import { SnipersTableModel } from '../../server/auctionsniper/SnipersTableModel.
 import { AuctionSniper } from '../../server/auctionsniper/AuctionSniper.ts';
 import { SniperSnapshot } from '../../server/auctionsniper/SniperSnapshot.ts';
 import { SniperState } from '../../server/auctionsniper/SniperState.ts';
+import { Defect } from '../../server/auctionsniper/util/Defect.ts';
 import type { Auction } from '../../server/auctionsniper/Auction.ts';
 import { Item } from '../../server/auctionsniper/UserRequestListener.ts';
 import { Column } from '../../shared/Column.ts';
@@ -94,6 +95,6 @@ describe('the snipers table model', () => {
 
     expect(() =>
       model.sniperStateChanged(new SniperSnapshot('item 1', 123, 234, SniperState.WINNING)),
-    ).toThrow();
+    ).toThrow(Defect);
   });
 });

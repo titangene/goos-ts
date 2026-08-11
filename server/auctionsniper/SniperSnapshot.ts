@@ -8,6 +8,10 @@ export class SniperSnapshot {
     public readonly state: SniperState = SniperState.JOINING,
   ) {}
 
+  static joining(itemId: string): SniperSnapshot {
+    return new SniperSnapshot(itemId, 0, 0, SniperState.JOINING);
+  }
+
   bidding(newLastPrice: number, newLastBid: number): SniperSnapshot {
     return new SniperSnapshot(this.itemId, newLastPrice, newLastBid, SniperState.BIDDING);
   }
@@ -35,9 +39,5 @@ export class SniperSnapshot {
 
   isForSameItemAs(other: SniperSnapshot): boolean {
     return this.itemId === other.itemId;
-  }
-
-  static joining(itemId: string): SniperSnapshot {
-    return new SniperSnapshot(itemId, 0, 0, SniperState.JOINING);
   }
 }
