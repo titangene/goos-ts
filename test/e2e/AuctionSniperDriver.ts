@@ -13,7 +13,7 @@ export class AuctionSniperDriver {
       'Item',
       'Last Price',
       'Last Bid',
-      'State',
+      'State'
     ]);
   }
 
@@ -21,7 +21,7 @@ export class AuctionSniperDriver {
     itemId: string,
     lastPrice: number,
     lastBid: number,
-    statusText: string,
+    statusText: string
   ): Promise<void> {
     const row = this.page.locator(`#auction-${itemId}`);
     await expect(row.locator('td.itemId')).toHaveText(itemId);

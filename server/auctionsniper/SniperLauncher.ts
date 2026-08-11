@@ -6,7 +6,7 @@ import type { UserRequestListener, Item } from './UserRequestListener.ts';
 export class SniperLauncher implements UserRequestListener {
   constructor(
     private readonly auctionHouse: AuctionHouse,
-    private readonly collector: SniperCollector,
+    private readonly collector: SniperCollector
   ) {}
 
   joinAuction(item: Item): void {

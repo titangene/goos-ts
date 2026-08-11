@@ -40,7 +40,7 @@ export class RedisAuctionHouse implements AuctionHouse {
 
   private makeLogger(): Logger {
     return {
-      severe: (message) => appendFileSync(RedisAuctionHouse.LOG_FILE_NAME, `${message}\n`),
+      severe: message => appendFileSync(RedisAuctionHouse.LOG_FILE_NAME, `${message}\n`)
     };
   }
 }

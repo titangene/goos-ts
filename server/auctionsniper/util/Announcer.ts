@@ -6,14 +6,14 @@ export class Announcer<T extends object> {
     this.proxy = new Proxy({} as T, {
       get: (_target, prop) => {
         return (...args: unknown[]) => {
-          this.listeners.forEach((listener) => {
+          this.listeners.forEach(listener => {
             const method = listener[prop as keyof T];
             if (typeof method === 'function') {
               (method as (...methodArgs: unknown[]) => void).apply(listener, args);
             }
           });
         };
-      },
+      }
     });
   }
 

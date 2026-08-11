@@ -12,7 +12,7 @@ export class AuctionMessageTranslator implements MessageListener {
   constructor(
     sniperId: string,
     listener: AuctionEventListener,
-    failureReporter: RedisFailureReporter,
+    failureReporter: RedisFailureReporter
   ) {
     this.sniperId = sniperId;
     this.listener = listener;
@@ -26,7 +26,7 @@ export class AuctionMessageTranslator implements MessageListener {
       this.failureReporter.cannotTranslateMessage(
         this.sniperId,
         messageBody,
-        parseException as Error,
+        parseException as Error
       );
       this.listener.auctionFailed();
     }
@@ -42,7 +42,7 @@ export class AuctionMessageTranslator implements MessageListener {
       this.listener.currentPrice(
         event.currentPrice(),
         event.increment(),
-        event.isFrom(this.sniperId),
+        event.isFrom(this.sniperId)
       );
     }
   }
@@ -99,7 +99,7 @@ class AuctionEvent {
   }
 
   private static fieldsIn(messageBody: string): string[] {
-    return messageBody.split(';').filter((field) => field !== '');
+    return messageBody.split(';').filter(field => field !== '');
   }
 }
 

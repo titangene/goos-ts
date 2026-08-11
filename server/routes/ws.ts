@@ -11,7 +11,7 @@ function snapshotsPayload(): string {
 
 onSnapshotsChanged(() => {
   const payload = snapshotsPayload();
-  peers.forEach((peer) => peer.send(payload));
+  peers.forEach(peer => peer.send(payload));
 });
 
 export default defineWebSocketHandler({
@@ -21,5 +21,5 @@ export default defineWebSocketHandler({
   },
   close(peer) {
     peers.delete(peer);
-  },
+  }
 });

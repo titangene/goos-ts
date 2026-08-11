@@ -119,7 +119,7 @@ test.describe('the auction sniper', () => {
   });
 
   test('sniper reports invalid auction message and stops responding to events', async ({
-    page,
+    page
   }) => {
     const application = new ApplicationRunner(page);
     const brokenMessage = 'a broken message';

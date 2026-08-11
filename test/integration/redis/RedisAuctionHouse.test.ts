@@ -32,14 +32,14 @@ describe('RedisAuctionHouse', () => {
 
   it('receives events from auction server after joining', async () => {
     let resolveClosed: () => void;
-    const auctionWasClosed = new Promise<void>((resolve) => {
+    const auctionWasClosed = new Promise<void>(resolve => {
       resolveClosed = resolve;
     });
 
     const listener: AuctionEventListener = {
       auctionClosed: () => resolveClosed(),
       auctionFailed: () => {},
-      currentPrice: () => {},
+      currentPrice: () => {}
     };
 
     const auction = auctionHouse.auctionFor(new Item(auctionServer.itemId, 567));

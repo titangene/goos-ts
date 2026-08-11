@@ -22,7 +22,7 @@ export class RedisFakeAuctionServer {
       this.connection.subscriber,
       eventsChannel(this.itemId),
       commandsChannel(this.itemId),
-      this.messageListener,
+      this.messageListener
     );
   }
 
@@ -75,7 +75,7 @@ class SingleMessageListener implements MessageListener {
       if (messageBody !== undefined) {
         return messageBody;
       }
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
 
     throw new Error('No message received within timeout');

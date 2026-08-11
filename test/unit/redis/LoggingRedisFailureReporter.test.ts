@@ -13,7 +13,7 @@ describe('LoggingRedisFailureReporter', () => {
     reporter.cannotTranslateMessage('auction id', 'bad message', new Error('an exception'));
 
     expect(logger.severe).toHaveBeenCalledWith(
-      '<auction id> Could not translate message "bad message" because "Error: an exception"',
+      '<auction id> Could not translate message "bad message" because "Error: an exception"'
     );
   });
 });

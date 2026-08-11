@@ -9,7 +9,7 @@ async function joinAuction(): Promise<void> {
 
   await $fetch('/api/join', {
     method: 'POST',
-    body: { itemId: itemId.value, stopPrice: stopPrice.value },
+    body: { itemId: itemId.value, stopPrice: stopPrice.value }
   });
   itemId.value = '';
   stopPrice.value = null;

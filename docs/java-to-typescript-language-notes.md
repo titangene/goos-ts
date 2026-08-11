@@ -42,14 +42,14 @@ export enum SniperState {
   LOSING,
   LOST,
   WON,
-  FAILED,
+  FAILED
 }
 
 const CLOSE_TRANSITIONS: Partial<Record<SniperState, SniperState>> = {
   [SniperState.JOINING]: SniperState.LOST,
   [SniperState.BIDDING]: SniperState.LOST,
   [SniperState.WINNING]: SniperState.WON,
-  [SniperState.LOSING]: SniperState.LOST,
+  [SniperState.LOSING]: SniperState.LOST
 };
 
 export function whenAuctionClosed(state: SniperState): SniperState {

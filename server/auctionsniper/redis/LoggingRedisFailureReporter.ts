@@ -6,7 +6,7 @@ export class LoggingRedisFailureReporter implements RedisFailureReporter {
 
   cannotTranslateMessage(sniperId: string, failedMessage: string, exception: Error): void {
     this.logger.severe(
-      `<${sniperId}> Could not translate message "${failedMessage}" because "${String(exception)}"`,
+      `<${sniperId}> Could not translate message "${failedMessage}" because "${String(exception)}"`
     );
   }
 }

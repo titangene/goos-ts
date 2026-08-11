@@ -19,16 +19,16 @@ describe('SniperSnapshot', () => {
     expect(bidding.closed()).toEqual(new SniperSnapshot(itemId, 123, 234, SniperState.LOST));
 
     expect(bidding.winning(678).closed()).toEqual(
-      new SniperSnapshot(itemId, 678, 234, SniperState.WON),
+      new SniperSnapshot(itemId, 678, 234, SniperState.WON)
     );
   });
 
   it('compares item identities', () => {
     expect(SniperSnapshot.joining('item 1').isForSameItemAs(SniperSnapshot.joining('item 1'))).toBe(
-      true,
+      true
     );
     expect(SniperSnapshot.joining('item 1').isForSameItemAs(SniperSnapshot.joining('item 2'))).toBe(
-      false,
+      false
     );
   });
 });

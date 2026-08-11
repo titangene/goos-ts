@@ -9,10 +9,10 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     env: {
-      NUXT_SNIPER_ID: 'sniper',
-    },
+      NUXT_SNIPER_ID: 'sniper'
+    }
   },
   use: {
-    baseURL: 'http://localhost:3000',
-  },
+    baseURL: 'http://localhost:3000'
+  }
 });

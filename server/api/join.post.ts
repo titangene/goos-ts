@@ -3,7 +3,7 @@ interface JoinRequestBody {
   stopPrice?: number;
 }
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const body = await readBody<JoinRequestBody>(event);
 
   if (!body?.itemId) {

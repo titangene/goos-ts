@@ -23,7 +23,7 @@ export class ApplicationRunner {
 
   async startBiddingWithStopPrice(
     auction: RedisFakeAuctionServer,
-    stopPrice: number,
+    stopPrice: number
   ): Promise<void> {
     await this.startSniper();
     await this.openBiddingFor(auction, stopPrice);
@@ -32,7 +32,7 @@ export class ApplicationRunner {
   async hasShownSniperHasLostAuction(
     auction: RedisFakeAuctionServer,
     lastPrice: number,
-    lastBid: number,
+    lastBid: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Lost');
   }
@@ -40,14 +40,14 @@ export class ApplicationRunner {
   async hasShownSniperIsBidding(
     auction: RedisFakeAuctionServer,
     lastPrice: number,
-    lastBid: number,
+    lastBid: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Bidding');
   }
 
   async hasShownSniperIsWinning(
     auction: RedisFakeAuctionServer,
-    winningBid: number,
+    winningBid: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, winningBid, winningBid, 'Winning');
   }
@@ -55,14 +55,14 @@ export class ApplicationRunner {
   async hasShownSniperIsLosing(
     auction: RedisFakeAuctionServer,
     lastPrice: number,
-    lastBid: number,
+    lastBid: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Losing');
   }
 
   async hasShownSniperHasWonAuction(
     auction: RedisFakeAuctionServer,
-    lastPrice: number,
+    lastPrice: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastPrice, 'Won');
   }

@@ -10,11 +10,11 @@ export default withNuxt(
     plugins: { 'import-x': importX },
     settings: {
       'import-x/resolver': {
-        typescript: true,
-      },
+        typescript: true
+      }
     },
     rules: {
-      'import-x/extensions': ['error', 'always', { ignorePackages: true, checkTypeImports: true }],
-    },
-  },
+      'import-x/extensions': ['error', 'always', { ignorePackages: true, checkTypeImports: true }]
+    }
+  }
 );

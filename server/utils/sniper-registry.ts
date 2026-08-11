@@ -26,8 +26,8 @@ const snapshotsListeners: SnapshotsListener[] = [];
 tableModel.addListener({
   onSnapshotsChanged: () => {
     const data = getTableData();
-    snapshotsListeners.forEach((listener) => listener(data));
-  },
+    snapshotsListeners.forEach(listener => listener(data));
+  }
 });
 
 let sniperLauncher: SniperLauncher | undefined;
@@ -49,7 +49,7 @@ export function joinAuction(itemId: string, stopPrice: number): void {
 export function getTableData(): SnipersTableData {
   const columns: SnipersTableColumn[] = Column.values.map((column, index) => ({
     name: column.name,
-    className: COLUMN_CLASS_NAMES[index]!,
+    className: COLUMN_CLASS_NAMES[index]!
   }));
 
   const rows: SniperRow[] = [];

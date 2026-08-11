@@ -38,7 +38,7 @@ function parseCommand(messageBody: string): Map<string, string> {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const remote = args.includes('--remote');
-  const itemId = args.find((arg) => !arg.startsWith('--'));
+  const itemId = args.find(arg => !arg.startsWith('--'));
   if (!itemId) {
     console.error('usage: npm run fake-auction -- <itemId> [--remote]');
     process.exit(1);
@@ -96,7 +96,7 @@ async function main(): Promise<void> {
       } else if (command === 'BID') {
         printAsync(`< received: Bid ${fields.get('Price')} from ${bidder}`);
       }
-    },
+    }
   };
 
   const channel = new RedisChannel(
@@ -104,12 +104,12 @@ async function main(): Promise<void> {
     connection.subscriber,
     eventsChannel(itemId),
     commandsChannel(itemId),
-    listener,
+    listener
   );
 
   console.log(`Selling item ${itemId} on ${redisUrl}. Waiting for a sniper to join...`);
   console.log(
-    `Type a SOL message body (without the "${SOL_VERSION_PREFIX}" prefix) to send it, e.g.:`,
+    `Type a SOL message body (without the "${SOL_VERSION_PREFIX}" prefix) to send it, e.g.:`
   );
   console.log('  Event: PRICE; CurrentPrice: 90; Increment: 5; Bidder: other bidder;');
   console.log('  Event: CLOSE;');
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
 
   promptAgain();
 
-  rl.on('line', (line) => {
+  rl.on('line', line => {
     const trimmed = line.trim();
     if (!trimmed) {
       promptAgain();

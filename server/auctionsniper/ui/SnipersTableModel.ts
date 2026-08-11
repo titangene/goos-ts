@@ -14,7 +14,7 @@ const STATUS_TEXT: readonly string[] = [
   'Losing',
   'Lost',
   'Won',
-  'Failed',
+  'Failed'
 ];
 
 // 對應 Java 版 javax.swing.event.TableModelListener——只通知「有變動」，
@@ -49,7 +49,7 @@ export class SnipersTableModel implements SniperListener, PortfolioListener {
   }
 
   sniperStateChanged(newSnapshot: SniperSnapshot): void {
-    const index = this.snapshots.findIndex((s) => s.isForSameItemAs(newSnapshot));
+    const index = this.snapshots.findIndex(s => s.isForSameItemAs(newSnapshot));
     if (index === -1) {
       throw new Defect(`No existing Sniper state for ${newSnapshot.itemId}`);
     }
@@ -72,6 +72,6 @@ export class SnipersTableModel implements SniperListener, PortfolioListener {
   }
 
   private notifyChange(): void {
-    this.listeners.forEach((listener) => listener.onSnapshotsChanged());
+    this.listeners.forEach(listener => listener.onSnapshotsChanged());
   }
 }

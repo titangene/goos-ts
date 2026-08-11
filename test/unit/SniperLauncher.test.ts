@@ -17,19 +17,19 @@ describe('SniperLauncher', () => {
       addAuctionEventListener: vi.fn((sniper: AuctionSniper) => {
         callOrder.push('addAuctionEventListener');
         expect(sniper.getSnapshot().itemId).toBe(item.identifier);
-      }),
+      })
     };
     const auctionHouse: AuctionHouse = {
       auctionFor: vi.fn((requestedItem: Item) => {
         expect(requestedItem).toBe(item);
         return auction;
-      }),
+      })
     };
     const sniperCollector: SniperCollector = {
       addSniper: vi.fn((sniper: AuctionSniper) => {
         callOrder.push('addSniper');
         expect(sniper.getSnapshot().itemId).toBe(item.identifier);
-      }),
+      })
     };
 
     const launcher = new SniperLauncher(auctionHouse, sniperCollector);

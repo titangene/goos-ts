@@ -37,7 +37,7 @@ export class RedisAuction implements Auction {
     return new AuctionMessageTranslator(
       connection.getUser(),
       this.auctionEventListeners.announce(),
-      this.failureReporter,
+      this.failureReporter
     );
   }
 
@@ -45,7 +45,7 @@ export class RedisAuction implements Auction {
     return {
       auctionFailed: () => this.channel.removeMessageListener(translator),
       auctionClosed: () => {},
-      currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {},
+      currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {}
     };
   }
 

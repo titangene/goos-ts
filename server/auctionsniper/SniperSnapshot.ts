@@ -5,7 +5,7 @@ export class SniperSnapshot {
     public readonly itemId: string,
     public readonly lastPrice: number = 0,
     public readonly lastBid: number = 0,
-    public readonly state: SniperState = SniperState.JOINING,
+    public readonly state: SniperState = SniperState.JOINING
   ) {}
 
   static joining(itemId: string): SniperSnapshot {
@@ -29,7 +29,7 @@ export class SniperSnapshot {
       this.itemId,
       this.lastPrice,
       this.lastBid,
-      whenAuctionClosed(this.state),
+      whenAuctionClosed(this.state)
     );
   }
 

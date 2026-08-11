@@ -9,10 +9,10 @@ export class RedisChannel {
     private readonly subscriber: RedisClientType,
     private readonly publishChannel: string,
     private readonly subscribeChannel: string,
-    private readonly listener: MessageListener,
+    private readonly listener: MessageListener
   ) {
-    void this.subscriber.subscribe(this.subscribeChannel, (rawMessage) =>
-      this.listener.processMessage(this, rawMessage),
+    void this.subscriber.subscribe(this.subscribeChannel, rawMessage =>
+      this.listener.processMessage(this, rawMessage)
     );
   }
 

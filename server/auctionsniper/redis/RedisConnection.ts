@@ -37,7 +37,7 @@ export class RedisConnection {
       this.subscriber,
       commandsChannel(itemId),
       eventsChannel(itemId),
-      listener,
+      listener
     );
   }
 

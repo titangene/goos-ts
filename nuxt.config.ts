@@ -5,10 +5,10 @@ export default defineNuxtConfig({
   modules: ['@nuxt/eslint'],
   nitro: {
     experimental: {
-      websocket: true,
-    },
+      websocket: true
+    }
   },
   runtimeConfig: {
-    sniperId: 'sniper',
-  },
+    sniperId: 'sniper'
+  }
 });

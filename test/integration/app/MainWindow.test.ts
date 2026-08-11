@@ -11,10 +11,10 @@ describe('the main window', () => {
     let receivedBody: { itemId?: string; stopPrice?: number } | undefined;
     registerEndpoint('/api/join', {
       method: 'POST',
-      handler: async (event) => {
+      handler: async event => {
         receivedBody = await readBody(event);
         return { ok: true };
-      },
+      }
     });
 
     const wrapper = await mountSuspended(IndexPage);

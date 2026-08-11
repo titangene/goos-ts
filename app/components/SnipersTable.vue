@@ -2,7 +2,7 @@
 import type { SnapshotsMessage, SnipersTableColumn, SniperRow } from '#shared/types.ts';
 
 const { data: initialData } = await useFetch<{ columns: SnipersTableColumn[]; rows: SniperRow[] }>(
-  '/api/snipers',
+  '/api/snipers'
 );
 
 const columns = ref<SnipersTableColumn[]>(initialData.value?.columns ?? []);

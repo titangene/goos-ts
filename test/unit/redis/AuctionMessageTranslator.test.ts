@@ -26,7 +26,7 @@ describe('AuctionMessageTranslator', () => {
 
     translator.processMessage(
       UNUSED_CHANNEL,
-      'SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: Someone else;',
+      'SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: Someone else;'
     );
 
     expect(listener.currentPrice).toHaveBeenCalledWith(192, 7, PriceSource.FromOtherBidder);
@@ -38,7 +38,7 @@ describe('AuctionMessageTranslator', () => {
 
     translator.processMessage(
       UNUSED_CHANNEL,
-      `SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: ${SNIPER_ID};`,
+      `SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: ${SNIPER_ID};`
     );
 
     expect(listener.currentPrice).toHaveBeenCalledWith(192, 7, PriceSource.FromSniper);
@@ -79,12 +79,12 @@ function stubFailureReporter(): RedisFailureReporter {
 function expectFailureWithMessage(
   listener: AuctionEventListener,
   failureReporter: RedisFailureReporter,
-  badMessage: string,
+  badMessage: string
 ): void {
   expect(listener.auctionFailed).toHaveBeenCalledTimes(1);
   expect(failureReporter.cannotTranslateMessage).toHaveBeenCalledWith(
     SNIPER_ID,
     badMessage,
-    expect.anything(),
+    expect.anything()
   );
 }

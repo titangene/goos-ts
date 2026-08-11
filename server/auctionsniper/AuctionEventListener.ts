@@ -1,6 +1,6 @@
 export enum PriceSource {
   FromSniper = 'FromSniper',
-  FromOtherBidder = 'FromOtherBidder',
+  FromOtherBidder = 'FromOtherBidder'
 }
 
 export interface AuctionEventListener {

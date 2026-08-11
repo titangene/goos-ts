@@ -32,7 +32,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionClosed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.LOST, itemId }),
+      expect.objectContaining({ state: SniperState.LOST, itemId })
     );
   });
 
@@ -48,8 +48,8 @@ describe('The Auction Sniper', () => {
         state: SniperState.BIDDING,
         itemId,
         lastPrice: price,
-        lastBid: bid,
-      }),
+        lastBid: bid
+      })
     );
     expect(auction.bid).toHaveBeenCalledWith(bid);
   });
@@ -59,7 +59,7 @@ describe('The Auction Sniper', () => {
 
     expect(auction.bid).not.toHaveBeenCalled();
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 1990, lastBid: 0 }),
+      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 1990, lastBid: 0 })
     );
   });
 
@@ -73,8 +73,8 @@ describe('The Auction Sniper', () => {
         state: SniperState.LOSING,
         itemId,
         lastPrice: 2345,
-        lastBid: 168,
-      }),
+        lastBid: 168
+      })
     );
   });
 
@@ -88,8 +88,8 @@ describe('The Auction Sniper', () => {
         state: SniperState.LOSING,
         itemId,
         lastPrice: 2233,
-        lastBid: 168,
-      }),
+        lastBid: 168
+      })
     );
   });
 
@@ -99,11 +99,11 @@ describe('The Auction Sniper', () => {
 
     expect(listener.sniperStateChanged).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 2233 }),
+      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 2233 })
     );
     expect(listener.sniperStateChanged).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 2258 }),
+      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 2258 })
     );
   });
 
@@ -112,7 +112,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionClosed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.LOST, itemId }),
+      expect.objectContaining({ state: SniperState.LOST, itemId })
     );
   });
 
@@ -121,7 +121,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionClosed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.LOST, itemId, lastPrice: 1990, lastBid: 0 }),
+      expect.objectContaining({ state: SniperState.LOST, itemId, lastPrice: 1990, lastBid: 0 })
     );
   });
 
@@ -136,8 +136,8 @@ describe('The Auction Sniper', () => {
         state: SniperState.WINNING,
         itemId,
         lastPrice: 135,
-        lastBid: 135,
-      }),
+        lastBid: 135
+      })
     );
   });
 
@@ -146,7 +146,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionClosed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.WON, itemId }),
+      expect.objectContaining({ state: SniperState.WON, itemId })
     );
   });
 
@@ -155,7 +155,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionFailed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
+      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 })
     );
   });
 
@@ -163,7 +163,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionFailed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.FAILED, itemId }),
+      expect.objectContaining({ state: SniperState.FAILED, itemId })
     );
   });
 
@@ -172,7 +172,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionFailed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
+      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 })
     );
   });
 
@@ -182,7 +182,7 @@ describe('The Auction Sniper', () => {
     sniper.auctionFailed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
+      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 })
     );
   });
 });

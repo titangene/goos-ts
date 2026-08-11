@@ -5,7 +5,7 @@ export interface UserRequestListener {
 export class Item {
   constructor(
     public readonly identifier: string,
-    public readonly stopPrice: number,
+    public readonly stopPrice: number
   ) {}
 
   allowsBid(bid: number): boolean {

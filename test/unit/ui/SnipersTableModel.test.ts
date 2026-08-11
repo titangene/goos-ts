@@ -91,7 +91,7 @@ describe('the snipers table model', () => {
     const model = new SnipersTableModel();
 
     expect(() =>
-      model.sniperStateChanged(new SniperSnapshot('item 1', 123, 234, SniperState.WINNING)),
+      model.sniperStateChanged(new SniperSnapshot('item 1', 123, 234, SniperState.WINNING))
     ).toThrow(Defect);
   });
 });
@@ -99,13 +99,13 @@ describe('the snipers table model', () => {
 function assertRowMatchesSnapshot(
   model: SnipersTableModel,
   row: number,
-  snapshot: SniperSnapshot,
+  snapshot: SniperSnapshot
 ): void {
   expect(cellValue(model, row, Column.ITEM_IDENTIFIER)).toBe(snapshot.itemId);
   expect(cellValue(model, row, Column.LAST_PRICE)).toBe(snapshot.lastPrice);
   expect(cellValue(model, row, Column.LAST_BID)).toBe(snapshot.lastBid);
   expect(cellValue(model, row, Column.SNIPER_STATE)).toBe(
-    SnipersTableModel.textFor(snapshot.state),
+    SnipersTableModel.textFor(snapshot.state)
   );
 }
 

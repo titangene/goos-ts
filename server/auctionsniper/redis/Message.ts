@@ -32,7 +32,7 @@ export const Message = {
       command: 'Price',
       currentPrice,
       increment,
-      bidder,
+      bidder
     };
   },
   Bid: (bidder: string, bid: number): BidMessage => ({ command: 'Bid', bidder, bid }),
@@ -47,5 +47,5 @@ export const Message = {
       case 'Close':
         return 'SOLVersion: 1.1; Event: CLOSE;';
     }
-  },
+  }
 };
