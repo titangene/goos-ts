@@ -1,11 +1,17 @@
 import { MqttAuctionHouse } from '../auctionsniper/mqtt/MqttAuctionHouse.ts';
 import { SniperLauncher } from '../auctionsniper/SniperLauncher.ts';
 import { SniperPortfolio } from '../auctionsniper/SniperPortfolio.ts';
-import { SnipersTableModel } from '../auctionsniper/SnipersTableModel.ts';
+import { SnipersTableModel } from '../auctionsniper/ui/SnipersTableModel.ts';
+import { Column } from '../auctionsniper/ui/Column.ts';
 import { Item } from '../auctionsniper/UserRequestListener.ts';
-import type { SniperSnapshot } from '../auctionsniper/SniperSnapshot.ts';
+import type { SnipersTableColumn, SniperRow } from '../../shared/types.ts';
 
-type SnapshotsListener = (snapshots: SniperSnapshot[]) => void;
+interface SnipersTableData {
+  columns: SnipersTableColumn[];
+  rows: SniperRow[];
+}
+
+type SnapshotsListener = (data: SnipersTableData) => void;
 
 const portfolio = new SniperPortfolio();
 const tableModel = new SnipersTableModel();
@@ -13,8 +19,9 @@ portfolio.addPortfolioListener(tableModel);
 
 const snapshotsListeners: SnapshotsListener[] = [];
 tableModel.addListener({
-  onSnapshotsChanged: (snapshots) => {
-    snapshotsListeners.forEach((listener) => listener(snapshots));
+  onSnapshotsChanged: () => {
+    const data = getTableData();
+    snapshotsListeners.forEach((listener) => listener(data));
   },
 });
 
@@ -34,8 +41,22 @@ export function joinAuction(itemId: string, stopPrice: number): void {
   sniperLauncher.joinAuction(new Item(itemId, stopPrice));
 }
 
-export function getSnapshots(): SniperSnapshot[] {
-  return tableModel.getSnapshots();
+export function getTableData(): SnipersTableData {
+  const columns: SnipersTableColumn[] = Column.values.map((column) => ({
+    name: column.name,
+    className: column.className,
+  }));
+
+  const rows: SniperRow[] = [];
+  for (let row = 0; row < tableModel.getRowCount(); row++) {
+    const values: (string | number)[] = [];
+    for (let column = 0; column < tableModel.getColumnCount(); column++) {
+      values.push(tableModel.getValueAt(row, column));
+    }
+    rows.push({ itemId: String(tableModel.getValueAt(row, 0)), values });
+  }
+
+  return { columns, rows };
 }
 
 export function onSnapshotsChanged(listener: SnapshotsListener): void {

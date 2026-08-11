@@ -4,7 +4,7 @@ import { flushPromises } from '@vue/test-utils';
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime';
 import IndexPage from '../../../app/pages/index.vue';
 
-registerEndpoint('/api/snipers', () => []);
+registerEndpoint('/api/snipers', () => ({ columns: [], rows: [] }));
 
 describe('the main window', () => {
   it('makes a user request when join button is clicked', async () => {

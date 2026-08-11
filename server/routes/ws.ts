@@ -4,7 +4,8 @@ import type { SnapshotsMessage } from '../../shared/types.ts';
 const peers = new Set<Peer>();
 
 function snapshotsPayload(): string {
-  const message: SnapshotsMessage = { type: 'snapshots', snapshots: getSnapshots() };
+  const { columns, rows } = getTableData();
+  const message: SnapshotsMessage = { type: 'snapshots', columns, rows };
   return JSON.stringify(message);
 }
 

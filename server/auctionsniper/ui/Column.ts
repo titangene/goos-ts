@@ -1,13 +1,14 @@
-import type { SniperSnapshotData } from './types.ts';
+import { SnipersTableModel } from './SnipersTableModel.ts';
+import type { SniperSnapshot } from '../SniperSnapshot.ts';
 
 export class Column {
   private constructor(
     public readonly name: string,
     public readonly className: string,
-    private readonly valueInFn: (snapshot: SniperSnapshotData) => string | number,
+    private readonly valueInFn: (snapshot: SniperSnapshot) => string | number,
   ) {}
 
-  valueIn(snapshot: SniperSnapshotData): string | number {
+  valueIn(snapshot: SniperSnapshot): string | number {
     return this.valueInFn(snapshot);
   }
 
@@ -18,7 +19,9 @@ export class Column {
     (snapshot) => snapshot.lastPrice,
   );
   static readonly LAST_BID = new Column('Last Bid', 'lastBid', (snapshot) => snapshot.lastBid);
-  static readonly SNIPER_STATE = new Column('State', 'state', (snapshot) => snapshot.state);
+  static readonly SNIPER_STATE = new Column('State', 'state', (snapshot) =>
+    SnipersTableModel.textFor(snapshot.state),
+  );
 
   static readonly values: readonly Column[] = [
     Column.ITEM_IDENTIFIER,

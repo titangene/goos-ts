@@ -1,5 +1,3 @@
-import type { SniperSnapshotData } from '../../shared/types.ts';
-
-export default defineEventHandler((): SniperSnapshotData[] => {
-  return getSnapshots();
+export default defineEventHandler(() => {
+  return getTableData();
 });

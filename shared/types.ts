@@ -1,14 +1,15 @@
-export type SniperStateName =
-  'Joining' | 'Bidding' | 'Winning' | 'Losing' | 'Lost' | 'Won' | 'Failed';
+export interface SnipersTableColumn {
+  name: string;
+  className: string;
+}
 
-export interface SniperSnapshotData {
+export interface SniperRow {
   itemId: string;
-  lastPrice: number;
-  lastBid: number;
-  state: SniperStateName;
+  values: (string | number)[];
 }
 
 export interface SnapshotsMessage {
   type: 'snapshots';
-  snapshots: SniperSnapshotData[];
+  columns: SnipersTableColumn[];
+  rows: SniperRow[];
 }

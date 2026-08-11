@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { Column } from '#shared/Column.ts';
-import type { SnapshotsMessage, SniperSnapshotData } from '#shared/types.ts';
+import type { SnapshotsMessage, SnipersTableColumn, SniperRow } from '#shared/types.ts';
 
-const { data: initialSnapshots } = await useFetch<SniperSnapshotData[]>('/api/snipers');
+const { data: initialData } = await useFetch<{ columns: SnipersTableColumn[]; rows: SniperRow[] }>(
+  '/api/snipers',
+);
 
-const snapshots = ref<SniperSnapshotData[]>(initialSnapshots.value ?? []);
+const columns = ref<SnipersTableColumn[]>(initialData.value?.columns ?? []);
+const rows = ref<SniperRow[]>(initialData.value?.rows ?? []);
 
 function connect(): void {
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -13,7 +15,8 @@ function connect(): void {
   socket.addEventListener('message', (event: MessageEvent<string>) => {
     const message = JSON.parse(event.data) as SnapshotsMessage;
     if (message.type === 'snapshots') {
-      snapshots.value = message.snapshots;
+      columns.value = message.columns;
+      rows.value = message.rows;
     }
   });
 }
@@ -25,13 +28,13 @@ onMounted(connect);
   <table>
     <thead>
       <tr>
-        <th v-for="column in Column.values" :key="column.name">{{ column.name }}</th>
+        <th v-for="column in columns" :key="column.name">{{ column.name }}</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="snapshot in snapshots" :id="`auction-${snapshot.itemId}`" :key="snapshot.itemId">
-        <td v-for="column in Column.values" :key="column.className" :class="column.className">
-          {{ column.valueIn(snapshot) }}
+      <tr v-for="row in rows" :id="`auction-${row.itemId}`" :key="row.itemId">
+        <td v-for="(column, index) in columns" :key="column.className" :class="column.className">
+          {{ row.values[index] }}
         </td>
       </tr>
     </tbody>
