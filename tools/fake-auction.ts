@@ -19,7 +19,7 @@
  *   close                                        send a Close event
  *   quit                                         disconnect and exit
  */
-import { createInterface } from 'node:readline';
+import { clearLine, createInterface, cursorTo } from 'node:readline';
 import { createClient } from 'redis';
 import { Message } from '../server/auctionsniper/redis/Message.ts';
 import { commandsChannel, eventsChannel } from '../server/auctionsniper/redis/Topic.ts';
@@ -59,6 +59,20 @@ async function main(): Promise<void> {
 
   let sniperJoined = false;
 
+  const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '> ' });
+
+  // Redis pub/sub messages arrive whenever the sniper feels like sending
+  // them, independent of the readline prompt. Without clearing the
+  // in-progress "> " line first, an async message lands mid-prompt and
+  // swallows it, leaving the next line the user types with no visible
+  // prompt at all.
+  function printAsync(message: string): void {
+    clearLine(process.stdout, 0);
+    cursorTo(process.stdout, 0);
+    console.log(message);
+    rl.prompt(true);
+  }
+
   await subscriber.subscribe(commands, (rawMessage) => {
     const fields = parseCommand(rawMessage);
     const command = fields.get('Command');
@@ -66,16 +80,15 @@ async function main(): Promise<void> {
 
     if (command === 'JOIN') {
       sniperJoined = true;
-      console.log(`Sniper joined: ${bidder}`);
+      printAsync(`Sniper joined: ${bidder}`);
     } else if (command === 'BID') {
-      console.log(`< received: Bid ${fields.get('Price')} from ${bidder}`);
+      printAsync(`< received: Bid ${fields.get('Price')} from ${bidder}`);
     }
   });
 
   console.log(`Selling item ${itemId} on ${redisUrl}. Waiting for a sniper to join...`);
   console.log('Commands: price <currentPrice> <increment> [bidder] | close | quit');
 
-  const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '> ' });
   rl.prompt();
 
   rl.on('line', (line) => {
