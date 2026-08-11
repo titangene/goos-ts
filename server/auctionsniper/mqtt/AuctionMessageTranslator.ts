@@ -54,18 +54,6 @@ class AuctionEvent {
 
   private constructor() {}
 
-  static from(messageBody: string): AuctionEvent {
-    const event = new AuctionEvent();
-    for (const field of AuctionEvent.fieldsIn(messageBody)) {
-      event.addField(field);
-    }
-    return event;
-  }
-
-  private static fieldsIn(messageBody: string): string[] {
-    return messageBody.split(';').filter((field) => field !== '');
-  }
-
   type(): string {
     return this.get('Event');
   }
@@ -101,6 +89,18 @@ class AuctionEvent {
   private addField(field: string): void {
     const pair = field.split(':');
     this.fields.set(pair[0]!.trim(), pair[1]!.trim());
+  }
+
+  static from(messageBody: string): AuctionEvent {
+    const event = new AuctionEvent();
+    for (const field of AuctionEvent.fieldsIn(messageBody)) {
+      event.addField(field);
+    }
+    return event;
+  }
+
+  private static fieldsIn(messageBody: string): string[] {
+    return messageBody.split(';').filter((field) => field !== '');
   }
 }
 
