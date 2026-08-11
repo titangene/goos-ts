@@ -127,13 +127,9 @@ public interface XMPPFailureReporter {
 
 - 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`MqttFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `MqttAuctionHouse`/`MqttAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
 
-### 曾經走過的彎路：`Message.ts` 的 `Bidder` 型別
+### `Message.ts` 的訊息內容欄位跟 `sniperId` 都用 `string`，不另外宣告型別
 
-早期版本曾經幫 `Message.ts` 的訊息內容欄位（`JoinMessage.bidder`/`PriceMessage.bidder`/`BidMessage.bidder`）宣告一個 `export type Bidder = string;` 型別別名，理由是「它代表的是某則訊息裡記載的出價者，可能是目前這個 sniper 自己，也可能是別人，跟『我自己是誰』（`sniperId`）是不同的概念」。
-
-但這個型別別名後來被誤用到好幾個真正代表「我自己是誰」的地方（`MqttAuction.sniperId`、`MqttAuctionHouse.connect(brokerUrl, sniperId)`、`MqttConnection.login(username)`/`getUser()`、`AuctionMessageTranslator` 的 `sniperId` 欄位/參數），變成用同一個型別名字掛在兩種不同語意的值上——`Bidder` 型別本身在 TypeScript 是結構型別（`type Bidder = string` 純粹是 `string` 的別名，兩者可以無條件互相賦值，編譯器完全不會攔任何誤用），所以這個別名從頭到尾沒有提供過任何型別安全，唯一的價值是給讀者的語意提示，結果卻提示錯了。
-
-Java 原始碼從頭到尾兩種概念都只用 `String`，沒有為「訊息裡的出價者」另外宣告型別。既然 TS 版的型別別名本來就不提供編譯期保護、又已經被用錯過一次，索性拿掉這個型別別名，`Message.ts` 跟所有 `sniperId` 參數/欄位全部統一改回 `string`，跟 Java 原始碼完全一致——不再嘗試用型別系統表達這個純語意上的區分，語意上的差異改成只靠變數命名（`bidder` vs `sniperId`）跟註解自己說清楚。
+`Message.ts` 的 `JoinMessage.bidder`/`PriceMessage.bidder`/`BidMessage.bidder`（訊息裡記載的出價者，可能是目前這個 sniper 自己，也可能是別人）跟 `sniperId`（我自己是誰，出現在 `MqttAuction`、`MqttAuctionHouse.connect()`、`MqttConnection.login()`/`getUser()`、`AuctionMessageTranslator` 等處）是兩個不同語意的概念，但兩邊都直接用 `string`，不另外用型別系統區分——因為 TypeScript 是結構型別，就算宣告一個 `type Bidder = string` 這樣的別名，也只是 `string` 的別名，兩者可以無條件互相賦值，編譯器不會攔任何誤用，型別別名在這裡不會提供實質的型別安全，只會是純語意提示。跟 Java 原始碼一致（Java 兩種概念也都只用 `String`），語意上的差異只靠變數命名（`bidder` vs `sniperId`）跟註解自己說清楚。
 
 ## 9. Domain/util 層的框架轉換差異
 
@@ -161,7 +157,7 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 
 `SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
 
-- TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`/`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取，而不是像早期版本那樣直接把 `SniperSnapshot[]` 塞給監聽者。
+- TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`/`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取。
 - Java 版 `fireTableRowsInserted(row, row)`/`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`/`server/api/snipers.get.ts` 都是重新整包查詢（`getColumnCount()`/`getRowCount()`/`getValueAt()`）建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
 
 ### `server/utils/sniper-registry.ts` 對應 Java 的哪裡
