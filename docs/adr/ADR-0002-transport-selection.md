@@ -40,7 +40,7 @@ Redis Pub/Sub 目前扮演書中 XMPP 的「broker」角色，連接 `tools/fake
 
 ## Decision Outcome
 
-Chosen option：**Redis Pub/Sub（沿用現況）**。排除掉不構成決定性依據的 Federation、開放標準、內建身分識別之後，Redis Pub/Sub 與 MQTT + Mosquitto 在「貼近書中精神」（[ADR-0001](ADR-0001-decision-principles.md) 準則 2、3）上其實旗鼓相當——兩者都不是 XMPP 點對點 Chat 模型的天生對應，都得靠 topic/channel 廣播模型加上額外的 topic 拆分工程出等效效果（見 [ADR-0006](ADR-0006-mqtt-topic-topology.md)），沒有一方明顯比較貼近 XMPP 的實際運作機制。而在「不增加多餘邏輯」（準則 1，硬性限制）與「簡單/低成本」（準則 4）這兩項上，Redis Pub/Sub 明顯占優：
+Chosen option：**Redis Pub/Sub（沿用現況）**。排除掉不構成決定性依據的 Federation、開放標準、內建身分識別之後，Redis Pub/Sub 與 MQTT + Mosquitto 在「貼近書中精神」（[ADR-0001](ADR-0001-decision-principles.md) 準則 2、3）上其實旗鼓相當——兩者都不是 XMPP 點對點 Chat 模型的天生對應，都得靠 topic/channel 廣播模型加上額外的 topic 拆分工程出等效效果（見 [ADR-0006](ADR-0006-channel-topology.md)），沒有一方明顯比較貼近 XMPP 的實際運作機制。而在「不增加多餘邏輯」（準則 1，硬性限制）與「簡單/低成本」（準則 4）這兩項上，Redis Pub/Sub 明顯占優：
 
 - **循序保證免費取得**：Redis publisher/subscriber 各自透過單一 TCP 連線跟 Redis server 通訊，訊息循序天生保證，不需要像 MQTT 那樣額外設定 QoS 才能重現書中「訊息依發送順序抵達」的保證（Ch.12）。
 - **零遷移成本**：Redis Pub/Sub 是現況實作，已驗證可行、已部署過，不需要額外的 Dockerfile、CI service container 替換、或改寫 `tools/fake-auction.ts` 訊息序列化邏輯等一次性遷移工作。
@@ -57,13 +57,8 @@ Chosen option：**Redis Pub/Sub（沿用現況）**。排除掉不構成決定�
 
 **Negative:**
 
-- 目前已移除的舊版 Redis 實作（`server/auctionsniper/redis/*`）在 Connection 抽象、訊息格式、topic 拓樸上跟 Java 版有落差（沒有對應 `MqttConnection` 的身分包裝層、訊息用 JSON 而非書中 SOL 純文字格式、單一 channel 雙向收發），不符合 [ADR-0003](ADR-0003-username-only-identity.md)、[ADR-0006](ADR-0006-mqtt-topic-topology.md)、[ADR-0007: 拍賣協定訊息格式維持書中 XMPP 純文字格式](ADR-0007-message-format.md) 訂出的準則，需要依這些準則重新實作，不是單純復原舊版程式碼。
-- CI 需要把 Mosquitto service container 換回 Redis service container。
-- 需要移除 `server/auctionsniper/mqtt/*` 及 `mqtt` npm 依賴（待 Redis 版驗證完成後的後續步驟）。
-
-**Neutral:**
-
-- README、`docs/deploy.md`、`docs/fake-auction.md` 需要更新協定說明，反映 MQTT → Redis 的變更。
+- 沒有連線層級的身分識別，JOIN/BID 訊息需要額外帶一個 `Bidder` 欄位才能讓接收端判斷是誰送出的（見 [`differences-from-java.md`](../differences-from-java.md) 第 2 節）。
+- `server/auctionsniper/redis/*` 需要依 [ADR-0003](ADR-0003-username-only-identity.md)、[ADR-0006](ADR-0006-channel-topology.md)、[ADR-0007: 拍賣協定訊息格式維持書中 XMPP 純文字格式](ADR-0007-message-format.md) 訂出的準則實作 Connection 抽象、訊息格式、channel 拓樸，不是單純的薄包裝。
 
 ## Compliance
 
@@ -71,8 +66,8 @@ Chosen option：**Redis Pub/Sub（沿用現況）**。排除掉不構成決定�
 2. **Broker 獨立性**：Redis MUST 以獨立於 Nuxt server 的 process/服務運行，MUST NOT 內嵌於應用程式自身的 Node.js process 中。
 3. **訊息循序保證**：Redis publisher/subscriber MUST 各自透過單一連線循序收發（不並行多個 in-flight），以重現書中「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」（Ch.12）這個依賴的循序送達保證；這個保證由單一 TCP 連線天生提供，MUST NOT 額外撰寫排序緩衝邏輯來補償，也不需要像 MQTT 那樣設定 QoS。
 4. **測試分層**：Unit test MUST NOT 依賴真實 Redis，MUST 透過 fake 的 `Auction`/`AuctionHouse` 介面測試；只有 integration/e2e 測試才可以連接真實 Redis，延續書中 Java 版的測試分層方式。
-5. **訊息格式**：拍賣協定 payload MUST 使用書中 SOL 純文字格式（`Field: Value;` 分號分隔），MUST NOT 使用 JSON 或其他結構化序列化格式（見 [ADR-0007](ADR-0007-message-format.md)）——這項要求跟 broker 選擇無關，不因為換回 Redis 就改變。
-6. **Commands/Events channel 拆分**：拍賣協定 MUST 分成 `commands`/`events` 兩個獨立 channel，理由跟 [ADR-0006](ADR-0006-mqtt-topic-topology.md) 對 MQTT topic 拓樸的推論相同——topic/channel 廣播模型天生會讓其他 sniper 看到彼此的命令，MUST 只透過訂閱關係本身隔離，MUST NOT 新增應用層過濾邏輯；同一套推論邏輯同樣適用於 Redis channel 拓樸，不因為 ADR-0006 標題只寫 MQTT 而不適用。
+5. **訊息格式**：拍賣協定 payload MUST 使用書中 SOL 純文字格式（`Field: Value;` 分號分隔），MUST NOT 使用 JSON 或其他結構化序列化格式（見 [ADR-0007](ADR-0007-message-format.md)）——這項要求跟 broker 選擇無關。
+6. **Commands/Events channel 拆分**：拍賣協定 MUST 分成 `commands`/`events` 兩個獨立 channel，理由見 [ADR-0006](ADR-0006-channel-topology.md)——channel 廣播模型天生會讓其他 sniper 看到彼此的命令，MUST 只透過訂閱關係本身隔離，MUST NOT 新增應用層過濾邏輯。
 7. **不保留 MQTT 作為備援**：拍賣協定實作 MUST NOT 保留 MQTT 作為可透過設定切換的備援機制或相容層。
 
 ## Pros and Cons of the Options
@@ -133,7 +128,7 @@ Eclipse Mosquitto，最主流的開源 MQTT broker 參考實作，C 語言撰寫
 - Good, because 資源需求比 Aedes 更輕（C binary，通常個位數到十幾 MB），維護風險也最低（業界最廣泛使用的 MQTT 實作）。
 - Bad, because MQTT 沒有天生的訊息循序保證，需要客戶端明確設定 `{ qos: 1 }` 且限制單一 in-flight 才能重現書中「訊息依發送順序抵達」的保證——Redis Pub/Sub 跟 XMPP 一樣，靠單一 TCP 連線天生就有這個保證，不需要額外設定。
 - Bad, because 需要維護一份 Dockerfile（雖然通常只需 `FROM eclipse-mosquitto` + COPY 設定檔，成本很小）。
-- Bad, because 本機開發需要額外安裝 Mosquitto 或跑 Docker，不像 Redis 現況那樣已經是既有基礎設施，需要額外的一次性遷移工作（見 [ADR-0005](ADR-0005-ci-local-dev-workflow.md) 的取捨）。
+- Bad, because 本機開發需要額外安裝 Mosquitto 或跑 Docker，不像 Redis 現況那樣已經是既有基礎設施，需要額外的一次性遷移工作。
 
 ### AMQP/RabbitMQ
 

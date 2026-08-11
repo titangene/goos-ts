@@ -10,7 +10,7 @@ goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS
 
 書中選擇 XMPP 的理由：作者需要「一個真實存在、非同步、第三方的基礎設施，用來示範如何對它做 TDD」，且明確承認這不是務實的正式架構（"This isn't a realistic architecture: XMPP is neither reliable nor secure, and so is unsuitable for transactions... Ensuring any of those qualities is outside our scope."）。
 
-在評估拍賣協定要用什麼取代 Redis Pub/Sub 的過程中（見 [ADR-0002: 拍賣協定改用 MQTT（Mosquitto）取代 Redis Pub/Sub](ADR-0002-mqtt-replaces-redis.md)），反覆浮現同一組判準，且各篇 ADR 都會引用這組判準來解釋取捨，因此需要獨立記錄，避免每篇 ADR 重複解釋一次同樣的優先順序邏輯。
+在評估拍賣協定要用什麼取代 Redis Pub/Sub 的過程中（見 [ADR-0002: 拍賣協定的訊息傳輸機制選型——Redis Pub/Sub](ADR-0002-transport-selection.md)），反覆浮現同一組判準，且各篇 ADR 都會引用這組判準來解釋取捨，因此需要獨立記錄，避免每篇 ADR 重複解釋一次同樣的優先順序邏輯。
 
 ## Decision Outcome
 
@@ -32,7 +32,7 @@ goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS
 
 **Negative:**
 
-- 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0002: 拍賣協定改用 MQTT（Mosquitto）取代 Redis Pub/Sub](ADR-0002-mqtt-replaces-redis.md)、[ADR-0004: MQTT Broker 部署為獨立 Render Web Service](ADR-0004-mqtt-broker-deployment.md) 等已接受的結論。
+- 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0002: 拍賣協定的訊息傳輸機制選型——Redis Pub/Sub](ADR-0002-transport-selection.md)、[ADR-0006: Redis Channel 拓樸設計——分離 Commands/Events Channel](ADR-0006-channel-topology.md) 等已接受的結論。
 
 ## Compliance
 

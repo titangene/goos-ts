@@ -27,7 +27,7 @@ Non-goals：本決定不涉及任何形式的密碼、token、或外部帳號系
 
 **Positive:**
 
-- 不需要任何持久化的帳號資料庫，簡化了部署（呼應 [ADR-0004: MQTT Broker 部署為獨立 Render Web Service](ADR-0004-mqtt-broker-deployment.md) 不需要 persistent volume 的結論）。
+- 不需要任何持久化的帳號資料庫，簡化了部署。
 - 保留了「連線可能因未知身分而失敗」這個可測試的錯誤路徑，維持跟書中 `XMPPAuctionException` 對應的錯誤處理練習價值。
 
 **Negative:**
@@ -43,4 +43,4 @@ Non-goals：本決定不涉及任何形式的密碼、token、或外部帳號系
 
 ## Alternatives Considered
 
-- **真實密碼驗證**（維持現有 XMPP/Matrix 那種真帳密登入模式）：符合書中原貌，但需要引入外部帳號系統或客製化 auth provider，違反「不增加多餘邏輯」的硬性限制，且跟 [ADR-0002: 拍賣協定改用 MQTT（Mosquitto）取代 Redis Pub/Sub](ADR-0002-mqtt-replaces-redis.md) 選定的 MQTT 沒有內建帳密機制的事實不符——MQTT 本身沒有強制性的帳密驗證流程，比 XMPP/Matrix 更適合搭配這個決策。
+- **真實密碼驗證**（維持現有 XMPP/Matrix 那種真帳密登入模式）：符合書中原貌，但需要引入外部帳號系統或客製化 auth provider，違反「不增加多餘邏輯」的硬性限制，且跟 [ADR-0002: 拍賣協定的訊息傳輸機制選型——Redis Pub/Sub](ADR-0002-transport-selection.md) 選定的 Redis Pub/Sub 沒有內建帳密機制的事實不符——Redis Pub/Sub 本身沒有強制性的帳密驗證流程，比 XMPP/Matrix 更適合搭配這個決策。
