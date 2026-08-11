@@ -6,12 +6,12 @@
 
 ## 1. 協定與架構層級（見對應 ADR）
 
-| 差異                                                 | 對應 ADR                                           |
-| ---------------------------------------------------- | --------------------------------------------------- |
-| 拍賣協定改用 Redis Pub/Sub，不是 XMPP                | [ADR-0002](adr/ADR-0002-transport-selection.md)     |
-| 身分識別改用 username-only 白名單，不做真實密碼驗證  | [ADR-0003](adr/ADR-0003-username-only-identity.md)  |
-| 拍賣協定分成 `commands`/`events` 兩個 channel        | [ADR-0006](adr/ADR-0006-channel-topology.md)     |
-| 訊息格式維持書中純文字 SOL 格式（非 JSON）           | [ADR-0007](adr/ADR-0007-message-format.md)          |
+| 差異                                                | 對應 ADR                                           |
+| --------------------------------------------------- | -------------------------------------------------- |
+| 拍賣協定改用 Redis Pub/Sub，不是 XMPP               | [ADR-0002](adr/ADR-0002-transport-selection.md)    |
+| 身分識別改用 username-only 白名單，不做真實密碼驗證 | [ADR-0003](adr/ADR-0003-username-only-identity.md) |
+| 拍賣協定分成 `commands`/`events` 兩個 channel       | [ADR-0006](adr/ADR-0006-channel-topology.md)       |
+| 訊息格式維持書中純文字 SOL 格式（非 JSON）          | [ADR-0007](adr/ADR-0007-message-format.md)         |
 
 ## 2. Redis Pub/Sub 沒有 XMPP「連線層級身分」，訊息內容要多帶一個 Bidder 欄位
 
