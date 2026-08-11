@@ -112,7 +112,7 @@ public class FakeAuctionServer {
 
 `SingleMessageListener` 宣告成外部類別 `FakeAuctionServer` 的內部類別（雖然這個例子沒有真的用到 `FakeAuctionServer.this` 存取外部欄位，但語言層級上就是隱含可以這樣做）。要建立實例得先有外部實例：`fakeAuctionServer.new SingleMessageListener()`。
 
-**TS（`test/e2e/FakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
+**TS（`test/e2e/RedisFakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
 
 ### 2.3 `private static` 巢狀類別——封裝實作細節
 
@@ -136,7 +136,7 @@ public class AuctionMessageTranslator implements MessageListener {
 }
 ```
 
-**TS（`server/auctionsniper/mqtt/AuctionMessageTranslator.ts`）：** `AuctionEvent`、`MissingValueException` 都拉成同檔案內**沒有 `export`** 的頂層 class——沒有 `export` 就等於這個模組外部完全 import 不到，達到跟 Java `private static class` 一樣的封裝效果，只是機制從「巢狀 + `private`」變成「模組邊界（沒有 `export`）」。
+**TS（`server/auctionsniper/redis/AuctionMessageTranslator.ts`）：** `AuctionEvent`、`MissingValueException` 都拉成同檔案內**沒有 `export`** 的頂層 class——沒有 `export` 就等於這個模組外部完全 import 不到，達到跟 Java `private static class` 一樣的封裝效果，只是機制從「巢狀 + `private`」變成「模組邊界（沒有 `export`）」。
 
 ## 3. 匿名類別（Anonymous Classes）
 
@@ -154,7 +154,7 @@ private AuctionEventListener chatDisconnectorFor(final AuctionMessageTranslator 
 }
 ```
 
-**TS（`MqttAuction.ts`）：**
+**TS（`RedisAuction.ts`）：**
 
 ```ts
 private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
@@ -168,11 +168,11 @@ private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEve
 
 TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。
 
-方法名稱從 `chatDisconnectorFor` 改成 `channelDisconnectorFor`（`chat` 欄位也改成 `channel`），是這份文件少數**刻意**不逐字沿用 Java 名稱的地方——原因見 [`differences-from-java.md` 第 7 節](differences-from-java.md#7-mqttchannel-要自己過濾-topicsmack-的-chat-天生只收自己的訊息)，`Chat` 這個名字在 MQTT 版底下會誤導讀者以為有 Smack `Chat` 那種協定天生的點對點保證。
+方法名稱從 `chatDisconnectorFor` 改成 `channelDisconnectorFor`（`chat` 欄位也改成 `channel`），是這份文件少數**刻意**不逐字沿用 Java 名稱的地方——原因見 [`differences-from-java.md` 第 7 節](differences-from-java.md#7-redischannel-沿用-node-redis-的-per-channel-callback-機制)，`Chat` 這個名字底下會誤導讀者以為有 Smack `Chat` 那種協定天生的點對點保證。
 
 其他同樣模式的例子（Java 用匿名類別，對應的 TS 檔案改用物件字面量或箭頭函式）：
 
-- `FakeAuctionServer.java` 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { ... })`——這段邏輯本身在 TS 版因為 `MqttConnection.createChannel()` 直接建構 `MqttChannel`（不需要「等對方建立 chat 才能拿到」這個非同步通知），整段被省略，細節見 [`differences-from-java.md` 第 4 節](differences-from-java.md#4-mqttclient-沒有-getuser所以包了一個-mqttconnection)。
+- `FakeAuctionServer.java` 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { ... })`——這段邏輯本身在 TS 版因為 `RedisConnection.createChannel()` 直接建構 `RedisChannel`（不需要「等對方建立 chat 才能拿到」這個非同步通知），整段被省略，細節見 [`differences-from-java.md` 第 4 節](differences-from-java.md#4-redisclienttype-沒有-getuser所以包了一個-redisconnection)。
 - `Main.java` 的 `SwingUtilities.invokeAndWait(new Runnable() { public void run() { ... } })`、`ui.addWindowListener(new WindowAdapter() { ... })`——這兩處都沒有 TS 對應物，因為 `Main.java` 整個檔案的職責（啟動 Swing UI、視窗關閉時斷線）被 Nuxt 的 plugin 生命週期（`server/plugins/init-sniper-launcher.ts`）取代，不是逐行對應的翻譯關係。這裡列出來只是作為「Java 匿名類別 → TS 箭頭函式/物件字面量」這個一般性模式的示範。
 
 ## 4. Checked Exception（受檢例外）
@@ -197,22 +197,22 @@ public static XMPPAuctionHouse connect(String hostname, String username, String 
 
 `connect()` 簽章上的 `throws XMPPAuctionException` 是**呼叫端看得到、編譯器會檢查**的契約——呼叫 `XMPPAuctionHouse.connect(...)` 的地方，不處理這個例外的話根本編譯不過。
 
-**TS（`MqttAuctionHouse.ts`）：**
+**TS（`RedisAuctionHouse.ts`）：**
 
 ```ts
-static async connect(brokerUrl: string, sniperId: Bidder): Promise<MqttAuctionHouse> {
-  const connection = new MqttConnection(brokerUrl);
+static async connect(redisUrl: string, sniperId: string): Promise<RedisAuctionHouse> {
+  const connection = new RedisConnection(redisUrl);
   try {
     await connection.connect();
     connection.login(sniperId);
-    return new MqttAuctionHouse(connection);
+    return new RedisAuctionHouse(connection);
   } catch (cause) {
-    throw new MqttAuctionException(`Could not connect to auction: ${String(cause)}`, cause);
+    throw new RedisAuctionException(`Could not connect to auction: ${String(cause)}`, cause);
   }
 }
 ```
 
-函式內部的 try/catch 包裝邏輯逐行對應，但 `Promise<MqttAuctionHouse>` 這個回傳型別完全沒有「這個函式可能 reject 成 `MqttAuctionException`」的資訊——呼叫端得自己讀程式碼或文件才知道要接。這是 TypeScript/JavaScript 本身的限制，不是這個專案的取捨。
+函式內部的 try/catch 包裝邏輯逐行對應，但 `Promise<RedisAuctionHouse>` 這個回傳型別完全沒有「這個函式可能 reject 成 `RedisAuctionException`」的資訊——呼叫端得自己讀程式碼或文件才知道要接。這是 TypeScript/JavaScript 本身的限制，不是這個專案的取捨。
 
 同樣道理，`AuctionEvent.get(fieldName)` 在 Java 宣告 `throws MissingValueException`（`AuctionMessageTranslator.AuctionEvent`），TS 版的 `get(fieldName)` 就是普通的 `throw new MissingValueException(fieldName)`，簽章上不會出現 `: never` 或任何「這個方法會拋例外」的型別標記。
 
@@ -321,7 +321,7 @@ public static void main(String... args) throws Exception {
 }
 ```
 
-`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；設定值（對應 Java 的命令列參數 `args[ARG_HOSTNAME]` 等）改用環境變數（`MQTT_BROKER_URL`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
+`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；設定值（對應 Java 的命令列參數 `args[ARG_HOSTNAME]` 等）改用環境變數（`REDIS_URL`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
 
 ## 10. Getter 方法 vs 直接公開欄位
 
@@ -339,11 +339,11 @@ public class FakeAuctionServer {
 
 呼叫端要用 `auctionServer.getItemId()`（方法呼叫）。
 
-**TS（`test/e2e/FakeAuctionServer.ts`）：**
+**TS（`test/e2e/RedisFakeAuctionServer.ts`）：**
 
 ```ts
-export class FakeAuctionServer {
-  constructor(public readonly itemId: string) {}
+export class RedisFakeAuctionServer {
+  constructor(public readonly itemId: string) { ... }
 }
 ```
 

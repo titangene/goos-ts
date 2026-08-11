@@ -2,31 +2,9 @@
 
 本專案部署在 [Render](https://render.com/)：
 
-- **Web Service（`goos-ts`）**：跑 Nuxt server（`npm run build` 建置、`node .output/server/index.mjs` 啟動），連線用的是 Redis（見 [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)）。
-- **Web Service（`goos-ts-mosquitto`）**：跑 MQTT broker（Docker 建置，見 [ADR-0004](adr/ADR-0004-mqtt-broker-deployment.md)）——[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md) 改回 Redis 之後，這個服務已經沒有任何程式碼會連它，是孤兒資源，見文件最後「舊有 Mosquitto 資源（待清理）」。
+- **Web Service（`goos-ts`）**：跑 Nuxt server（`npm run build` 建置、`node .output/server/index.mjs` 啟動），連線用的是 Redis（見 [ADR-0002](adr/ADR-0002-transport-selection.md)）。
 
-`goos-ts` 需要連線的是一個 Redis 相容的服務（Render 的 **Key Value** 服務即可，不需要像 Mosquitto 那樣自建 Docker image），選在 Singapore region、同區內可用 internal URL 互連。CD 流程見 `.github/workflows/cd.yml`。
-
-## 建立 Mosquitto Web Service（MQTT 版參考用，`goos-ts` 目前不需要）
-
-以下步驟是 MQTT 版本（`server/auctionsniper/mqtt/*`）部署時的紀錄，[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md) 改回 Redis 之後，`goos-ts` 已不再連線這個服務——保留這節，是為了未來若要重新啟用 MQTT 版本時仍有步驟可查。
-
-Render Dashboard → **New** → **Web Service**：
-
-- **Source Code**：選同一個 GitHub repo
-- **Name**：例如 `goos-ts-mosquitto`
-- **Runtime**：**Docker**（不是 Node）
-- **Branch**：跟 `goos-ts` 一樣，部署用的分支
-- **Region**：Singapore
-- **Root Directory**：`mosquitto`
-- **Dockerfile Path**：`Dockerfile`（相對於上面設定的 Root Directory，實際路徑是 `mosquitto/Dockerfile`）
-- **Docker Build Context Directory**：`.`（同樣相對於 Root Directory，實際路徑是 `mosquitto/`）
-- **Instance Type**：選 **Free**
-- 不要掛載任何 Disk / Persistent Volume（[ADR-0004](adr/ADR-0004-mqtt-broker-deployment.md) Compliance #4，Free 方案本來就不支援）
-
-按 **Deploy Web Service**。建立完成後，該服務的公開網址（例如 `https://<mosquitto-service-name>.onrender.com`）就是 `MQTT_BROKER_URL` 要用的值（協定要換成 `wss://`），下一步會用到。
-
-> **為什麼不是用 Render 私有網路內部 URL？**：原規劃是 Nuxt server 透過私有網路連 Mosquitto 的內部 1883 TCP listener（比照 Redis 時代的 internal URL 模式），但 Render 官方文件寫明 **Free web service 可以發起私有網路連線、但無法接收**——Mosquitto 服務本身是 Free 方案，完全無法接收私有網路的入站連線。因此 Nuxt server 改成跟 `fake-auction.ts --remote` 一樣，走 Mosquitto 對外公開的 `wss://` listener。細節見 [ADR-0004](adr/ADR-0004-mqtt-broker-deployment.md)「部署後修正」一節。
+`goos-ts` 需要連線的是一個 Redis 相容的服務（Render 的 **Key Value** 服務），選在 Singapore region、同區內可用 internal URL 互連。CD 流程見 `.github/workflows/cd.yml`。
 
 ## 建立 Nuxt Web Service
 
@@ -58,8 +36,6 @@ Render Dashboard → **New** → **Web Service**：
 Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到該分支都會自動觸發部署。但部署現在要交給 `.github/workflows/cd.yml`（等 `ci.yml` 跑完且成功才部署，見下方「CD 流程」），所以要把 Render 內建的 Auto-Deploy 關掉，避免兩邊搶著部署：
 
 進到該 Web Service 頁面 → **Settings** → **Deploy** 區塊 → **Auto-Deploy** 旁的 **Edit** → 選 **Off** → **Save changes**。
-
-`goos-ts-mosquitto` 目前維持預設的 `On Commit`，沒有另外設 CD——它很少變動，直接讓 Render 對 push 自動重建即可，跟 `goos-ts` 用同一個 `cd.yml` 反而多一道不必要的複雜度。
 
 ### CD 流程
 
@@ -97,17 +73,6 @@ npm run fake-auction:remote -- item-54321
 
 ## 重置已部署環境的狀態
 
-拍賣/sniper 的狀態（誰加入了哪些拍賣、目前 Winning/Losing 等）是存在 Nuxt server 那個 Node process 的記憶體裡（見 `server/utils/sniper-registry.ts` 的 `portfolio`/`tableModel`），不是存在 Mosquitto（Mosquitto 純粹是訊息 broker，沒有應用層狀態）。所以只要 process 沒重啟，狀態就會一直累積，畫面上的表格也不會清空。
+拍賣/sniper 的狀態（誰加入了哪些拍賣、目前 Winning/Losing 等）是存在 Nuxt server 那個 Node process 的記憶體裡（見 `server/utils/sniper-registry.ts` 的 `portfolio`/`tableModel`），不是存在 Redis（Redis 純粹是訊息 broker，沒有應用層狀態）。所以只要 process 沒重啟，狀態就會一直累積，畫面上的表格也不會清空。
 
 要重置，直接在 Render Dashboard 重啟 `goos-ts` 這個 Web Service 的 process 即可：進到該服務頁面，右上角 **Manual Deploy** 下拉選單裡選 **Restart Service**（不會重新 build，幾秒內就重啟完成）。
-
-## 舊有 Mosquitto 資源（待清理）
-
-[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md) 改回 Redis Pub/Sub 之後，`server/auctionsniper/mqtt/*` 雖然還留在 repo 中（未刪除，見該 ADR Compliance），但已經沒有任何 app 程式碼會連線 Mosquitto。若你先前已依本文件建立過 `goos-ts-mosquitto` 這個 Web Service，它現在是孤兒資源：
-
-- **`goos-ts-mosquitto` Web Service**：已經沒有任何程式碼會連它，可以到該服務頁面 → **Settings** → 捲到最下面刪除；若之後想重新啟用 MQTT 版本，「建立 Mosquitto Web Service」一節仍保留步驟可查。
-- **`goos-ts` Web Service 的 `MQTT_BROKER_URL` 環境變數**（若先前有設定）：已經沒有程式碼讀它，留著不影響運作，但可以到 **Environment** 頁面一併刪掉。
-
-若你先前已依更早版本的本文件刪除過 `goos-ts-redis`（Key Value 服務），現在需要重新建立一個 Redis 相容的 Key Value 服務，並在 `goos-ts` 設定 `REDIS_URL` 指向它（見上面「建立 Nuxt Web Service」）。
-
-刪除/重建雲端資源都故意留給你手動確認、手動執行。

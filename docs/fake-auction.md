@@ -53,7 +53,3 @@ quit
 ```
 
 想同時跑 `item-65432` 那組流程，開另一個終端機分頁執行 `npm run fake-auction -- item-65432`，瀏覽器那邊也輸入對應的 item id 加入即可，兩組可以同時跑，互不影響。
-
-## MQTT 版工具
-
-`server/auctionsniper/mqtt/*`（見 [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)）目前仍保留在 repo 中，但沒有被 app 使用。對應的互動式假拍賣現場是 `tools/fake-auction-mqtt.ts`（`npm run fake-auction:mqtt -- <itemId>`），用法跟上面完全一樣，只是連的是 Mosquitto（見 `mosquitto/start.sh`）而不是 Redis。

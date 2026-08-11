@@ -1,19 +1,19 @@
 # TS 版與 Java 版的刻意差異
 
-`server/auctionsniper/mqtt/*` 已逐檔對照 `goos-code` 的 `src/auctionsniper/xmpp/*.java`，命名、結構盡量貼齊。這份文件記錄**刻意**跟 Java 版不同的地方——每一項都有明確理由，不是漏改、也不是還沒對齊。決策依據見 [`docs/adr/`](adr/)，這裡只整理「差異本身是什麼、為什麼非改不可」。
+`server/auctionsniper/redis/*` 已逐檔對照 `goos-code` 的 `src/auctionsniper/xmpp/*.java`，命名、結構盡量貼齊。這份文件記錄**刻意**跟 Java 版不同的地方——每一項都有明確理由，不是漏改、也不是還沒對齊。決策依據見 [`docs/adr/`](adr/)，這裡只整理「差異本身是什麼、為什麼非改不可」。
 
 跟 [`java-to-typescript-language-notes.md`](java-to-typescript-language-notes.md) 的分工：這份文件講「拍賣協定/domain 層為什麼要這樣改」，那份文件講「Java 語言本身的機制（enum 多型、巢狀類別、checked exception…）TypeScript 沒有對應物，所以程式碼結構才會不一樣」。
 
 ## 1. 協定與架構層級（見對應 ADR）
 
-| 差異                                                | 對應 ADR                                           |
-| --------------------------------------------------- | -------------------------------------------------- |
-| 拍賣協定改用 MQTT（Mosquitto），不是 XMPP           | [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)    |
-| 身分識別改用 username-only 白名單，不做真實密碼驗證 | [ADR-0003](adr/ADR-0003-username-only-identity.md) |
-| 拍賣協定分成 `commands`/`events` 兩個 topic         | [ADR-0006](adr/ADR-0006-mqtt-topic-topology.md)    |
-| 訊息格式維持書中純文字 SOL 格式（非 JSON）          | [ADR-0007](adr/ADR-0007-message-format.md)         |
+| 差異                                                 | 對應 ADR                                           |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| 拍賣協定改用 Redis Pub/Sub，不是 XMPP                | [ADR-0002](adr/ADR-0002-transport-selection.md)     |
+| 身分識別改用 username-only 白名單，不做真實密碼驗證  | [ADR-0003](adr/ADR-0003-username-only-identity.md)  |
+| 拍賣協定分成 `commands`/`events` 兩個 channel        | [ADR-0006](adr/ADR-0006-channel-topology.md)     |
+| 訊息格式維持書中純文字 SOL 格式（非 JSON）           | [ADR-0007](adr/ADR-0007-message-format.md)          |
 
-## 2. MQTT 沒有 XMPP「連線層級身分」，訊息內容要多帶一個 Bidder 欄位
+## 2. Redis Pub/Sub 沒有 XMPP「連線層級身分」，訊息內容要多帶一個 Bidder 欄位
 
 - XMPP 的 `XMPPConnection` 物件本身知道「我是誰」（`connection.getUser()`），對方也能從 `chat.getParticipant()` 直接查到「這則訊息是誰送的」——身分完全在**連線層級**，訊息內容不需要帶任何身分資訊。
 - 因此 `XMPPAuction.JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 完全沒有 Bidder 欄位：
@@ -21,15 +21,15 @@
   public static final String JOIN_COMMAND_FORMAT = "SOLVersion: 1.1; Command: JOIN;";
   public static final String BID_COMMAND_FORMAT = "SOLVersion: 1.1; Command: BID; Price: %d;";
   ```
-- MQTT client 沒有任何等價於 `connection.getUser()`/`chat.getParticipant()` 的機制——同一個 topic 底下，所有訂閱者收到的訊息看起來完全一樣，broker 不會告訴你「這則訊息是誰發的」。
+- Redis Pub/Sub 沒有任何等價於 `connection.getUser()`/`chat.getParticipant()` 的機制——同一個 channel 底下，所有訂閱者收到的訊息看起來完全一樣，broker 不會告訴你「這則訊息是誰發的」。
 - `Message.ts` 的 `JoinMessage`/`BidMessage` 因此都多了一個 `Bidder` 欄位，`encode()` 出來的訊息長這樣：
   ```
   SOLVersion: 1.1; Command: JOIN; Bidder: sniper;
   SOLVersion: 1.1; Command: BID; Price: 95; Bidder: sniper;
   ```
-- 這個差異會連帶影響到第 3 節提到的 `FakeAuctionServer.ts`。
+- 這個差異會連帶影響到第 3 節提到的 `RedisFakeAuctionServer.ts`。
 
-## 3. `FakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
+## 3. `RedisFakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
 
 `FakeAuctionServer.java` 從不解析收到的 JOIN/BID 訊息內容，靠的是**兩件事分開檢查**：
 
@@ -44,10 +44,10 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 ```
 
 - 訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查——`JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 是固定字串/格式樣板，跟 sniperId 無關，因為身分已經由連線層級保證。
-- 因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `MqttAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數。
-- 所以 `test/e2e/FakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`/`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
+- 因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `RedisAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數。
+- 所以 `test/e2e/RedisFakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`/`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
 
-## 4. `MqttClient` 沒有 `getUser()`，所以包了一個 `MqttConnection`
+## 4. `RedisClientType` 沒有 `getUser()`，所以包了一個 `RedisConnection`
 
 ### `XMPPAuctionHouse` 不存身分，臨時查
 
@@ -71,12 +71,12 @@ private AuctionMessageTranslator translatorFor(XMPPConnection connection) {
 }
 ```
 
-### `MqttConnection` 包住 `MqttClient`
+### `RedisConnection` 包住兩條 Redis 連線
 
-`MqttClient`（mqtt.js 的原生型別）沒有 `getUser()`、也沒有 `connect()`/`login()` 這種分階段的連線流程——這些能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `MqttConnection.ts`，包住 `MqttClient`，補上 `connect()`/`login()`/`getUser()`/`disconnect()`，讓 `MqttAuctionHouse.connect()` 可以用跟 Java 幾乎一樣的順序操作：
+`node-redis` 的 `RedisClientType` 沒有 `getUser()`、也沒有 `connect()`/`login()` 這種分階段的連線流程——這些能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `RedisConnection.ts`，補上 `connect()`/`login()`/`getUser()`/`disconnect()`，讓 `RedisAuctionHouse.connect()` 可以用跟 Java 幾乎一樣的順序操作：
 
 ```ts
-const connection = new MqttConnection(brokerUrl);
+const connection = new RedisConnection(redisUrl);
 await connection.connect();
 connection.login(sniperId);
 ```
@@ -89,33 +89,69 @@ connection.connect();
 connection.login(username, password, AUCTION_RESOURCE);
 ```
 
-`login()` 找不到 username 時只拋一般的 `Error`（對應 Smack `connection.login()` 拋出的 `XMPPException`，屬於連線失敗的其中一種），不是直接拋 `MqttAuctionException`——包裝成 `MqttAuctionException` 是 `MqttAuctionHouse.connect()` 外層 try/catch 的責任，這點也跟 Java 的兩層結構一致（見 [ADR-0003](adr/ADR-0003-username-only-identity.md) Compliance #3）。
+`login()` 找不到 username 時只拋一般的 `Error`（對應 Smack `connection.login()` 拋出的 `XMPPException`，屬於連線失敗的其中一種），不是直接拋 `RedisAuctionException`——包裝成 `RedisAuctionException` 是 `RedisAuctionHouse.connect()` 外層 try/catch 的責任，這點也跟 Java 的兩層結構一致（見 [ADR-0003](adr/ADR-0003-username-only-identity.md) Compliance #3）。
 
-有了這層包裝，`MqttAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
+`RedisConnection` 比 XMPP 版多一層 Java 完全沒有對應物的結構：Redis 協定規定**同一條連線一旦呼叫 `SUBSCRIBE`，就進入訂閱模式，不能再用同一條連線發 `PUBLISH` 等其他命令**——這是 Redis 協定本身的限制，不是 TS 版自己加的邏輯。`RedisConnection` 因此持有兩個 client（`publisher`/`subscriber`），`connect()`/`disconnect()` 都用 `Promise.all` 同時處理兩條連線：
 
-### `FakeAuctionServer.ts` 也共用 `MqttConnection`，但反向建立 chat
+```ts
+export class RedisConnection {
+  readonly publisher: RedisClientType;
+  readonly subscriber: RedisClientType;
 
-`MqttConnection` 也不只服務 sniper 端：
+  async connect(): Promise<void> {
+    await Promise.all([this.publisher.connect(), this.subscriber.connect()]);
+  }
 
-- TS 版 `test/e2e/FakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。
+  async disconnect(): Promise<void> {
+    await Promise.all([this.publisher.quit(), this.subscriber.quit()]);
+  }
+}
+```
+
+`XMPPConnection`（單一連線可同時收發）不需要這個分裂，這是 Redis Pub/Sub 協定設計本身要求的，跟「貼近書中精神」的取捨無關。
+
+有了 `RedisConnection` 這層包裝，`RedisAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
+
+### `RedisFakeAuctionServer.ts` 也共用 `RedisConnection`，但反向建立 channel
+
+`RedisConnection` 也不只服務 sniper 端：
+
+- TS 版 `test/e2e/RedisFakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。
 - 但 Java 版建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`。
-- TS 版對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChannel`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`/`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChannel()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
-- 因此 `MqttConnection` 沒有另外提供反向的 `createChannel()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
+- TS 版對應的作法是直接用 `connection.publisher`/`connection.subscriber` 建構方向相反的 `RedisChannel`（publish 用 events channel、subscribe 用 commands channel，跟 `RedisAuction` 的 `commandsChannel`/`eventsChannel` 方向正好相反），因為 node-redis 沒有 `ChatManager`/`addChatListener` 這種「被動等對方建立 chat」的機制，且 `RedisConnection.createChannel()` 內建的 channel 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
+- 因此 `RedisConnection` 沒有另外提供反向的 `createChannel()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
 
 ## 5. 非同步 API：`connect()`/`disconnect()` 的簽章差異
 
-- `XMPPAuctionHouse.disconnect()` 是同步的 `void` 方法；`MqttAuctionHouse.disconnect()` 是 `async`，回傳 `Promise<void>`——因為 Node.js 的 I/O（包含 mqtt.js 的斷線）本來就是非同步的，Smack 提供同步 API，這點沒有辦法讓 TS 版變成同步，是平台本身的差異。`connection.connect()`/`connection.login()` 同理。
-- `AuctionMessageTranslator.processMessage(Chat chat, Message message)` 接收 Smack 的 `Message` 物件，內部呼叫 `message.getBody()` 取出字串；TS 版 `processMessage(channel: MqttChannel, messageBody: string)` 的 `channel` 參數維持（跟 Java 一樣沒被用到），但第二個參數直接是字串——因為 mqtt.js 沒有對應 Smack `Message` 的物件模型，拿到的就是原始 payload，沒有 `.getBody()` 這一步可以省。
+- `XMPPAuctionHouse.disconnect()` 是同步的 `void` 方法；`RedisAuctionHouse.disconnect()` 是 `async`，回傳 `Promise<void>`——因為 Node.js 的 I/O（包含 node-redis 的斷線）本來就是非同步的，Smack 提供同步 API，這點沒有辦法讓 TS 版變成同步，是平台本身的差異。`connection.connect()`/`connection.login()` 同理。
+- `AuctionMessageTranslator.processMessage(Chat chat, Message message)` 接收 Smack 的 `Message` 物件，內部呼叫 `message.getBody()` 取出字串；TS 版 `processMessage(channel: RedisChannel, messageBody: string)` 的 `channel` 參數維持（跟 Java 一樣沒被用到），但第二個參數直接是字串——因為 node-redis 沒有對應 Smack `Message` 的物件模型，拿到的就是原始 payload，沒有 `.getBody()` 這一步可以省。
 
-## 6. 循序保證要靠明確設定 QoS，不是天生就有
+## 6. 循序保證由單一 TCP 連線天生保證，不需要額外設定
 
-書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChannel`/`FakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
+書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。
 
-## 7. `MqttChannel` 要自己過濾 topic，Smack 的 `Chat` 天生只收自己的訊息
+Redis Pub/Sub 跟 XMPP 一樣：`publisher`/`subscriber` 各自透過**單一 TCP 連線**跟 Redis server 通訊，同一條連線上的訊息順序天生保證，`RedisChannel.sendMessage()`/訂閱都不需要任何額外設定就能重現書中的循序保證（[ADR-0002](adr/ADR-0002-transport-selection.md) Compliance #3）。這正是 [ADR-0002](adr/ADR-0002-transport-selection.md) 選 Redis Pub/Sub、不選 MQTT 的理由之一——MQTT 沒有這個天生保證，需要額外設定 QoS 才能重現同等保證。
 
-Smack 的 `Chat` 物件，`addMessageListener()` 註冊的 listener 天生只會收到「這個 chat」的訊息——因為每個 `Chat` 對應到一個特定的 JID 對話。mqtt.js 的 `client.on('message', ...)` 是**整個 client 共用**的單一事件，訂閱多個 topic 時，所有 topic 的訊息都會觸發同一個 handler。`MqttChannel` 的建構子因此得自己判斷 `topic === this.subscribeTopic` 才呼叫 `receive()`，這段過濾邏輯在 Java 版完全不需要，是 mqtt.js API 設計本身的差異。
+## 7. `RedisChannel` 沿用 node-redis 的 per-channel callback 機制
 
-`MqttChannel` 這層抽象要對齊的是 `XMPPAuction`/`MqttAuction` 呼叫端的介面形狀（`sendMessage(...)`、`removeMessageListener(listener)`），不是底層 wire 語意本身的點對點保證：`events` topic 對單一 sniper 而言，其實是廣播頻道的其中一個訂閱者（[ADR-0006](adr/ADR-0006-mqtt-topic-topology.md) 的 `commands`/`events` topic 拆分加上本節的過濾邏輯工程出來的效果），跟 Smack `Chat` 協定天生保證的專屬點對點通道性質不同——這也是為什麼這個類別沒有沿用 Java 的 `Chat` 命名，改叫 `MqttChannel`，見[第 8 節](#8-命名上刻意不逐字沿用-java-的地方)。
+Smack 的 `Chat` 物件，`addMessageListener()` 註冊的 listener 天生只會收到「這個 chat」的訊息——因為每個 `Chat` 對應到一個特定的 JID 對話。`node-redis` 的 `subscriber.subscribe(channel, listener)` 剛好是同樣的模型：**每次訂閱都拿到專屬的 callback**，`RedisChannel` 因此不需要自己判斷「這則訊息是不是我訂閱的那個 channel」，直接把 subscribe 拿到的訊息轉呼叫 `listener.processMessage(...)` 即可：
+
+```ts
+// RedisChannel.ts
+constructor(
+  private readonly publisher: RedisClientType,
+  private readonly subscriber: RedisClientType,
+  private readonly publishChannel: string,
+  private readonly subscribeChannel: string,
+  private readonly listener: MessageListener,
+) {
+  void this.subscriber.subscribe(this.subscribeChannel, (rawMessage) =>
+    this.listener.processMessage(this, rawMessage),
+  );
+}
+```
+
+`RedisChannel` 這層抽象要對齊的是 `XMPPAuction`/`RedisAuction` 呼叫端的介面形狀（`sendMessage(...)`、`removeMessageListener(listener)`），不是底層 wire 語意本身的點對點保證：`events` channel 對單一 sniper 而言，其實是廣播頻道的其中一個訂閱者（[ADR-0006](adr/ADR-0006-channel-topology.md) 的 `commands`/`events` channel 拆分工程出來的效果），跟 Smack `Chat` 協定天生保證的專屬點對點通道性質不同——即使 node-redis 的 API 形狀比其他 pub/sub client 更接近 Smack 的 per-`Chat` 模型（不需要手動過濾），底層仍然是「同一個 channel 底下所有訂閱者都收到同一份訊息」的廣播語意，這也是為什麼這個類別沒有沿用 Java 的 `Chat` 命名，改叫 `RedisChannel`，見[第 8 節](#8-命名上刻意不逐字沿用-java-的地方)。
 
 ## 8. 命名上刻意不逐字沿用 Java 的地方
 
@@ -127,19 +163,19 @@ public interface XMPPFailureReporter {
 }
 ```
 
-- 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`MqttFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `MqttAuctionHouse`/`MqttAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
+- 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`RedisFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `RedisAuctionHouse`/`RedisAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
 
-### `Chat` 改名叫 `MqttChannel`
+### `Chat` 改名叫 `RedisChannel`
 
-Java 的 `org.jivesoftware.smack.Chat`、`XMPPAuction.chat` 欄位、`chatDisconnectorFor()` 方法，這幾個命名 TS 版沒有逐字沿用——對應的 `MqttChat`/`chat`/`chatDisconnectorFor()` 已改名為 `MqttChannel`/`channel`/`channelDisconnectorFor()`。`Chat` 在 Smack 裡是協定天生保證的點對點通道，`MqttChannel` 底下其實是一個私有的 publish topic 加一個廣播的 subscribe topic（見[第 7 節](#7-mqttchannel-要自己過濾-topicsmack-的-chat-天生只收自己的訊息)），沿用 `Chat` 這個名字會讓讀者誤以為兩者有一樣的協定層保證，屬於 Clean Code「避免誤導性命名」（Avoid Disinformation）要處理的情況，跟上面 `sniperId`/`auctionId` 那個例子屬於同一類——書中命名不能直接沿用時，準則 2（貼近書中精神）要對齊的是介面形狀跟呼叫端寫法（`XMPPAuction.java` 圍繞一個 `Chat` collaborator 設計，`MqttAuction.ts` 也圍繞一個 `MqttChannel` collaborator 設計，兩者結構一致），不是連已經不成立的命名語意也要照搬。
+Java 的 `org.jivesoftware.smack.Chat`、`XMPPAuction.chat` 欄位、`chatDisconnectorFor()` 方法，這幾個命名 TS 版沒有逐字沿用——對應的 `chat`/`chatDisconnectorFor()` 已改名為 `channel`/`channelDisconnectorFor()`。`Chat` 在 Smack 裡是協定天生保證的點對點通道，`RedisChannel` 底下其實是一個私有的 publish channel 加一個廣播的 subscribe channel（見[第 7 節](#7-redischannel-沿用-node-redis-的-per-channel-callback-機制)），沿用 `Chat` 這個名字會讓讀者誤以為兩者有一樣的協定層保證，屬於 Clean Code「避免誤導性命名」（Avoid Disinformation）要處理的情況，跟上面 `sniperId`/`auctionId` 那個例子屬於同一類——書中命名不能直接沿用時，準則 2（貼近書中精神）要對齊的是介面形狀跟呼叫端寫法（`XMPPAuction.java` 圍繞一個 `Chat` collaborator 設計，`RedisAuction.ts` 也圍繞一個 `RedisChannel` collaborator 設計，兩者結構一致），不是連已經不成立的命名語意也要照搬。
 
 ### `Message.ts` 的訊息內容欄位跟 `sniperId` 都用 `string`，不另外宣告型別
 
-`Message.ts` 的 `JoinMessage.bidder`/`PriceMessage.bidder`/`BidMessage.bidder`（訊息裡記載的出價者，可能是目前這個 sniper 自己，也可能是別人）跟 `sniperId`（我自己是誰，出現在 `MqttAuction`、`MqttAuctionHouse.connect()`、`MqttConnection.login()`/`getUser()`、`AuctionMessageTranslator` 等處）是兩個不同語意的概念，但兩邊都直接用 `string`，不另外用型別系統區分——因為 TypeScript 是結構型別，就算宣告一個 `type Bidder = string` 這樣的別名，也只是 `string` 的別名，兩者可以無條件互相賦值，編譯器不會攔任何誤用，型別別名在這裡不會提供實質的型別安全，只會是純語意提示。跟 Java 原始碼一致（Java 兩種概念也都只用 `String`），語意上的差異只靠變數命名（`bidder` vs `sniperId`）跟註解自己說清楚。
+`Message.ts` 的 `JoinMessage.bidder`/`PriceMessage.bidder`/`BidMessage.bidder`（訊息裡記載的出價者，可能是目前這個 sniper 自己，也可能是別人）跟 `sniperId`（我自己是誰，出現在 `RedisAuction`、`RedisAuctionHouse.connect()`、`RedisConnection.login()`/`getUser()`、`AuctionMessageTranslator` 等處）是兩個不同語意的概念，但兩邊都直接用 `string`，不另外用型別系統區分——因為 TypeScript 是結構型別，就算宣告一個 `type Bidder = string` 這樣的別名，也只是 `string` 的別名，兩者可以無條件互相賦值，編譯器不會攔任何誤用，型別別名在這裡不會提供實質的型別安全，只會是純語意提示。跟 Java 原始碼一致（Java 兩種概念也都只用 `String`），語意上的差異只靠變數命名（`bidder` vs `sniperId`）跟註解自己說清楚。
 
 ## 9. Domain/util 層的框架轉換差異
 
-以下是 `server/auctionsniper/*.ts`（非 mqtt 部分，即 `AuctionSniper`、`SniperSnapshot`、`SniperState`、`SnipersTableModel`、`util/Announcer` 等對應書中 `src/auctionsniper/*.java` 核心邏輯）跟 Java 版逐檔比對後，確認屬於**必要**的框架/語言轉換差異，不是漏改：
+以下是 `server/auctionsniper/*.ts`（不含 `redis/` 子目錄，即 `AuctionSniper`、`SniperSnapshot`、`SniperState`、`SnipersTableModel`、`util/Announcer` 等對應書中 `src/auctionsniper/*.java` 核心邏輯）跟 Java 版逐檔比對後，確認屬於**必要**的框架/語言轉換差異，不是漏改：
 
 ### `equals()`/`hashCode()`/`toString()` 省略
 
@@ -147,7 +183,7 @@ Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `Eq
 
 ### `SniperState.whenAuctionClosed()` 的多型改用查表
 
-Java `SniperState` 是 enum，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`、其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
+Java `SniperState` 是 enum，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`，其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
 
 `SniperState` 的 enum 成員刻意**不帶字串值**（`JOINING`、`BIDDING`…直接用 TS 自動遞增的數字，等同 Java 的 `ordinal()`），跟 Java 一樣不持有任何顯示文字——顯示文字統一由 `SnipersTableModel.STATUS_TEXT`/`textFor()` 負責（見下面 `Column`/`SnipersTableModel` 那節），不是這裡的責任。
 
@@ -184,7 +220,7 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
   const portfolio = new SniperPortfolio();
   ...
   export async function initSniperLauncher(sniperId: string): Promise<void> {
-    const auctionHouse = await MqttAuctionHouse.connect(brokerUrl, sniperId);
+    const auctionHouse = await RedisAuctionHouse.connect(redisUrl, sniperId);
     sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
   }
   export function joinAuction(itemId: string, stopPrice: number): void {
@@ -214,11 +250,11 @@ Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才
 
 ## 10. 測試檔案跟 Java 版刻意不一致的地方
 
-`test/unit/**`（非 mqtt 部分）已逐檔對照 `goos-code` 的 `test/unit/test/auctionsniper/**`，測項數量、測項涵蓋的情境、測項宣告順序都已對齊到跟 Java 版一致（例如 `AuctionSniper.test.ts` 對照 `AuctionSniperTest.java`、`SnipersTableModel.test.ts` 對照 `SnipersTableModelTest.java`）。以下是review 後確認**必要**保留、不會也不需要對齊的差異：
+`test/unit/**`（不含 `redis/` 子目錄）已逐檔對照 `goos-code` 的 `test/unit/test/auctionsniper/**`，測項數量、測項涵蓋的情境、測項宣告順序都已對齊到跟 Java 版一致（例如 `AuctionSniper.test.ts` 對照 `AuctionSniperTest.java`、`SnipersTableModel.test.ts` 對照 `SnipersTableModelTest.java`）。以下是review 後確認**必要**保留、不會也不需要對齊的差異：
 
 - **測試框架語法**：Java 用 JUnit 4 的 `@Test public void methodName()`（方法名即測項描述，駝峰命名），TS 用 Vitest 的 `it('描述文字', () => {...})`（描述文字用一般英文句子）。這是框架慣例差異，測項對應關係已在各測試檔案逐一核對，順序、數量、涵蓋情境都有比對，只是描述的書寫方式不同。
 - **Mock 機制**：Java 用 jMock 2（`Mockery`、`Expectations`、`context.checking(...)`、`States`/`Sequence` 表達呼叫順序與狀態機限制），TS 用 Vitest 內建的 `vi.fn()`/`toHaveBeenCalledWith()`/`toHaveBeenNthCalledWith()`。兩者能表達的斷言能力大致對等（`toHaveBeenNthCalledWith` 對應 jMock 的 `inSequence`），但寫法不同，不強求逐字翻譯 jMock 的 `Expectations` DSL。
 - **Matcher 語法**：Java 用 Hamcrest（`equalTo`、`samePropertyValuesAs`、自訂 `FeatureMatcher`），TS 用 Vitest 內建的 `expect(...).toEqual(...)`/`expect.objectContaining(...)`。`samePropertyValuesAs`（比對物件所有屬性值，不要求同一個 class）對應 `toEqual`；Java 自訂的 `FeatureMatcher`（例如 `AuctionSniperTest.aSniperThatIs(state)`）在 TS 版用 `expect.objectContaining({ state })` 這種內建局部比對取代，不需要另外寫一個 matcher class。
 - **例外斷言**：Java 用 `@Test(expected = Defect.class)` annotation 屬性宣告預期例外；TS 用 `expect(() => ...).toThrow(Defect)`。兩者都明確指定例外的 class/類型，斷言強度對等。
 - **helper 函式的宣告位置**：Java 的私有 helper 方法（`AuctionMessageTranslatorTest.expectFailureWithMessage()`、`SnipersTableModelTest.assertRowMatchesSnapshot()`/`cellValue()`、`AuctionSniperEndToEndTest.waitForAnotherAuctionEvent()` 等）都宣告在**所有 `@Test` 方法之後**。對應的 TS 測試檔案已全部核對並改成同樣的順序（`describe()`/`test.describe()` 裡的 `it`/`test` 全部排在前面，helper function 放在最後），不是宣告在檔案開頭——JS/TS 的 function 宣告本來就會 hoisting，所以放在檔案結尾不影響 helper 在測試中被呼叫。
-- **`uniqueItemId()` 沒有 Java 對應物**：`test/integration/mqtt/MqttAuctionHouse.test.ts` 用 `uniqueItemId()` 幫每個測試產生獨一無二的 item id，避免多次測試執行之間互相污染（因為這一層是接**真實 Mosquitto**，topic 名稱如果撞到前一次測試殘留的訂閱/訊息會誤判）。Java 的 `XMPPAuctionHouseTest.java` 直接用固定字串 `"item-54321"`，沒有這層考量——推測是 Openfire 測試環境每次都是乾淨重來，不會有殘留狀態跨測試污染的問題。
+- **`uniqueItemId()` 沒有 Java 對應物**：`test/integration/redis/RedisAuctionHouse.test.ts` 用 `uniqueItemId()` 幫每個測試產生獨一無二的 item id，避免多次測試執行之間互相污染（因為這一層是接**真實 Redis**，channel 名稱如果撞到前一次測試殘留的訂閱/訊息會誤判）。Java 的 `XMPPAuctionHouseTest.java` 直接用固定字串 `"item-54321"`，沒有這層考量——推測是 Openfire 測試環境每次都是乾淨重來，不會有殘留狀態跨測試污染的問題。
