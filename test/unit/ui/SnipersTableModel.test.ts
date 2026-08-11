@@ -10,27 +10,6 @@ import { Item } from '../../../server/auctionsniper/UserRequestListener.ts';
 
 const ITEM_ID = 'item 0';
 
-function stubAuction(): Auction {
-  return { bid: vi.fn(), join: vi.fn(), addAuctionEventListener: vi.fn() };
-}
-
-function cellValue(model: SnipersTableModel, rowIndex: number, column: Column): string | number {
-  return model.getValueAt(rowIndex, Column.values.indexOf(column));
-}
-
-function assertRowMatchesSnapshot(
-  model: SnipersTableModel,
-  row: number,
-  snapshot: SniperSnapshot,
-): void {
-  expect(cellValue(model, row, Column.ITEM_IDENTIFIER)).toBe(snapshot.itemId);
-  expect(cellValue(model, row, Column.LAST_PRICE)).toBe(snapshot.lastPrice);
-  expect(cellValue(model, row, Column.LAST_BID)).toBe(snapshot.lastBid);
-  expect(cellValue(model, row, Column.SNIPER_STATE)).toBe(
-    SnipersTableModel.textFor(snapshot.state),
-  );
-}
-
 describe('the snipers table model', () => {
   it('has enough columns', () => {
     const model = new SnipersTableModel();
@@ -116,3 +95,26 @@ describe('the snipers table model', () => {
     ).toThrow(Defect);
   });
 });
+
+function assertRowMatchesSnapshot(
+  model: SnipersTableModel,
+  row: number,
+  snapshot: SniperSnapshot,
+): void {
+  expect(cellValue(model, row, Column.ITEM_IDENTIFIER)).toBe(snapshot.itemId);
+  expect(cellValue(model, row, Column.LAST_PRICE)).toBe(snapshot.lastPrice);
+  expect(cellValue(model, row, Column.LAST_BID)).toBe(snapshot.lastBid);
+  expect(cellValue(model, row, Column.SNIPER_STATE)).toBe(
+    SnipersTableModel.textFor(snapshot.state),
+  );
+}
+
+function cellValue(model: SnipersTableModel, rowIndex: number, column: Column): string | number {
+  return model.getValueAt(rowIndex, Column.values.indexOf(column));
+}
+
+// Java 版直接傳 null 給 AuctionSniper 的 Auction 參數（測試中從未真正用到），
+// TS 型別系統不允許這樣做，補一個 stub——沒有對應的 Java helper。
+function stubAuction(): Auction {
+  return { bid: vi.fn(), join: vi.fn(), addAuctionEventListener: vi.fn() };
+}

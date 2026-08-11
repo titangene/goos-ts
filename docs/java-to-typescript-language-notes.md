@@ -321,11 +321,67 @@ public static void main(String... args) throws Exception {
 
 `goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；設定值（對應 Java 的命令列參數 `args[ARG_HOSTNAME]` 等）改用環境變數（`MQTT_BROKER_URL`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
 
-## 10. `@Override` 註解
+## 10. Getter 方法 vs 直接公開欄位
+
+Java 慣用手法是把欄位宣告成 `private`，另外提供 `public` 的 getter 方法存取——即使欄位值建構後就不會再變。這個專案的 domain 類別（`SniperSnapshot`、`UserRequestListener.Item`）其實大多直接用 `public final` 欄位，沒有走 getter，但測試用的 `FakeAuctionServer.java` 用了這個模式：
+
+```java
+public class FakeAuctionServer {
+  private final String itemId;
+  ...
+  public String getItemId() {
+    return itemId;
+  }
+}
+```
+
+呼叫端要用 `auctionServer.getItemId()`（方法呼叫）。
+
+**TS（`test/e2e/FakeAuctionServer.ts`）：**
+
+```ts
+export class FakeAuctionServer {
+  constructor(public readonly itemId: string) {}
+}
+```
+
+呼叫端對應改成 `auctionServer.itemId`（直接存取欄位，沒有 `()`）——TypeScript 用建構子參數屬性（constructor parameter property）`public readonly` 直接把參數宣告成一個唯讀公開欄位，不需要另外寫 getter 方法，因為 TS 沒有 Java 那種「即使不可變也要包一層方法」的封裝慣例，唯讀公開欄位本身就已經表達了「外部只能讀、不能寫」。
+
+## 11. 執行緒（Thread）——兩種不同用途
+
+Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版都沒有對應物，但原因不一樣：
+
+- **`SwingThreadSniperListener`**：把通知轉派到 Swing 的 Event Dispatch Thread，見 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)。
+- **`test/end-to-end/ApplicationRunner.java` 的 `startSniper()`**：在**背景執行緒**啟動整個應用程式（`Main.main(...)`），讓測試主執行緒可以繼續往下執行、用 WindowLicker 的 `AWTEventQueueProber` 輪詢等待 UI 準備好：
+
+  ```java
+  private void startSniper() {
+    logDriver.clearLog();
+    Thread thread = new Thread("Test Application") {
+      @Override public void run() {
+        try {
+          Main.main(XMPP_HOSTNAME, SNIPER_ID, SNIPER_PASSWORD);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    };
+    thread.setDaemon(true);
+    thread.start();
+    ...
+    driver = new AuctionSniperDriver(1000);
+    driver.hasTitle(MainWindow.APPLICATION_TITLE);
+    driver.hasColumnTitles();
+  }
+  ```
+
+  `goos-ts` 的對應方法 `ApplicationRunner.ts` 的 `startSniper()` 完全不需要背景執行緒：Playwright 的 `page.goto('/')`（`AuctionSniperDriver.goto()`）本身就是非同步、不會阻塞——瀏覽器頁面載入跟測試程式碼**本來就是兩個獨立的執行環境**（頁面在瀏覽器 process 裡跑，測試程式碼在 Node process 裡跑），不需要像 Java 那樣手動開一個執行緒把應用程式跟測試斷開。
+
+## 12. `@Override` 註解
 
 Java 的 `@Override` 是編譯期檢查用的 annotation：標了它、但方法簽章其實沒有真的覆寫任何父類別/介面方法的話，編譯器會報錯，純粹是防呆用途，不影響執行期行為。TypeScript 有一個語意類似的 `override` 關鍵字（TS 4.3+），但只用在 class 繼承另一個 class 的情境；這個專案的 TS 版幾乎都是「implements 介面」而非「extends 類別」，介面實作在 TypeScript 是純結構比對，不需要、也沒有語法可以標註「這個方法是在實作某個介面」，因此 Java 原始碼裡大量的 `@Override` 在 TS 版對應的方法上完全不會出現任何標記——不是漏寫，是 TS 的結構型別本來就不需要。
 
-## 11. 其他已在 `differences-from-java.md` 記錄的語言/機制差異
+## 13. 其他已在 `differences-from-java.md` 記錄的語言/機制差異
 
 以下幾個語言機制轉換已經在 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)詳細說明，這裡只列出條目、不重複內容：
 

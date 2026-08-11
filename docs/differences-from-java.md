@@ -126,7 +126,14 @@ public interface XMPPFailureReporter {
 ```
 
 - 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`MqttFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `MqttAuctionHouse`/`MqttAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
-- `Message.ts` 的 `Bidder` 型別維持獨立，不跟 `sniperId` 統一——因為它代表的是「某則訊息裡記載的出價者」，可能是目前這個 sniper 自己，也可能是別人（`PriceMessage.bidder` 可以是 `"Someone else"`），跟「我自己是誰」是不同的概念，Java 原始碼裡也是分開處理的（`isFrom(sniperId)` 拿訊息裡的 bidder 去跟自己的 sniperId 比對）。
+
+### 曾經走過的彎路：`Message.ts` 的 `Bidder` 型別
+
+早期版本曾經幫 `Message.ts` 的訊息內容欄位（`JoinMessage.bidder`/`PriceMessage.bidder`/`BidMessage.bidder`）宣告一個 `export type Bidder = string;` 型別別名，理由是「它代表的是某則訊息裡記載的出價者，可能是目前這個 sniper 自己，也可能是別人，跟『我自己是誰』（`sniperId`）是不同的概念」。
+
+但這個型別別名後來被誤用到好幾個真正代表「我自己是誰」的地方（`MqttAuction.sniperId`、`MqttAuctionHouse.connect(brokerUrl, sniperId)`、`MqttConnection.login(username)`/`getUser()`、`AuctionMessageTranslator` 的 `sniperId` 欄位/參數），變成用同一個型別名字掛在兩種不同語意的值上——`Bidder` 型別本身在 TypeScript 是結構型別（`type Bidder = string` 純粹是 `string` 的別名，兩者可以無條件互相賦值，編譯器完全不會攔任何誤用），所以這個別名從頭到尾沒有提供過任何型別安全，唯一的價值是給讀者的語意提示，結果卻提示錯了。
+
+Java 原始碼從頭到尾兩種概念都只用 `String`，沒有為「訊息裡的出價者」另外宣告型別。既然 TS 版的型別別名本來就不提供編譯期保護、又已經被用錯過一次，索性拿掉這個型別別名，`Message.ts` 跟所有 `sniperId` 參數/欄位全部統一改回 `string`，跟 Java 原始碼完全一致——不再嘗試用型別系統表達這個純語意上的區分，語意上的差異改成只靠變數命名（`bidder` vs `sniperId`）跟註解自己說清楚。
 
 ## 9. Domain/util 層的框架轉換差異
 
@@ -211,3 +218,5 @@ Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才
 - **Mock 機制**：Java 用 jMock 2（`Mockery`、`Expectations`、`context.checking(...)`、`States`/`Sequence` 表達呼叫順序與狀態機限制），TS 用 Vitest 內建的 `vi.fn()`/`toHaveBeenCalledWith()`/`toHaveBeenNthCalledWith()`。兩者能表達的斷言能力大致對等（`toHaveBeenNthCalledWith` 對應 jMock 的 `inSequence`），但寫法不同，不強求逐字翻譯 jMock 的 `Expectations` DSL。
 - **Matcher 語法**：Java 用 Hamcrest（`equalTo`、`samePropertyValuesAs`、自訂 `FeatureMatcher`），TS 用 Vitest 內建的 `expect(...).toEqual(...)`/`expect.objectContaining(...)`。`samePropertyValuesAs`（比對物件所有屬性值，不要求同一個 class）對應 `toEqual`；Java 自訂的 `FeatureMatcher`（例如 `AuctionSniperTest.aSniperThatIs(state)`）在 TS 版用 `expect.objectContaining({ state })` 這種內建局部比對取代，不需要另外寫一個 matcher class。
 - **例外斷言**：Java 用 `@Test(expected = Defect.class)` annotation 屬性宣告預期例外；TS 用 `expect(() => ...).toThrow(Defect)`。兩者都明確指定例外的 class/類型，斷言強度對等。
+- **helper 函式的宣告位置**：Java 的私有 helper 方法（`AuctionMessageTranslatorTest.expectFailureWithMessage()`、`SnipersTableModelTest.assertRowMatchesSnapshot()`/`cellValue()`、`AuctionSniperEndToEndTest.waitForAnotherAuctionEvent()` 等）都宣告在**所有 `@Test` 方法之後**。對應的 TS 測試檔案已全部核對並改成同樣的順序（`describe()`/`test.describe()` 裡的 `it`/`test` 全部排在前面，helper function 放在最後），不是宣告在檔案開頭——JS/TS 的 function 宣告本來就會 hoisting，所以放在檔案結尾不影響 helper 在測試中被呼叫。
+- **`uniqueItemId()` 沒有 Java 對應物**：`test/integration/mqtt/MqttAuctionHouse.test.ts` 用 `uniqueItemId()` 幫每個測試產生獨一無二的 item id，避免多次測試執行之間互相污染（因為這一層是接**真實 Mosquitto**，topic 名稱如果撞到前一次測試殘留的訂閱/訊息會誤判）。Java 的 `XMPPAuctionHouseTest.java` 直接用固定字串 `"item-54321"`，沒有這層考量——推測是 Openfire 測試環境每次都是乾淨重來，不會有殘留狀態跨測試污染的問題。

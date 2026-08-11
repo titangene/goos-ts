@@ -137,12 +137,15 @@ test.describe('the auction sniper', () => {
     await application.hasShownSniperHasFailed(auction);
 
     await auction.reportPrice(520, 21, 'other bidder');
-
-    await auction2.hasReceivedJoinRequestFrom(SNIPER_ID);
-    await auction2.reportPrice(600, 6, 'other bidder');
-    await application.hasShownSniperIsBidding(auction2, 600, 606);
+    await waitForAnotherAuctionEvent(application);
 
     await application.reportsInvalidMessage(brokenMessage);
     await application.hasShownSniperHasFailed(auction);
   });
+
+  async function waitForAnotherAuctionEvent(application: ApplicationRunner): Promise<void> {
+    await auction2.hasReceivedJoinRequestFrom(SNIPER_ID);
+    await auction2.reportPrice(600, 6, 'other bidder');
+    await application.hasShownSniperIsBidding(auction2, 600, 606);
+  }
 });

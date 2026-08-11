@@ -10,28 +10,6 @@ import type { MqttFailureReporter } from '../../../server/auctionsniper/mqtt/Mqt
 const SNIPER_ID = 'sniper id';
 const UNUSED_CHAT = null as unknown as MqttChat;
 
-function stubListener(): AuctionEventListener {
-  return { auctionClosed: vi.fn(), auctionFailed: vi.fn(), currentPrice: vi.fn() };
-}
-
-function stubFailureReporter(): MqttFailureReporter {
-  return { cannotTranslateMessage: vi.fn() };
-}
-
-// 對應 Java 版 AuctionMessageTranslatorTest.expectFailureWithMessage()。
-function expectFailureWithMessage(
-  listener: AuctionEventListener,
-  failureReporter: MqttFailureReporter,
-  badMessage: string,
-): void {
-  expect(listener.auctionFailed).toHaveBeenCalledTimes(1);
-  expect(failureReporter.cannotTranslateMessage).toHaveBeenCalledWith(
-    SNIPER_ID,
-    badMessage,
-    expect.anything(),
-  );
-}
-
 describe('AuctionMessageTranslator', () => {
   it('notifies auction closed when close message received', () => {
     const listener = stubListener();
@@ -88,3 +66,25 @@ describe('AuctionMessageTranslator', () => {
     expectFailureWithMessage(listener, failureReporter, badMessage);
   });
 });
+
+function stubListener(): AuctionEventListener {
+  return { auctionClosed: vi.fn(), auctionFailed: vi.fn(), currentPrice: vi.fn() };
+}
+
+function stubFailureReporter(): MqttFailureReporter {
+  return { cannotTranslateMessage: vi.fn() };
+}
+
+// 對應 Java 版 AuctionMessageTranslatorTest.expectFailureWithMessage()。
+function expectFailureWithMessage(
+  listener: AuctionEventListener,
+  failureReporter: MqttFailureReporter,
+  badMessage: string,
+): void {
+  expect(listener.auctionFailed).toHaveBeenCalledTimes(1);
+  expect(failureReporter.cannotTranslateMessage).toHaveBeenCalledWith(
+    SNIPER_ID,
+    badMessage,
+    expect.anything(),
+  );
+}
