@@ -136,13 +136,22 @@ Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `Eq
 
 ### `SniperState.whenAuctionClosed()` 的多型改用查表
 
-Java `SniperState` 是列舉，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`、其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
+Java `SniperState` 是 enum，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`、其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
 
-### `Column` 的多型改用 class + 具名靜態實例
+`SniperState` 的 enum 成員刻意**不帶字串值**（`JOINING`、`BIDDING`…直接用 TS 自動遞增的數字，等同 Java 的 `ordinal()`），跟 Java 一樣不持有任何顯示文字——顯示文字統一由 `SnipersTableModel.STATUS_TEXT`／`textFor()` 負責（見下面 `Column`／`SnipersTableModel` 那節），不是這裡的責任。
 
-Java `ui/Column` 也是列舉、每個常數各自 `@Override` `valueIn()`。`shared/Column.ts` 改用另一種譯法：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`／`Column.at()` 對應 Java 的 `values()`／`at(offset)`。
+### `Column`／`SnipersTableModel` 的多型改用 class + 具名靜態實例
 
-跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，前端（`SnipersTable.vue`）還需要把它當一個可迭代集合直接渲染表頭／欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
+Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 `SNIPER_STATE` 常數的 `valueIn()` 呼叫 `SnipersTableModel.textFor(snapshot.state)`——`Column`／`SnipersTableModel` 同在 `auctionsniper.ui` package，互相依賴。
+
+`server/auctionsniper/ui/Column.ts` 改用另一種譯法重現這個依賴：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`／`Column.at()` 對應 Java 的 `values()`／`at(offset)`；`SNIPER_STATE` 一樣呼叫 `SnipersTableModel.textFor(snapshot.state)`。兩個檔案互相 import（`Column.ts` import `SnipersTableModel.ts` 取得 `textFor`，`SnipersTableModel.ts` import `Column.ts` 取得 `values`/`at`），這在 ESM 是合法的循環依賴——雙方都只在方法/closure 內部才真正引用對方，模組頂層求值階段不會互相卡住。
+
+跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，`server/utils/sniper-registry.ts` 建構 WebSocket／HTTP payload 時還需要把它當一個可迭代集合走訪每個欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
+
+`SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`／`getRowCount()`／`getColumnName()`／`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
+
+- TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`／`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取，而不是像早期版本那樣直接把 `SniperSnapshot[]` 塞給監聽者。
+- Java 版 `fireTableRowsInserted(row, row)`／`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`／`server/api/snipers.get.ts` 都是重新整包查詢（`getColumnCount()`/`getRowCount()`/`getValueAt()`）建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
 
 ### `Announcer` 用 JS `Proxy` 取代 `java.lang.reflect.Proxy`
 
@@ -151,8 +160,23 @@ Java `ui/Column` 也是列舉、每個常數各自 `@Override` `valueIn()`。`sh
 - Java 版靠 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler`，還得手動處理 `InvocationTargetException` 把底層例外重新拋出。
 - TS 版用語言原生的 `Proxy`（`get` trap 攔截任意屬性存取、回傳一個會遍歷 `listeners` 呼叫同名方法的函式），不需要 Java 反射那套例外包裝，呼叫端的例外會原生往上拋，行為等價但機制更直接。
 
-### `SnipersTableModel` 從 Swing `AbstractTableModel` 改成陣列 + 整包通知
+### Java 的 `extends EventListener` 標記介面沒有對應物
 
-- Java 版繼承 `AbstractTableModel`，用 `fireTableRowsInserted(row, row)`／`fireTableRowsUpdated(row, row)` 精確通知 Swing 是「哪一列」變了。
-- TS 版沒有 Swing，`SnipersTableModel.ts` 自己維護 `snapshots` 陣列，`sniperAdded()`／`sniperStateChanged()` 都是呼叫同一個 `notifyChange()`，把**整包**陣列透過 `SnipersTableListener.onSnapshotsChanged(snapshots)` 傳給監聽者，不區分是新增還是更新、也不指出是哪一列。
-- 這是因為下游的 `server/routes/ws.ts` 只是把整包 snapshots 序列化成 WebSocket 訊息推給瀏覽器，瀏覽器端 `SnipersTable.vue` 直接用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量，也就不需要 Java 版那樣的行號精細度。
+Java 有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener`本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing／AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
+
+TypeScript 是結構型別（structural typing），本來就不需要顯式標記「這是一個 listener 介面」才能被當成 listener 使用，所以 TS 版的對應介面（`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener`）都不 `extends` 任何東西。`Announcer<T>` 的泛型上界也對應改成 `T extends object`（TS 沒有 `EventListener` 這個概念可以當上界），而不是 `T extends EventListener`。
+
+### `SwingThreadSniperListener` 沒有 TS 對應檔案
+
+Java 的 `SwingThreadSniperListener` 是一個 `SniperListener` 的包裝器：`sniperStateChanged()` 收到通知時，用 `SwingUtilities.invokeLater()` 把實際處理**轉派到 Swing 的 Event Dispatch Thread（EDT）**再執行，因為 Swing 元件只能在 EDT 上安全存取，而通知來源（XMPP 網路執行緒）不是 EDT。`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此是 `sniper.addSniperListener(new SwingThreadSniperListener(this))`，包一層再註冊。
+
+Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才能安全更新 UI」這個問題，`SnipersTableModel.ts` 的 `sniperAdded()` 因此直接 `sniper.addSniperListener(this)`，不需要、也没有對應 `SwingThreadSniperListener` 的包裝類別——這整個檔案在 TS 版被刪除，不是漏翻譯。
+
+## 10. 測試檔案跟 Java 版刻意不一致的地方
+
+`test/unit/**`（非 mqtt 部分）已逐檔對照 `goos-code` 的 `test/unit/test/auctionsniper/**`，測項數量、測項涵蓋的情境、測項宣告順序都已對齊到跟 Java 版一致（例如 `AuctionSniper.test.ts` 對照 `AuctionSniperTest.java`、`SnipersTableModel.test.ts` 對照 `SnipersTableModelTest.java`）。以下是review 後確認**必要**保留、不會也不需要對齊的差異：
+
+- **測試框架語法**：Java 用 JUnit 4 的 `@Test public void methodName()`（方法名即測項描述，駝峰命名），TS 用 Vitest 的 `it('描述文字', () => {...})`（描述文字用一般英文句子）。這是框架慣例差異，測項對應關係已在各測試檔案逐一核對，順序、數量、涵蓋情境都有比對，只是描述的書寫方式不同。
+- **Mock 機制**：Java 用 jMock 2（`Mockery`、`Expectations`、`context.checking(...)`、`States`／`Sequence` 表達呼叫順序與狀態機限制），TS 用 Vitest 內建的 `vi.fn()`／`toHaveBeenCalledWith()`／`toHaveBeenNthCalledWith()`。兩者能表達的斷言能力大致對等（`toHaveBeenNthCalledWith` 對應 jMock 的 `inSequence`），但寫法不同，不強求逐字翻譯 jMock 的 `Expectations` DSL。
+- **Matcher 語法**：Java 用 Hamcrest（`equalTo`、`samePropertyValuesAs`、自訂 `FeatureMatcher`），TS 用 Vitest 內建的 `expect(...).toEqual(...)`／`expect.objectContaining(...)`。`samePropertyValuesAs`（比對物件所有屬性值，不要求同一個 class）對應 `toEqual`；Java 自訂的 `FeatureMatcher`（例如 `AuctionSniperTest.aSniperThatIs(state)`）在 TS 版用 `expect.objectContaining({ state })` 這種內建局部比對取代，不需要另外寫一個 matcher class。
+- **例外斷言**：Java 用 `@Test(expected = Defect.class)` annotation 屬性宣告預期例外；TS 用 `expect(() => ...).toThrow(Defect)`。兩者都明確指定例外的 class／類型，斷言強度對等。
