@@ -8,19 +8,19 @@
 
 ## 1. 檔案對照總表
 
-| Java（`goos-code`）                           | Redis Pub/Sub 版                | MQTT 版（目前實作）             | 兩個 TS 版本是否相同 |
-| ---------------------------------------------- | -------------------------------- | -------------------------------- | -------------------- |
-| `XMPPAuctionHouse.java`                        | `RedisAuctionHouse.ts`           | `MqttAuctionHouse.ts`            | 結構相同，只換型別名稱 |
-| `XMPPConnection`（Smack）                      | `RedisConnection.ts`             | `MqttConnection.ts`              | **不同**（見第 3、5 節） |
-| `XMPPAuction.java`                             | `RedisAuction.ts`                | `MqttAuction.ts`                 | 結構相同，只換型別名稱 |
-| `org.jivesoftware.smack.Chat`                  | `RedisChannel.ts`                   | `MqttChannel.ts`                    | **不同**（見第 5 節） |
-| `org.jivesoftware.smack.MessageListener`       | `MessageListener.ts`             | `MessageListener.ts`             | 結構相同，只換 `channel` 參數型別 |
-| `AuctionMessageTranslator.java`                | `AuctionMessageTranslator.ts`    | `AuctionMessageTranslator.ts`    | 邏輯完全相同（見第 8 節） |
-| `XMPPAuctionException.java`                    | `RedisAuctionException.ts`       | `MqttAuctionException.ts`        | 結構相同，只換型別名稱 |
-| `XMPPFailureReporter.java`                     | `RedisFailureReporter.ts`        | `MqttFailureReporter.ts`         | 結構相同，只換型別名稱 |
-| `LoggingXMPPFailureReporter.java`               | `LoggingRedisFailureReporter.ts` | `LoggingMqttFailureReporter.ts`  | 結構相同，只換型別名稱 |
-| （訊息格式，[ADR-0007](adr/ADR-0007-message-format.md)） | `Message.ts`                     | `Message.ts`                     | **完全相同**（見第 8 節） |
-| （topic/channel 拓樸，[ADR-0006](adr/ADR-0006-mqtt-topic-topology.md)） | `Topic.ts`（channel 命名） | `Topic.ts`（topic 命名） | 邏輯相同，命名慣例不同（見第 7 節） |
+| Java（`goos-code`）                                                     | Redis Pub/Sub 版                 | MQTT 版（目前實作）             | 兩個 TS 版本是否相同                |
+| ----------------------------------------------------------------------- | -------------------------------- | ------------------------------- | ----------------------------------- |
+| `XMPPAuctionHouse.java`                                                 | `RedisAuctionHouse.ts`           | `MqttAuctionHouse.ts`           | 結構相同，只換型別名稱              |
+| `XMPPConnection`（Smack）                                               | `RedisConnection.ts`             | `MqttConnection.ts`             | **不同**（見第 3、5 節）            |
+| `XMPPAuction.java`                                                      | `RedisAuction.ts`                | `MqttAuction.ts`                | 結構相同，只換型別名稱              |
+| `org.jivesoftware.smack.Chat`                                           | `RedisChannel.ts`                | `MqttChannel.ts`                | **不同**（見第 5 節）               |
+| `org.jivesoftware.smack.MessageListener`                                | `MessageListener.ts`             | `MessageListener.ts`            | 結構相同，只換 `channel` 參數型別   |
+| `AuctionMessageTranslator.java`                                         | `AuctionMessageTranslator.ts`    | `AuctionMessageTranslator.ts`   | 邏輯完全相同（見第 8 節）           |
+| `XMPPAuctionException.java`                                             | `RedisAuctionException.ts`       | `MqttAuctionException.ts`       | 結構相同，只換型別名稱              |
+| `XMPPFailureReporter.java`                                              | `RedisFailureReporter.ts`        | `MqttFailureReporter.ts`        | 結構相同，只換型別名稱              |
+| `LoggingXMPPFailureReporter.java`                                       | `LoggingRedisFailureReporter.ts` | `LoggingMqttFailureReporter.ts` | 結構相同，只換型別名稱              |
+| （訊息格式，[ADR-0007](adr/ADR-0007-message-format.md)）                | `Message.ts`                     | `Message.ts`                    | **完全相同**（見第 8 節）           |
+| （topic/channel 拓樸，[ADR-0006](adr/ADR-0006-mqtt-topic-topology.md)） | `Topic.ts`（channel 命名）       | `Topic.ts`（topic 命名）        | 邏輯相同，命名慣例不同（見第 7 節） |
 
 ## 2. 先講結論：差異集中在哪一層
 
@@ -28,14 +28,14 @@
 
 真正因為 client library 形狀不同而必然不同的，只有 **Connection 層**跟 **Channel 層**：
 
-| 面向                     | Redis Pub/Sub（`redis` v6，node-redis）                  | MQTT（`mqtt` v5，mqtt.js）                            |
-| ------------------------ | ---------------------------------------------------------- | -------------------------------------------------------- |
-| 連線數量                 | 兩條連線（publisher + subscriber，見第 3 節）              | 一條連線可同時 publish/subscribe                          |
-| 訊息監聽粒度             | `subscribe(channel, listener)`，per-channel 各自的 callback | `client.on('message', ...)`，整個 client 共用單一事件      |
-| 因此需不需要手動過濾 topic | 不需要（見第 5 節）                                        | 需要（`MqttChannel` 得自己判斷 `topic === subscribeTopic`）    |
-| 循序保證                 | 單一 TCP 連線天生保證，不需設定（見第 6 節）                | 需要明確 `{ qos: 1 }`（見第 6 節，ADR-0002 Compliance #3） |
-| channel/topic 命名慣例   | `auction:<itemId>:commands`（`:` 分隔）                    | `auction/<itemId>/commands`（`/` 分隔）                   |
-| 離線期間的訊息保留       | 無（subscriber 離線時發布的訊息直接遺失，無持久化）          | 依 broker session/QoS 設定，可能有限度保留                |
+| 面向                       | Redis Pub/Sub（`redis` v6，node-redis）                     | MQTT（`mqtt` v5，mqtt.js）                                  |
+| -------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| 連線數量                   | 兩條連線（publisher + subscriber，見第 3 節）               | 一條連線可同時 publish/subscribe                            |
+| 訊息監聽粒度               | `subscribe(channel, listener)`，per-channel 各自的 callback | `client.on('message', ...)`，整個 client 共用單一事件       |
+| 因此需不需要手動過濾 topic | 不需要（見第 5 節）                                         | 需要（`MqttChannel` 得自己判斷 `topic === subscribeTopic`） |
+| 循序保證                   | 單一 TCP 連線天生保證，不需設定（見第 6 節）                | 需要明確 `{ qos: 1 }`（見第 6 節，ADR-0002 Compliance #3）  |
+| channel/topic 命名慣例     | `auction:<itemId>:commands`（`:` 分隔）                     | `auction/<itemId>/commands`（`/` 分隔）                     |
+| 離線期間的訊息保留         | 無（subscriber 離線時發布的訊息直接遺失，無持久化）         | 依 broker session/QoS 設定，可能有限度保留                  |
 
 ## 3. Connection 層：身分怎麼存
 
@@ -510,10 +510,10 @@ export class LoggingRedisFailureReporter implements RedisFailureReporter {
 
 ## 10. 套件與部署面的差異
 
-| 項目           | Redis Pub/Sub                     | MQTT                              |
-| -------------- | ---------------------------------- | ---------------------------------- |
-| npm 套件       | `redis`（v6，node-redis）          | `mqtt`（v5，mqtt.js）              |
-| broker 二進位檔 | Redis server                       | Eclipse Mosquitto                  |
-| 連線位址環境變數（範例） | `REDIS_URL`                  | `MQTT_BROKER_URL`                  |
+| 項目                     | Redis Pub/Sub             | MQTT                  |
+| ------------------------ | ------------------------- | --------------------- |
+| npm 套件                 | `redis`（v6，node-redis） | `mqtt`（v5，mqtt.js） |
+| broker 二進位檔          | Redis server              | Eclipse Mosquitto     |
+| 連線位址環境變數（範例） | `REDIS_URL`               | `MQTT_BROKER_URL`     |
 
 其餘部署面（Docker image、CI service container、Render 部署拓樸等）不屬於實作層級的差異，已記錄在 [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)、[ADR-0004](adr/ADR-0004-mqtt-broker-deployment.md)、[ADR-0005](adr/ADR-0005-ci-local-dev-workflow.md)，這裡不重複。
