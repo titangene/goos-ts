@@ -1,3 +1,7 @@
+export interface UserRequestListener {
+  joinAuction(item: Item): void;
+}
+
 export class Item {
   constructor(
     public readonly identifier: string,
@@ -7,8 +11,4 @@ export class Item {
   allowsBid(bid: number): boolean {
     return bid <= this.stopPrice;
   }
-}
-
-export interface UserRequestListener {
-  joinAuction(item: Item): void;
 }

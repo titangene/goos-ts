@@ -28,40 +28,11 @@ describe('The Auction Sniper', () => {
     expect(sniper.getSnapshot()).toEqual(SniperSnapshot.joining(itemId));
   });
 
-  describe('reports lost', () => {
-    it('if auction closes immediately', () => {
-      sniper.auctionClosed();
-
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.LOST, itemId }),
-      );
-    });
-
-    it('if auction closes when bidding', () => {
-      sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
-      sniper.auctionClosed();
-
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.LOST, itemId }),
-      );
-    });
-
-    it('if auction closes when losing', () => {
-      sniper.currentPrice(1990, 50, PriceSource.FromOtherBidder);
-      sniper.auctionClosed();
-
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.LOST, itemId, lastPrice: 1990, lastBid: 0 }),
-      );
-    });
-  });
-
-  it('reports won if auction closes when winning', () => {
-    sniper.currentPrice(123, 45, PriceSource.FromSniper);
+  it('reports lost when auction closes immediately', () => {
     sniper.auctionClosed();
 
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ state: SniperState.WON, itemId }),
+      expect.objectContaining({ state: SniperState.LOST, itemId }),
     );
   });
 
@@ -83,61 +54,43 @@ describe('The Auction Sniper', () => {
     expect(auction.bid).toHaveBeenCalledWith(bid);
   });
 
-  it('reports winning when current price comes from sniper', () => {
-    sniper.currentPrice(123, 12, PriceSource.FromOtherBidder);
+  it('does not bid and reports losing if first price is above stop price', () => {
+    sniper.currentPrice(1990, 50, PriceSource.FromOtherBidder);
+
+    expect(auction.bid).not.toHaveBeenCalled();
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 1990, lastBid: 0 }),
+    );
+  });
+
+  it('does not bid and reports losing if subsequent price is above stop price', () => {
+    sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
+    sniper.currentPrice(2345, 25, PriceSource.FromOtherBidder);
+
     expect(auction.bid).toHaveBeenCalledOnce();
-
-    sniper.currentPrice(135, 45, PriceSource.FromSniper);
-
     expect(listener.sniperStateChanged).toHaveBeenCalledWith(
       expect.objectContaining({
-        state: SniperState.WINNING,
+        state: SniperState.LOSING,
         itemId,
-        lastPrice: 135,
-        lastBid: 135,
+        lastPrice: 2345,
+        lastBid: 168,
       }),
     );
   });
 
-  describe('does not bid and reports losing', () => {
-    it('if first price is above stop price', () => {
-      sniper.currentPrice(1990, 50, PriceSource.FromOtherBidder);
+  it('does not bid and reports losing if price after winning is above stop price', () => {
+    sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
+    sniper.currentPrice(168, 45, PriceSource.FromSniper);
+    sniper.currentPrice(2233, 25, PriceSource.FromOtherBidder);
 
-      expect(auction.bid).not.toHaveBeenCalled();
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.LOSING, itemId, lastPrice: 1990, lastBid: 0 }),
-      );
-    });
-
-    it('if subsequent price is above stop price', () => {
-      sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
-      sniper.currentPrice(2345, 25, PriceSource.FromOtherBidder);
-
-      expect(auction.bid).toHaveBeenCalledOnce();
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({
-          state: SniperState.LOSING,
-          itemId,
-          lastPrice: 2345,
-          lastBid: 168,
-        }),
-      );
-    });
-
-    it('if price after winning is above stop price', () => {
-      sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
-      sniper.currentPrice(168, 45, PriceSource.FromSniper);
-      sniper.currentPrice(2233, 25, PriceSource.FromOtherBidder);
-
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({
-          state: SniperState.LOSING,
-          itemId,
-          lastPrice: 2233,
-          lastBid: 168,
-        }),
-      );
-    });
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state: SniperState.LOSING,
+        itemId,
+        lastPrice: 2233,
+        lastBid: 168,
+      }),
+    );
   });
 
   it('continues to be losing once stop price has been reached', () => {
@@ -154,41 +107,82 @@ describe('The Auction Sniper', () => {
     );
   });
 
-  describe('reports failed', () => {
-    it('when the auction fails', () => {
-      sniper.auctionFailed();
+  it('reports lost if auction closes when bidding', () => {
+    sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
+    sniper.auctionClosed();
 
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.FAILED, itemId }),
-      );
-    });
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.LOST, itemId }),
+    );
+  });
 
-    it('if auction fails when bidding', () => {
-      sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
-      sniper.auctionFailed();
+  it('reports lost if auction closes when losing', () => {
+    sniper.currentPrice(1990, 50, PriceSource.FromOtherBidder);
+    sniper.auctionClosed();
 
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
-      );
-    });
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.LOST, itemId, lastPrice: 1990, lastBid: 0 }),
+    );
+  });
 
-    it('if auction fails when losing', () => {
-      sniper.currentPrice(1990, 50, PriceSource.FromOtherBidder);
-      sniper.auctionFailed();
+  it('reports winning when current price comes from sniper', () => {
+    sniper.currentPrice(123, 12, PriceSource.FromOtherBidder);
+    expect(auction.bid).toHaveBeenCalledOnce();
 
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
-      );
-    });
+    sniper.currentPrice(135, 45, PriceSource.FromSniper);
 
-    it('if auction fails when winning', () => {
-      sniper.currentPrice(123, 12, PriceSource.FromOtherBidder);
-      sniper.currentPrice(135, 45, PriceSource.FromSniper);
-      sniper.auctionFailed();
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state: SniperState.WINNING,
+        itemId,
+        lastPrice: 135,
+        lastBid: 135,
+      }),
+    );
+  });
 
-      expect(listener.sniperStateChanged).toHaveBeenCalledWith(
-        expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
-      );
-    });
+  it('reports won if auction closes when winning', () => {
+    sniper.currentPrice(123, 45, PriceSource.FromSniper);
+    sniper.auctionClosed();
+
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.WON, itemId }),
+    );
+  });
+
+  it('reports failed if auction fails when bidding', () => {
+    sniper.currentPrice(123, 45, PriceSource.FromOtherBidder);
+    sniper.auctionFailed();
+
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
+    );
+  });
+
+  it('reports failed if auction fails immediately', () => {
+    sniper.auctionFailed();
+
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.FAILED, itemId }),
+    );
+  });
+
+  it('reports failed if auction fails when losing', () => {
+    sniper.currentPrice(1990, 50, PriceSource.FromOtherBidder);
+    sniper.auctionFailed();
+
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
+    );
+  });
+
+  it('reports failed if auction fails when winning', () => {
+    sniper.currentPrice(123, 12, PriceSource.FromOtherBidder);
+    sniper.currentPrice(135, 45, PriceSource.FromSniper);
+    sniper.auctionFailed();
+
+    expect(listener.sniperStateChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ state: SniperState.FAILED, itemId, lastPrice: 0, lastBid: 0 }),
+    );
   });
 });
