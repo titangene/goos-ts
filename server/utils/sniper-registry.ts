@@ -1,4 +1,4 @@
-import { MqttAuctionHouse } from '../auctionsniper/mqtt/MqttAuctionHouse.ts';
+import { RedisAuctionHouse } from '../auctionsniper/redis/RedisAuctionHouse.ts';
 import { SniperLauncher } from '../auctionsniper/SniperLauncher.ts';
 import { SniperPortfolio } from '../auctionsniper/SniperPortfolio.ts';
 import { SnipersTableModel } from '../auctionsniper/ui/SnipersTableModel.ts';
@@ -33,8 +33,8 @@ tableModel.addListener({
 let sniperLauncher: SniperLauncher | undefined;
 
 export async function initSniperLauncher(sniperId: string): Promise<void> {
-  const brokerUrl = process.env.MQTT_BROKER_URL ?? 'mqtt://localhost:1883';
-  const auctionHouse = await MqttAuctionHouse.connect(brokerUrl, sniperId);
+  const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+  const auctionHouse = await RedisAuctionHouse.connect(redisUrl, sniperId);
   sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
 }
 
