@@ -36,7 +36,7 @@ Chosen option：**Render**，因為 Mosquitto 的資源需求已經小到 Render
 
 Mosquitto 部署為**獨立於 Nuxt server 的 Render Web Service**（Docker 建置），開兩個 listener：
 
-1. **內部 MQTT TCP listener**（例如 1883 port）——本機開發、CI 用 `docker run`／`docker-compose` 直連。原規劃是部署後 Nuxt server 也透過 Render 私有網路連線（比照現有 `REDIS_URL` internal URL 模式），但實際建立服務後發現這條路徑在 Free 方案上不可行（見下方「部署後修正」），production 環境改用第 2 點的對外 listener。
+1. **內部 MQTT TCP listener**（例如 1883 port）——本機開發、CI 用 `docker run`/`docker-compose` 直連。原規劃是部署後 Nuxt server 也透過 Render 私有網路連線（比照現有 `REDIS_URL` internal URL 模式），但實際建立服務後發現這條路徑在 Free 方案上不可行（見下方「部署後修正」），production 環境改用第 2 點的對外 listener。
 2. **對外 MQTT-over-WS listener**——綁定 Render 的 `PORT` 環境變數。`tools/fake-auction.ts` 依照 [ADR-0002](ADR-0002-mqtt-replaces-redis.md) 改用 MQTT client（`mqtt.js`）後，本機加 `--remote` 參數執行時透過 `wss://` 連到這個對外 listener；部署後 Nuxt server 的 `MQTT_BROKER_URL` 也指向同一個 `wss://` 位址（見下方「部署後修正」）。此 listener 使用 Mosquitto 原生的 `protocol websockets` 設定（純設定檔，零程式碼），不與 `server/routes/ws.ts`（瀏覽器 UI 推播、使用 crossws）共用任何程式碼或連線機制——兩者是服務不同協定（MQTT binary framing vs. 應用層 JSON）的獨立端點。
 
 ### 部署後修正：Nuxt server 改連公開 `wss://`，不走私有網路

@@ -2,6 +2,8 @@
 
 `server/auctionsniper/mqtt/*` 已逐檔對照 `goos-code` 的 `src/auctionsniper/xmpp/*.java`，命名、結構盡量貼齊。這份文件記錄**刻意**跟 Java 版不同的地方——每一項都有明確理由，不是漏改、也不是還沒對齊。決策依據見 [`docs/adr/`](adr/)，這裡只整理「差異本身是什麼、為什麼非改不可」。
 
+跟 [`java-to-typescript-language-notes.md`](java-to-typescript-language-notes.md) 的分工：這份文件講「拍賣協定/domain 層為什麼要這樣改」，那份文件講「Java 語言本身的機制（enum 多型、巢狀類別、checked exception…）TypeScript 沒有對應物，所以程式碼結構才會不一樣」。
+
 ## 1. 協定與架構層級（見對應 ADR）
 
 | 差異                                                | 對應 ADR                                           |
@@ -19,7 +21,7 @@
   public static final String JOIN_COMMAND_FORMAT = "SOLVersion: 1.1; Command: JOIN;";
   public static final String BID_COMMAND_FORMAT = "SOLVersion: 1.1; Command: BID; Price: %d;";
   ```
-- MQTT client 沒有任何等價於 `connection.getUser()`／`chat.getParticipant()` 的機制——同一個 topic 底下，所有訂閱者收到的訊息看起來完全一樣，broker 不會告訴你「這則訊息是誰發的」。
+- MQTT client 沒有任何等價於 `connection.getUser()`/`chat.getParticipant()` 的機制——同一個 topic 底下，所有訂閱者收到的訊息看起來完全一樣，broker 不會告訴你「這則訊息是誰發的」。
 - `Message.ts` 的 `JoinMessage`/`BidMessage` 因此都多了一個 `Bidder` 欄位，`encode()` 出來的訊息長這樣：
   ```
   SOLVersion: 1.1; Command: JOIN; Bidder: sniper;
@@ -41,9 +43,9 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 }
 ```
 
-- 訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查——`JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 是固定字串／格式樣板，跟 sniperId 無關，因為身分已經由連線層級保證。
+- 訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查——`JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 是固定字串/格式樣板，跟 sniperId 無關，因為身分已經由連線層級保證。
 - 因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `MqttAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數。
-- 所以 `test/e2e/FakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`／`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
+- 所以 `test/e2e/FakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`/`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
 
 ## 4. `MqttClient` 沒有 `getUser()`，所以包了一個 `MqttConnection`
 
@@ -71,7 +73,7 @@ private AuctionMessageTranslator translatorFor(XMPPConnection connection) {
 
 ### `MqttConnection` 包住 `MqttClient`
 
-`MqttClient`（mqtt.js 的原生型別）沒有 `getUser()`、也沒有 `connect()`/`login()` 這種分階段的連線流程——這些能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `MqttConnection.ts`，包住 `MqttClient`，補上 `connect()`／`login()`／`getUser()`／`disconnect()`，讓 `MqttAuctionHouse.connect()` 可以用跟 Java 幾乎一樣的順序操作：
+`MqttClient`（mqtt.js 的原生型別）沒有 `getUser()`、也沒有 `connect()`/`login()` 這種分階段的連線流程——這些能力是 `XMPPConnection` 自己提供的，不是 XMPP 協定本身的功能。因此另外寫了 `MqttConnection.ts`，包住 `MqttClient`，補上 `connect()`/`login()`/`getUser()`/`disconnect()`，讓 `MqttAuctionHouse.connect()` 可以用跟 Java 幾乎一樣的順序操作：
 
 ```ts
 const connection = new MqttConnection(brokerUrl);
@@ -97,7 +99,7 @@ connection.login(username, password, AUCTION_RESOURCE);
 
 - TS 版 `test/e2e/FakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。
 - 但 Java 版建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`。
-- TS 版對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChat`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`／`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChat()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
+- TS 版對應的作法是直接用 `connection.client` 建構方向相反的 `MqttChat`（publish 用 events topic、subscribe 用 commands topic，跟 `MqttAuction` 的 `commandsTopic`/`eventsTopic` 方向正好相反），因為 mqtt.js 沒有 `ChatManager`/`addChatListener` 這種「被動等對方建立 chat」的機制，且 `MqttConnection.createChat()` 內建的 topic 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
 - 因此 `MqttConnection` 沒有另外提供反向的 `createChat()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。
 
 ## 5. 非同步 API：`connect()`/`disconnect()` 的簽章差異
@@ -107,7 +109,7 @@ connection.login(username, password, AUCTION_RESOURCE);
 
 ## 6. 循序保證要靠明確設定 QoS，不是天生就有
 
-書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChat`／`FakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
+書中原文（Ch.12）：「we expect it to ensure that messages between a bidder and an auction arrive in the same order in which they were sent」——這個保證在 XMPP 裡是**單一 TCP 連線天生就有**的，不需要額外設定。MQTT 沒有這個天生保證，`MqttChat`/`FakeAuctionServer` 的所有 publish 都明確帶 `{ qos: 1 }`，且同一條連線循序發送（不並行多個 in-flight），才能重現同等的循序保證（ADR-0002 Compliance #3）。
 
 ## 7. `MqttChat` 要自己過濾 topic，Smack 的 `Chat` 天生只收自己的訊息
 
@@ -126,32 +128,61 @@ public interface XMPPFailureReporter {
 - 第一個參數叫 `auctionId`，但 Java 原始碼裡唯一的呼叫處（`AuctionMessageTranslator.java`）永遠傳的是 `sniperId` 這個變數，從未真正代表過拍賣本身的 ID——這是書中原始碼自己的命名瑕疵。`MqttFailureReporter` 刻意不逐字沿用，改叫 `sniperId`，跟 `MqttAuctionHouse`/`MqttAuction`/`AuctionMessageTranslator` 裡代表「我是誰」的其他地方統一命名，避免混淆。
 - `Message.ts` 的 `Bidder` 型別維持獨立，不跟 `sniperId` 統一——因為它代表的是「某則訊息裡記載的出價者」，可能是目前這個 sniper 自己，也可能是別人（`PriceMessage.bidder` 可以是 `"Someone else"`），跟「我自己是誰」是不同的概念，Java 原始碼裡也是分開處理的（`isFrom(sniperId)` 拿訊息裡的 bidder 去跟自己的 sniperId 比對）。
 
-## 9. Domain／util 層的框架轉換差異
+## 9. Domain/util 層的框架轉換差異
 
 以下是 `server/auctionsniper/*.ts`（非 mqtt 部分，即 `AuctionSniper`、`SniperSnapshot`、`SniperState`、`SnipersTableModel`、`util/Announcer` 等對應書中 `src/auctionsniper/*.java` 核心邏輯）跟 Java 版逐檔比對後，確認屬於**必要**的框架/語言轉換差異，不是漏改：
 
 ### `equals()`/`hashCode()`/`toString()` 省略
 
-Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。TS 版沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`／`hashCode()` 在 TS 測試或執行流程中也沒有被用到。
+Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。TS 版沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`/`hashCode()` 在 TS 測試或執行流程中也沒有被用到。
 
 ### `SniperState.whenAuctionClosed()` 的多型改用查表
 
 Java `SniperState` 是 enum，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`、其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
 
-`SniperState` 的 enum 成員刻意**不帶字串值**（`JOINING`、`BIDDING`…直接用 TS 自動遞增的數字，等同 Java 的 `ordinal()`），跟 Java 一樣不持有任何顯示文字——顯示文字統一由 `SnipersTableModel.STATUS_TEXT`／`textFor()` 負責（見下面 `Column`／`SnipersTableModel` 那節），不是這裡的責任。
+`SniperState` 的 enum 成員刻意**不帶字串值**（`JOINING`、`BIDDING`…直接用 TS 自動遞增的數字，等同 Java 的 `ordinal()`），跟 Java 一樣不持有任何顯示文字——顯示文字統一由 `SnipersTableModel.STATUS_TEXT`/`textFor()` 負責（見下面 `Column`/`SnipersTableModel` 那節），不是這裡的責任。
 
-### `Column`／`SnipersTableModel` 的多型改用 class + 具名靜態實例
+### `Column`/`SnipersTableModel` 的多型改用 class + 具名靜態實例
 
-Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 `SNIPER_STATE` 常數的 `valueIn()` 呼叫 `SnipersTableModel.textFor(snapshot.state)`——`Column`／`SnipersTableModel` 同在 `auctionsniper.ui` package，互相依賴。
+Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 `SNIPER_STATE` 常數的 `valueIn()` 呼叫 `SnipersTableModel.textFor(snapshot.state)`——`Column`/`SnipersTableModel` 同在 `auctionsniper.ui` package，互相依賴。
 
-`server/auctionsniper/ui/Column.ts` 改用另一種譯法重現這個依賴：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`／`Column.at()` 對應 Java 的 `values()`／`at(offset)`；`SNIPER_STATE` 一樣呼叫 `SnipersTableModel.textFor(snapshot.state)`。兩個檔案互相 import（`Column.ts` import `SnipersTableModel.ts` 取得 `textFor`，`SnipersTableModel.ts` import `Column.ts` 取得 `values`/`at`），這在 ESM 是合法的循環依賴——雙方都只在方法/closure 內部才真正引用對方，模組頂層求值階段不會互相卡住。
+`server/auctionsniper/ui/Column.ts` 改用另一種譯法重現這個依賴：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`/`Column.at()` 對應 Java 的 `values()`/`at(offset)`；`SNIPER_STATE` 一樣呼叫 `SnipersTableModel.textFor(snapshot.state)`。兩個檔案互相 import（`Column.ts` import `SnipersTableModel.ts` 取得 `textFor`，`SnipersTableModel.ts` import `Column.ts` 取得 `values`/`at`），這在 ESM 是合法的循環依賴——雙方都只在方法/closure 內部才真正引用對方，模組頂層求值階段不會互相卡住。
 
-跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，`server/utils/sniper-registry.ts` 建構 WebSocket／HTTP payload 時還需要把它當一個可迭代集合走訪每個欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
+跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，`server/utils/sniper-registry.ts` 建構 WebSocket/HTTP payload 時還需要把它當一個可迭代集合走訪每個欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
 
-`SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`／`getRowCount()`／`getColumnName()`／`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
+`Column.ts` 的欄位（`name`、`valueInFn`）刻意只對到 Java `Column` enum 實際有的東西（`name` 欄位 + `valueIn()` 行為），不多帶一個 `className` 欄位——瀏覽器渲染需要的 CSS class 名稱，是純粹的 TS/HTML 特有需求（Java 的 `JTable` 不需要 CSS），因此放在沒有 Java 對應物、本來就是 TS 專屬的 `server/utils/sniper-registry.ts`（見下一節）裡維護，不汙染 `Column` 這個直接對照 Java enum 的檔案。
 
-- TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`／`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取，而不是像早期版本那樣直接把 `SniperSnapshot[]` 塞給監聽者。
-- Java 版 `fireTableRowsInserted(row, row)`／`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`／`server/api/snipers.get.ts` 都是重新整包查詢（`getColumnCount()`/`getRowCount()`/`getValueAt()`）建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
+`SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
+
+- TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`/`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取，而不是像早期版本那樣直接把 `SniperSnapshot[]` 塞給監聽者。
+- Java 版 `fireTableRowsInserted(row, row)`/`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`/`server/api/snipers.get.ts` 都是重新整包查詢（`getColumnCount()`/`getRowCount()`/`getValueAt()`）建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
+
+### `server/utils/sniper-registry.ts` 對應 Java 的哪裡
+
+這個檔案沒有單一個 Java 檔案可以 1:1 對照，因為它身兼兩種角色，一種有 Java 對應物，一種完全是 TS 專屬：
+
+- **有對應物的部分**：`initSniperLauncher()`/`joinAuction()` 對應 `Main.java` 裡建立 `SniperPortfolio`、`SniperLauncher`，以及把使用者請求轉呼叫 `SniperLauncher.joinAuction()` 的那段 wiring 邏輯：
+  ```java
+  // Main.java
+  private final SniperPortfolio portfolio = new SniperPortfolio();
+  ...
+  private void addUserRequestListenerFor(final AuctionHouse auctionHouse) {
+    ui.addUserRequestListener(new SniperLauncher(auctionHouse, portfolio));
+  }
+  ```
+  ```ts
+  // sniper-registry.ts
+  const portfolio = new SniperPortfolio();
+  ...
+  export async function initSniperLauncher(sniperId: string): Promise<void> {
+    const auctionHouse = await MqttAuctionHouse.connect(brokerUrl, sniperId);
+    sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
+  }
+  export function joinAuction(itemId: string, stopPrice: number): void {
+    sniperLauncher.joinAuction(new Item(itemId, stopPrice));
+  }
+  ```
+- **沒有對應物的部分**：`getTableData()` 把 `SnipersTableModel` 的 `getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 走訪一遍，組成一份 `{ columns, rows }` 的純資料物件，供 `server/api/snipers.get.ts`（HTTP）、`server/routes/ws.ts`（WebSocket）序列化成 JSON 送給瀏覽器。Java 版完全沒有這一步——`MainWindow`（Swing `JFrame`）跟 `SnipersTableModel` 活在**同一個 JVM process** 裡，`JTable` 直接呼叫 `model.getValueAt(row, col)` 就能拿到資料渲染，中間沒有任何序列化或網路邊界。goos-ts 的 UI 是瀏覽器裡的 Vue app，跟跑 `SnipersTableModel` 的 Node process 是**兩個不同 process、隔著網路**，所以需要一個地方把「表格模型」轉成「可以序列化過網路的純資料」，`getTableData()` 就是在做這件事——這整個轉譯步驟是 client-server 架構的必然需求，Java 桌面應用完全不需要。
 
 ### `Announcer` 用 JS `Proxy` 取代 `java.lang.reflect.Proxy`
 
@@ -162,7 +193,7 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 
 ### Java 的 `extends EventListener` 標記介面沒有對應物
 
-Java 有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener`本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing／AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
+Java 有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener`本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing/AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
 
 TypeScript 是結構型別（structural typing），本來就不需要顯式標記「這是一個 listener 介面」才能被當成 listener 使用，所以 TS 版的對應介面（`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener`）都不 `extends` 任何東西。`Announcer<T>` 的泛型上界也對應改成 `T extends object`（TS 沒有 `EventListener` 這個概念可以當上界），而不是 `T extends EventListener`。
 
@@ -177,6 +208,6 @@ Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才
 `test/unit/**`（非 mqtt 部分）已逐檔對照 `goos-code` 的 `test/unit/test/auctionsniper/**`，測項數量、測項涵蓋的情境、測項宣告順序都已對齊到跟 Java 版一致（例如 `AuctionSniper.test.ts` 對照 `AuctionSniperTest.java`、`SnipersTableModel.test.ts` 對照 `SnipersTableModelTest.java`）。以下是review 後確認**必要**保留、不會也不需要對齊的差異：
 
 - **測試框架語法**：Java 用 JUnit 4 的 `@Test public void methodName()`（方法名即測項描述，駝峰命名），TS 用 Vitest 的 `it('描述文字', () => {...})`（描述文字用一般英文句子）。這是框架慣例差異，測項對應關係已在各測試檔案逐一核對，順序、數量、涵蓋情境都有比對，只是描述的書寫方式不同。
-- **Mock 機制**：Java 用 jMock 2（`Mockery`、`Expectations`、`context.checking(...)`、`States`／`Sequence` 表達呼叫順序與狀態機限制），TS 用 Vitest 內建的 `vi.fn()`／`toHaveBeenCalledWith()`／`toHaveBeenNthCalledWith()`。兩者能表達的斷言能力大致對等（`toHaveBeenNthCalledWith` 對應 jMock 的 `inSequence`），但寫法不同，不強求逐字翻譯 jMock 的 `Expectations` DSL。
-- **Matcher 語法**：Java 用 Hamcrest（`equalTo`、`samePropertyValuesAs`、自訂 `FeatureMatcher`），TS 用 Vitest 內建的 `expect(...).toEqual(...)`／`expect.objectContaining(...)`。`samePropertyValuesAs`（比對物件所有屬性值，不要求同一個 class）對應 `toEqual`；Java 自訂的 `FeatureMatcher`（例如 `AuctionSniperTest.aSniperThatIs(state)`）在 TS 版用 `expect.objectContaining({ state })` 這種內建局部比對取代，不需要另外寫一個 matcher class。
-- **例外斷言**：Java 用 `@Test(expected = Defect.class)` annotation 屬性宣告預期例外；TS 用 `expect(() => ...).toThrow(Defect)`。兩者都明確指定例外的 class／類型，斷言強度對等。
+- **Mock 機制**：Java 用 jMock 2（`Mockery`、`Expectations`、`context.checking(...)`、`States`/`Sequence` 表達呼叫順序與狀態機限制），TS 用 Vitest 內建的 `vi.fn()`/`toHaveBeenCalledWith()`/`toHaveBeenNthCalledWith()`。兩者能表達的斷言能力大致對等（`toHaveBeenNthCalledWith` 對應 jMock 的 `inSequence`），但寫法不同，不強求逐字翻譯 jMock 的 `Expectations` DSL。
+- **Matcher 語法**：Java 用 Hamcrest（`equalTo`、`samePropertyValuesAs`、自訂 `FeatureMatcher`），TS 用 Vitest 內建的 `expect(...).toEqual(...)`/`expect.objectContaining(...)`。`samePropertyValuesAs`（比對物件所有屬性值，不要求同一個 class）對應 `toEqual`；Java 自訂的 `FeatureMatcher`（例如 `AuctionSniperTest.aSniperThatIs(state)`）在 TS 版用 `expect.objectContaining({ state })` 這種內建局部比對取代，不需要另外寫一個 matcher class。
+- **例外斷言**：Java 用 `@Test(expected = Defect.class)` annotation 屬性宣告預期例外；TS 用 `expect(() => ...).toThrow(Defect)`。兩者都明確指定例外的 class/類型，斷言強度對等。

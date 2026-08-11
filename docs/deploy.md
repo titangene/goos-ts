@@ -67,7 +67,7 @@ Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到�
 - 用 `render deploys create <serviceID> --commit <sha> --wait --confirm` 部署該次觸發 CI 的 commit，`--wait` 是 CLI 原生支援的阻塞等待，部署失敗會讓這個 job 失敗（非 0 exit code）
 - 需要的兩個 GitHub Actions secrets：`RENDER_API_KEY`（Render Account Settings → API Keys 產生）、`RENDER_SERVICE_ID`（`goos-ts` 這個 Web Service 的 ID，例如 `srv-xxxxx`）
 
-> **`workflow_run` 生效的前提：GitHub repo 的預設分支要跟 CI/CD workflow 檔案所在的分支一致。**`workflow_run` 事件只會抓「repo 預設分支上的 workflow 檔案」，不是「觸發它的那個 workflow 執行所在的分支」。本專案的 `ci.yml`／`cd.yml` 只存在 `poc` 分支（`main` 分支目前只有初始 commit，沒有任何 CI/CD 設定），所以 **GitHub repo 的 Default branch 設定必須是 `poc`**，`cd.yml` 才抓得到、`workflow_run` 才會觸發。如果之後把 Default branch 改回 `main`（或建立正式的 `main` 開發流程），要記得把 `ci.yml`／`cd.yml` 也同步搬過去，否則 CD 會在完全沒有錯誤訊息的情況下悄悄失效——這正是本專案曾經踩過的坑：`ci.yml` 照常跑綠燈，但 `cd.yml` 完全不會被觸發，且沒有任何地方會報錯或提示原因。
+> **`workflow_run` 生效的前提：GitHub repo 的預設分支要跟 CI/CD workflow 檔案所在的分支一致。**`workflow_run` 事件只會抓「repo 預設分支上的 workflow 檔案」，不是「觸發它的那個 workflow 執行所在的分支」。本專案的 `ci.yml`/`cd.yml` 只存在 `poc` 分支（`main` 分支目前只有初始 commit，沒有任何 CI/CD 設定），所以 **GitHub repo 的 Default branch 設定必須是 `poc`**，`cd.yml` 才抓得到、`workflow_run` 才會觸發。如果之後把 Default branch 改回 `main`（或建立正式的 `main` 開發流程），要記得把 `ci.yml`/`cd.yml` 也同步搬過去，否則 CD 會在完全沒有錯誤訊息的情況下悄悄失效——這正是本專案曾經踩過的坑：`ci.yml` 照常跑綠燈，但 `cd.yml` 完全不會被觸發，且沒有任何地方會報錯或提示原因。
 
 ## 針對已部署環境模擬（`--remote`）
 
@@ -95,7 +95,7 @@ npm run fake-auction:remote -- item-54321
 
 ## 重置已部署環境的狀態
 
-拍賣/sniper 的狀態（誰加入了哪些拍賣、目前 Winning/Losing 等）是存在 Nuxt server 那個 Node process 的記憶體裡（見 `server/utils/sniper-registry.ts` 的 `portfolio`／`tableModel`），不是存在 Mosquitto（Mosquitto 純粹是訊息 broker，沒有應用層狀態）。所以只要 process 沒重啟，狀態就會一直累積，畫面上的表格也不會清空。
+拍賣/sniper 的狀態（誰加入了哪些拍賣、目前 Winning/Losing 等）是存在 Nuxt server 那個 Node process 的記憶體裡（見 `server/utils/sniper-registry.ts` 的 `portfolio`/`tableModel`），不是存在 Mosquitto（Mosquitto 純粹是訊息 broker，沒有應用層狀態）。所以只要 process 沒重啟，狀態就會一直累積，畫面上的表格也不會清空。
 
 要重置，直接在 Render Dashboard 重啟 `goos-ts` 這個 Web Service 的 process 即可：進到該服務頁面，右上角 **Manual Deploy** 下拉選單裡選 **Restart Service**（不會重新 build，幾秒內就重啟完成）。
 

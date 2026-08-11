@@ -4,7 +4,7 @@ Auction Sniper — TypeScript + Nuxt + MQTT + WebSocket 版本，改寫自 [Grow
 
 ## 與 Java 版本的比較
 
-《GOOS》原書 Java 版原始碼：[sf105/goos-code](https://github.com/sf105/goos-code)（`master` 分支）。
+《GOOS》原書 Java 版原始碼：[sf105/goos-code](https://github.com/sf105/goos-code)（`master` 分支）。刻意的協定/domain 層差異見 [`docs/differences-from-java.md`](docs/differences-from-java.md)，Java 語言機制（enum 多型、巢狀類別、checked exception…）沒有 TS 對應物的部分見 [`docs/java-to-typescript-language-notes.md`](docs/java-to-typescript-language-notes.md)。
 
 ### 使用技術比較
 

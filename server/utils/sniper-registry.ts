@@ -6,6 +6,11 @@ import { Column } from '../auctionsniper/ui/Column.ts';
 import { Item } from '../auctionsniper/UserRequestListener.ts';
 import type { SnipersTableColumn, SniperRow } from '../../shared/types.ts';
 
+// Column（見 server/auctionsniper/ui/Column.ts）沒有 className，因為 Java 版的
+// auctionsniper.ui.Column 也沒有——這是純粹給瀏覽器渲染用的 CSS class，跟
+// Column.values 同順序對應，只存在於這個 wire-payload 組裝層。
+const COLUMN_CLASS_NAMES = ['itemId', 'lastPrice', 'lastBid', 'state'] as const;
+
 interface SnipersTableData {
   columns: SnipersTableColumn[];
   rows: SniperRow[];
@@ -42,9 +47,9 @@ export function joinAuction(itemId: string, stopPrice: number): void {
 }
 
 export function getTableData(): SnipersTableData {
-  const columns: SnipersTableColumn[] = Column.values.map((column) => ({
+  const columns: SnipersTableColumn[] = Column.values.map((column, index) => ({
     name: column.name,
-    className: column.className,
+    className: COLUMN_CLASS_NAMES[index]!,
   }));
 
   const rows: SniperRow[] = [];
