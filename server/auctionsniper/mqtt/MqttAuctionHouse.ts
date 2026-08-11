@@ -4,7 +4,6 @@ import { MqttConnection } from './MqttConnection.ts';
 import { LoggingMqttFailureReporter } from './LoggingMqttFailureReporter.ts';
 import { MqttAuctionException } from './MqttAuctionException.ts';
 import type { Logger } from './Logger.ts';
-import type { Bidder } from './Message.ts';
 import type { AuctionHouse } from '../AuctionHouse.ts';
 import type { Auction } from '../Auction.ts';
 import type { Item } from '../UserRequestListener.ts';
@@ -28,7 +27,7 @@ export class MqttAuctionHouse implements AuctionHouse {
     await this.connection.disconnect();
   }
 
-  static async connect(brokerUrl: string, sniperId: Bidder): Promise<MqttAuctionHouse> {
+  static async connect(brokerUrl: string, sniperId: string): Promise<MqttAuctionHouse> {
     const connection = new MqttConnection(brokerUrl);
     try {
       await connection.connect();

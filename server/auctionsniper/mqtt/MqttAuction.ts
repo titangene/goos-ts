@@ -1,6 +1,5 @@
 import { Announcer } from '../util/Announcer.ts';
 import { Message } from './Message.ts';
-import type { Bidder } from './Message.ts';
 import type { MqttChat } from './MqttChat.ts';
 import type { MqttConnection } from './MqttConnection.ts';
 import { AuctionMessageTranslator } from './AuctionMessageTranslator.ts';
@@ -12,7 +11,7 @@ export class MqttAuction implements Auction {
   private readonly auctionEventListeners = Announcer.to<AuctionEventListener>();
   private readonly chat: MqttChat;
   private readonly failureReporter: MqttFailureReporter;
-  private readonly sniperId: Bidder;
+  private readonly sniperId: string;
 
   constructor(connection: MqttConnection, itemId: string, failureReporter: MqttFailureReporter) {
     this.failureReporter = failureReporter;

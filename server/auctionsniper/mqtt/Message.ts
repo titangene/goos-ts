@@ -1,10 +1,8 @@
 // ADR-0007。解析（decode）在 AuctionMessageTranslator.ts 的 AuctionEvent，
 // 不在這裡。
-export type Bidder = string;
-
 export interface JoinMessage {
   command: 'Join';
-  bidder: Bidder;
+  bidder: string;
 }
 
 export interface CloseMessage {
@@ -15,21 +13,21 @@ export interface PriceMessage {
   command: 'Price';
   currentPrice: number;
   increment: number;
-  bidder: Bidder;
+  bidder: string;
 }
 
 export interface BidMessage {
   command: 'Bid';
-  bidder: Bidder;
+  bidder: string;
   bid: number;
 }
 
 export type AuctionMessage = JoinMessage | CloseMessage | PriceMessage | BidMessage;
 
 export const Message = {
-  Join: (bidder: Bidder): JoinMessage => ({ command: 'Join', bidder }),
+  Join: (bidder: string): JoinMessage => ({ command: 'Join', bidder }),
   Close: (): CloseMessage => ({ command: 'Close' }),
-  Price(currentPrice: number, increment: number, bidder: Bidder): PriceMessage {
+  Price(currentPrice: number, increment: number, bidder: string): PriceMessage {
     return {
       command: 'Price',
       currentPrice,
@@ -37,7 +35,7 @@ export const Message = {
       bidder,
     };
   },
-  Bid: (bidder: Bidder, bid: number): BidMessage => ({ command: 'Bid', bidder, bid }),
+  Bid: (bidder: string, bid: number): BidMessage => ({ command: 'Bid', bidder, bid }),
   encode(message: AuctionMessage): string {
     switch (message.command) {
       case 'Join':

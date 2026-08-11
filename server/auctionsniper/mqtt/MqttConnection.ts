@@ -1,6 +1,5 @@
 import { connectAsync } from 'mqtt';
 import type { MqttClient } from 'mqtt';
-import type { Bidder } from './Message.ts';
 import { MqttChat } from './MqttChat.ts';
 import type { MessageListener } from './MessageListener.ts';
 import { commandsTopic, eventsTopic } from './Topic.ts';
@@ -9,7 +8,7 @@ const KNOWN_USERNAMES: readonly string[] = ['sniper'];
 
 export class MqttConnection {
   client!: MqttClient;
-  private sniperId!: Bidder;
+  private sniperId!: string;
 
   constructor(private readonly brokerUrl: string) {}
 
@@ -17,14 +16,14 @@ export class MqttConnection {
     this.client = await connectAsync(this.brokerUrl);
   }
 
-  login(username: Bidder): void {
+  login(username: string): void {
     if (!KNOWN_USERNAMES.includes(username)) {
       throw new Error(`Could not connect to auction: unknown account ${username}`);
     }
     this.sniperId = username;
   }
 
-  getUser(): Bidder {
+  getUser(): string {
     return this.sniperId;
   }
 

@@ -1,7 +1,6 @@
 import { MqttChat } from '../../server/auctionsniper/mqtt/MqttChat.ts';
 import { MqttConnection } from '../../server/auctionsniper/mqtt/MqttConnection.ts';
 import { Message } from '../../server/auctionsniper/mqtt/Message.ts';
-import type { Bidder } from '../../server/auctionsniper/mqtt/Message.ts';
 import type { MessageListener } from '../../server/auctionsniper/mqtt/MessageListener.ts';
 import { commandsTopic, eventsTopic } from '../../server/auctionsniper/mqtt/Topic.ts';
 
@@ -30,15 +29,15 @@ export class FakeAuctionServer {
     this.chat.sendMessage(brokenMessage);
   }
 
-  async reportPrice(price: number, increment: number, bidder: Bidder): Promise<void> {
+  async reportPrice(price: number, increment: number, bidder: string): Promise<void> {
     this.chat.sendMessage(Message.encode(Message.Price(price, increment, bidder)));
   }
 
-  async hasReceivedJoinRequestFrom(sniperId: Bidder): Promise<void> {
+  async hasReceivedJoinRequestFrom(sniperId: string): Promise<void> {
     await this.receivesAMessageMatching(Message.encode(Message.Join(sniperId)));
   }
 
-  async hasReceivedBid(bid: number, sniperId: Bidder): Promise<void> {
+  async hasReceivedBid(bid: number, sniperId: string): Promise<void> {
     await this.receivesAMessageMatching(Message.encode(Message.Bid(sniperId, bid)));
   }
 

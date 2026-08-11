@@ -1,17 +1,16 @@
 import { PriceSource } from '../AuctionEventListener.ts';
 import type { AuctionEventListener } from '../AuctionEventListener.ts';
-import type { Bidder } from './Message.ts';
 import type { MqttChat } from './MqttChat.ts';
 import type { MessageListener } from './MessageListener.ts';
 import type { MqttFailureReporter } from './MqttFailureReporter.ts';
 
 export class AuctionMessageTranslator implements MessageListener {
   private readonly listener: AuctionEventListener;
-  private readonly sniperId: Bidder;
+  private readonly sniperId: string;
   private readonly failureReporter: MqttFailureReporter;
 
   constructor(
-    sniperId: Bidder,
+    sniperId: string,
     listener: AuctionEventListener,
     failureReporter: MqttFailureReporter,
   ) {
@@ -66,7 +65,7 @@ class AuctionEvent {
     return this.getInt('Increment');
   }
 
-  isFrom(sniperId: Bidder): PriceSource {
+  isFrom(sniperId: string): PriceSource {
     return this.bidder() === sniperId ? PriceSource.FromSniper : PriceSource.FromOtherBidder;
   }
 
