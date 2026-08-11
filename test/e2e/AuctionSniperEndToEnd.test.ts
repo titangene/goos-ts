@@ -1,18 +1,18 @@
 import { test } from '@playwright/test';
 import { ApplicationRunner, SNIPER_ID } from './ApplicationRunner.ts';
-import { FakeAuctionServer } from './FakeAuctionServer.ts';
+import { RedisFakeAuctionServer } from './RedisFakeAuctionServer.ts';
 
 function uniqueItemId(name: string): string {
   return `${name}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
 
 test.describe('the auction sniper', () => {
-  let auction: FakeAuctionServer;
-  let auction2: FakeAuctionServer;
+  let auction: RedisFakeAuctionServer;
+  let auction2: RedisFakeAuctionServer;
 
   test.beforeEach(() => {
-    auction = new FakeAuctionServer(uniqueItemId('item-54321'));
-    auction2 = new FakeAuctionServer(uniqueItemId('item-65432'));
+    auction = new RedisFakeAuctionServer(uniqueItemId('item-54321'));
+    auction2 = new RedisFakeAuctionServer(uniqueItemId('item-65432'));
   });
 
   test.afterEach(async () => {
