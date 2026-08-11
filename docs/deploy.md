@@ -47,6 +47,26 @@ Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到�
 
 > **`workflow_run` 生效的前提：GitHub repo 的預設分支要跟 CI/CD workflow 檔案所在的分支一致。**`workflow_run` 事件只會抓「repo 預設分支上的 workflow 檔案」，不是「觸發它的那個 workflow 執行所在的分支」。本專案的 `ci.yml`/`cd.yml` 只存在 `poc` 分支（`main` 分支目前只有初始 commit，沒有任何 CI/CD 設定），所以 **GitHub repo 的 Default branch 設定必須是 `poc`**，`cd.yml` 才抓得到、`workflow_run` 才會觸發。如果之後把 Default branch 改回 `main`（或建立正式的 `main` 開發流程），要記得把 `ci.yml`/`cd.yml` 也同步搬過去，否則 CD 會在完全沒有錯誤訊息的情況下悄悄失效——這正是本專案曾經踩過的坑：`ci.yml` 照常跑綠燈，但 `cd.yml` 完全不會被觸發，且沒有任何地方會報錯或提示原因。
 
+## 開放 Redis 外部連線（IP 白名單）
+
+Render 的 Key Value 免費方案預設**不允許外部流量**連入，只有同 workspace 內的 Render 服務可以透過 internal URL 存取。如果要從本機（例如跑 `npm run fake-auction:remote`）直接連到部署的 Redis，需要先把你的公網 IP 加入白名單：
+
+**1. 查詢自己目前的公網 IP：**
+
+```bash
+curl -s https://api.ipify.org
+```
+
+**2. 到 Render Dashboard 該 Key Value 服務的頁面** → 左側 **Info** → 往下捲到 **Networking** → **Inbound IP Restrictions** → **Add source**。
+
+**3. 點 `Use my IP address`**（Render 會自動偵測你目前連線的公網 IP 並帶入，通常會跟步驟 1 查到的一致），或手動輸入 `<你的公網 IP>/32`。**Save**。
+
+**4. 到同一頁最上面的 `Connect` 下拉選單 → `External` 分頁**，即可看到 `External Key Value URL`（`rediss://user:password@host:6379` 格式，含 TLS）。之前顯示「External traffic not allowed」的話，白名單設定成功後就會改顯示實際連線字串。
+
+> 公網 IP 若不是固定 IP（多數家用/公司網路都是動態配發），ISP 重新配發後白名單會失效，需要重跑一次上面的步驟更新 IP。
+>
+> 白名單是為了本機臨時除錯/模擬用；長期不需要對外開放的話，可以之後回到 Networking 設定把這條規則刪掉。
+
 ## 針對已部署環境模擬（`--remote`）
 
 如果要驗證部署到雲端的環境能不能跑完整拍賣流程，`tools/fake-auction.ts` 支援 `--remote` 參數，改連 `REDIS_URL` 環境變數指定的 Redis，而不是本機 Redis：
