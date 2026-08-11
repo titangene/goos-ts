@@ -2,12 +2,14 @@
 
 本專案部署在 [Render](https://render.com/)：
 
-- **Web Service（`goos-ts`）**：跑 Nuxt server（`npm run build` 建置、`node .output/server/index.mjs` 啟動）
-- **Web Service（`goos-ts-mosquitto`）**：跑 MQTT broker（Docker 建置，見 [ADR-0004](adr/ADR-0004-mqtt-broker-deployment.md)）
+- **Web Service（`goos-ts`）**：跑 Nuxt server（`npm run build` 建置、`node .output/server/index.mjs` 啟動），連線用的是 Redis（見 [ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)）。
+- **Web Service（`goos-ts-mosquitto`）**：跑 MQTT broker（Docker 建置，見 [ADR-0004](adr/ADR-0004-mqtt-broker-deployment.md)）——[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md) 改回 Redis 之後，這個服務已經沒有任何程式碼會連它，是孤兒資源，見文件最後「舊有 Mosquitto 資源（待清理）」。
 
-兩者都選在 Singapore region，同區內可用 internal URL 互連。CD 流程見 `.github/workflows/cd.yml`。
+`goos-ts` 需要連線的是一個 Redis 相容的服務（Render 的 **Key Value** 服務即可，不需要像 Mosquitto 那樣自建 Docker image），選在 Singapore region、同區內可用 internal URL 互連。CD 流程見 `.github/workflows/cd.yml`。
 
-## 建立 Mosquitto Web Service
+## 建立 Mosquitto Web Service（MQTT 版參考用，`goos-ts` 目前不需要）
+
+以下步驟是 MQTT 版本（`server/auctionsniper/mqtt/*`）部署時的紀錄，[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md) 改回 Redis 之後，`goos-ts` 已不再連線這個服務——保留這節，是為了未來若要重新啟用 MQTT 版本時仍有步驟可查。
 
 Render Dashboard → **New** → **Web Service**：
 
@@ -45,9 +47,9 @@ Render Dashboard → **New** → **Web Service**：
   ```
 - **Instance Type**：選 **Free**
 - **Environment Variables**：新增一筆
-  - `MQTT_BROKER_URL` = 上一步 Mosquitto 服務的公開網址，協定換成 `wss://`（格式 `wss://<mosquitto-service-name>.onrender.com`）
+  - `REDIS_URL` = Redis 服務（Render **Key Value** 服務）的連線字串
 
-  > 這個環境變數要 `server/utils/sniper-registry.ts` 有讀 `process.env.MQTT_BROKER_URL`（沒設定時預設回退 `mqtt://localhost:1883`）才會生效。
+  > 這個環境變數要 `server/utils/sniper-registry.ts` 有讀 `process.env.REDIS_URL`（沒設定時預設回退 `redis://localhost:6379`）才會生效。
 
 按 **Deploy Web Service**，Render 會自動 pull 該分支的 commit 並在雲端建置、啟動。
 
@@ -71,21 +73,21 @@ Render Web Service 預設 **Auto-Deploy** 是 `On Commit`——每次 push 到�
 
 ## 針對已部署環境模擬（`--remote`）
 
-如果要驗證部署到雲端的環境能不能跑完整拍賣流程，`tools/fake-auction.ts` 支援 `--remote` 參數，改連 `MQTT_BROKER_URL` 環境變數指定的 Mosquitto，而不是本機 Mosquitto：
+如果要驗證部署到雲端的環境能不能跑完整拍賣流程，`tools/fake-auction.ts` 支援 `--remote` 參數，改連 `REDIS_URL` 環境變數指定的 Redis，而不是本機 Redis：
 
-**1. 複製 `.env.example` 成 `.env.local`，填入部署環境的 Mosquitto 連線字串**（就是上面「建立 Mosquitto Web Service」拿到的公開網址，協定用 `wss://`）：
+**1. 複製 `.env.example` 成 `.env.local`，填入部署環境的 Redis 連線字串**（就是上面「建立 Nuxt Web Service」設定的 `REDIS_URL`）：
 
 ```bash
 cp .env.example .env.local
 ```
 
 ```
-MQTT_BROKER_URL=wss://<mosquitto-service-name>.onrender.com
+REDIS_URL=rediss://<redis-service-host>
 ```
 
-`.env.local` 已被 `.gitignore` 排除，不會進版控。跟 Redis 時代不同，這裡不需要另外設定 IP 白名單或帳密——Mosquitto 的對外 WS listener 本來就設計成公開連線（身分驗證交給應用層的 username 白名單，見 [ADR-0003](adr/ADR-0003-username-only-identity.md)）。
+`.env.local` 已被 `.gitignore` 排除，不會進版控。身分驗證交給應用層的 username 白名單（見 [ADR-0003](adr/ADR-0003-username-only-identity.md)），Redis 連線本身的存取控制（IP 白名單、帳密）依 Render Key Value 服務的預設設定為準。
 
-**2. 啟動假拍賣現場，連到部署環境的 Mosquitto：**
+**2. 啟動假拍賣現場，連到部署環境的 Redis：**
 
 ```bash
 npm run fake-auction:remote -- item-54321
@@ -99,11 +101,13 @@ npm run fake-auction:remote -- item-54321
 
 要重置，直接在 Render Dashboard 重啟 `goos-ts` 這個 Web Service 的 process 即可：進到該服務頁面，右上角 **Manual Deploy** 下拉選單裡選 **Restart Service**（不會重新 build，幾秒內就重啟完成）。
 
-## 舊有 Redis 資源（待清理）
+## 舊有 Mosquitto 資源（待清理）
 
-拍賣協定從 Redis Pub/Sub 換成 MQTT 後（[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md)），程式碼裡的 `server/auctionsniper/redis/*` 已經整組移除，但 Render 上原本為它建立的資源還沒清：
+[ADR-0002](adr/ADR-0002-mqtt-replaces-redis.md) 改回 Redis Pub/Sub 之後，`server/auctionsniper/mqtt/*` 雖然還留在 repo 中（未刪除，見該 ADR Compliance），但已經沒有任何 app 程式碼會連線 Mosquitto。若你先前已依本文件建立過 `goos-ts-mosquitto` 這個 Web Service，它現在是孤兒資源：
 
-- **Key Value 服務**（例如 `goos-ts-redis`）：已經沒有任何程式碼會連它，是孤兒資源。可以到該服務頁面 → **Settings** → 捲到最下面 **Delete Key Value** 刪除。
-- **`goos-ts` Web Service 的 `REDIS_URL` 環境變數**：已經沒有程式碼讀它，留著不影響運作，但可以到 **Environment** 頁面一併刪掉。
+- **`goos-ts-mosquitto` Web Service**：已經沒有任何程式碼會連它，可以到該服務頁面 → **Settings** → 捲到最下面刪除；若之後想重新啟用 MQTT 版本，「建立 Mosquitto Web Service」一節仍保留步驟可查。
+- **`goos-ts` Web Service 的 `MQTT_BROKER_URL` 環境變數**（若先前有設定）：已經沒有程式碼讀它，留著不影響運作，但可以到 **Environment** 頁面一併刪掉。
 
-這兩項都是刪除雲端資源的操作，故意留給你手動確認、手動執行。
+若你先前已依更早版本的本文件刪除過 `goos-ts-redis`（Key Value 服務），現在需要重新建立一個 Redis 相容的 Key Value 服務，並在 `goos-ts` 設定 `REDIS_URL` 指向它（見上面「建立 Nuxt Web Service」）。
+
+刪除/重建雲端資源都故意留給你手動確認、手動執行。
