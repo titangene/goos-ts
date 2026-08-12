@@ -1,6 +1,6 @@
 import type { Peer } from 'crossws';
 
-import type { SnapshotsMessage } from '../../shared/types.ts';
+import type { SnapshotsMessage } from '@shared/types.ts';
 
 const peers = new Set<Peer>();
 

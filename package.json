@@ -17,8 +17,8 @@
     "test:integration:app": "vitest run --config vitest.integration.app.config.ts",
     "test:e2e": "playwright test",
     "test": "npm run test:unit && npm run test:integration && npm run test:integration:app && npm run test:e2e",
-    "fake-auction": "npx tsx tools/fake-auction.ts",
-    "fake-auction:remote": "npx tsx --env-file=.env.local tools/fake-auction.ts --remote",
+    "fake-auction": "cd tools && npx tsx fake-auction.ts",
+    "fake-auction:remote": "cd tools && npx tsx --env-file=../.env.local fake-auction.ts --remote",
     "prepare": "husky"
   },
   "dependencies": {

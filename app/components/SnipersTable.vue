@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SnapshotsMessage, SnipersTableColumn, SniperRow } from '#shared/types.ts';
+import type { SnapshotsMessage, SnipersTableColumn, SniperRow } from '@shared/types.ts';
 
 const { data: initialData } = await useFetch<{ columns: SnipersTableColumn[]; rows: SniperRow[] }>(
   '/api/snipers'

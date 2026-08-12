@@ -1,10 +1,10 @@
 import { Column } from './Column.ts';
-import type { AuctionSniper } from '../AuctionSniper.ts';
-import type { SniperListener } from '../SniperListener.ts';
-import type { PortfolioListener } from '../SniperPortfolio.ts';
-import type { SniperSnapshot } from '../SniperSnapshot.ts';
-import type { SniperState } from '../SniperState.ts';
-import { Defect } from '../util/Defect.ts';
+import type { AuctionSniper } from '@server/auctionsniper/AuctionSniper.ts';
+import type { SniperListener } from '@server/auctionsniper/SniperListener.ts';
+import type { PortfolioListener } from '@server/auctionsniper/SniperPortfolio.ts';
+import type { SniperSnapshot } from '@server/auctionsniper/SniperSnapshot.ts';
+import type { SniperState } from '@server/auctionsniper/SniperState.ts';
+import { Defect } from '@server/auctionsniper/util/Defect.ts';
 
 // 對應 Java 的 STATUS_TEXT，索引對應 SniperState 的 ordinal（宣告順序）。
 const STATUS_TEXT: readonly string[] = [

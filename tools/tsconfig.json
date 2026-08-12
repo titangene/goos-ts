@@ -1,0 +1,11 @@
+{
+  // tools/ 不屬於 Nuxt app（不在 nuxt.config.ts 的 srcDir 範圍內），Nuxt 不會
+  // 幫忙產生 .nuxt/tsconfig.*.json，需要這個獨立的 tsconfig 才能讓
+  // `npm run typecheck`、`tsx`、編輯器涵蓋到它。
+  //
+  // extends ../.nuxt/tsconfig.json：Nuxt 自動產生、合併了 nuxt.config.ts 的
+  // alias（@server/@app/@shared）與其他基本編譯選項，改別名時不用再手動
+  // 同步一份到這裡。
+  "extends": "../.nuxt/tsconfig.json",
+  "include": ["**/*.ts"]
+}

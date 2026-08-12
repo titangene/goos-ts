@@ -1,5 +1,5 @@
 import { SnipersTableModel } from './SnipersTableModel.ts';
-import type { SniperSnapshot } from '../SniperSnapshot.ts';
+import type { SniperSnapshot } from '@server/auctionsniper/SniperSnapshot.ts';
 
 export class Column {
   private constructor(

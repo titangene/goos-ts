@@ -3,9 +3,12 @@ import { Message } from './Message.ts';
 import type { RedisChannel } from './RedisChannel.ts';
 import type { RedisConnection } from './RedisConnection.ts';
 import type { RedisFailureReporter } from './RedisFailureReporter.ts';
-import type { Auction } from '../Auction.ts';
-import type { AuctionEventListener, PriceSource } from '../AuctionEventListener.ts';
-import { Announcer } from '../util/Announcer.ts';
+import type { Auction } from '@server/auctionsniper/Auction.ts';
+import type {
+  AuctionEventListener,
+  PriceSource
+} from '@server/auctionsniper/AuctionEventListener.ts';
+import { Announcer } from '@server/auctionsniper/util/Announcer.ts';
 
 export class RedisAuction implements Auction {
   private readonly auctionEventListeners = Announcer.to<AuctionEventListener>();

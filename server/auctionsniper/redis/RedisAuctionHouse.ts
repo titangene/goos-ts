@@ -5,9 +5,9 @@ import { LoggingRedisFailureReporter } from './LoggingRedisFailureReporter.ts';
 import { RedisAuction } from './RedisAuction.ts';
 import { RedisAuctionException } from './RedisAuctionException.ts';
 import { RedisConnection } from './RedisConnection.ts';
-import type { Auction } from '../Auction.ts';
-import type { AuctionHouse } from '../AuctionHouse.ts';
-import type { Item } from '../UserRequestListener.ts';
+import type { Auction } from '@server/auctionsniper/Auction.ts';
+import type { AuctionHouse } from '@server/auctionsniper/AuctionHouse.ts';
+import type { Item } from '@server/auctionsniper/UserRequestListener.ts';
 
 export class RedisAuctionHouse implements AuctionHouse {
   static readonly LOG_FILE_NAME = 'auction-sniper.log';
