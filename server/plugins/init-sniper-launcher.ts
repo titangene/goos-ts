@@ -1,4 +1,8 @@
-export default defineNitroPlugin(async () => {
+export default defineNitroPlugin(async nitroApp => {
   const config = useRuntimeConfig();
-  await initSniperLauncher(config.sniperId);
+  const auctionHouse = await initSniperLauncher(config.sniperId);
+
+  nitroApp.hooks.hook('close', async () => {
+    await auctionHouse.disconnect();
+  });
 });

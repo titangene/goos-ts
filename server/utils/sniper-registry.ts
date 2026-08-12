@@ -32,10 +32,11 @@ tableModel.addListener({
 
 let sniperLauncher: SniperLauncher | undefined;
 
-export async function initSniperLauncher(sniperId: string): Promise<void> {
+export async function initSniperLauncher(sniperId: string): Promise<RedisAuctionHouse> {
   const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
   const auctionHouse = await RedisAuctionHouse.connect(redisUrl, sniperId);
   sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
+  return auctionHouse;
 }
 
 export function joinAuction(itemId: string, stopPrice: number): void {
