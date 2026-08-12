@@ -1,6 +1,6 @@
 export interface SnipersTableColumn {
   name: string;
-  className: string;
+  key: string;
 }
 
 export interface SniperRow {

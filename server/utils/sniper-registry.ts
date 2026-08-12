@@ -6,11 +6,6 @@ import { SnipersTableModel } from '@server/auctionsniper/ui/SnipersTableModel.ts
 import { Item } from '@server/auctionsniper/UserRequestListener.ts';
 import type { SnipersTableColumn, SniperRow } from '@shared/types.ts';
 
-// Column（見 server/auctionsniper/ui/Column.ts）沒有 className，因為 Java 版的
-// auctionsniper.ui.Column 也沒有——這是純粹給瀏覽器渲染用的 CSS class，跟
-// Column.values 同順序對應，只存在於這個 wire-payload 組裝層。
-const COLUMN_CLASS_NAMES = ['itemId', 'lastPrice', 'lastBid', 'state'] as const;
-
 interface SnipersTableData {
   columns: SnipersTableColumn[];
   rows: SniperRow[];
@@ -71,10 +66,16 @@ export function joinAuction(itemId: string, stopPrice: number): void {
   sniperLauncher.joinAuction(new Item(itemId, stopPrice));
 }
 
+// Column（見 server/auctionsniper/ui/Column.ts）沒有 key，因為 Java 版的
+// auctionsniper.ui.Column 也沒有——這是純粹給 SnipersTable.vue 的 v-for 當
+// Vue :key 用的欄位識別，跟 Column.values 同順序對應，只存在於這個
+// wire-payload 組裝層。
+const COLUMN_KEYS = ['itemId', 'lastPrice', 'lastBid', 'state'] as const;
+
 export function getTableData(): SnipersTableData {
   const columns: SnipersTableColumn[] = Column.values.map((column, index) => ({
     name: column.name,
-    className: COLUMN_CLASS_NAMES[index]!
+    key: COLUMN_KEYS[index]!
   }));
 
   const rows: SniperRow[] = [];

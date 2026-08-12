@@ -195,7 +195,7 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 
 跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，`server/utils/sniper-registry.ts` 建構 WebSocket/HTTP payload 時還需要把它當一個可迭代集合走訪每個欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
 
-`Column.ts` 的欄位（`name`、`valueInFn`）刻意只對到 Java `Column` enum 實際有的東西（`name` 欄位 + `valueIn()` 行為），不多帶一個 `className` 欄位——瀏覽器渲染需要的 CSS class 名稱，是純粹的 TS/HTML 特有需求（Java 的 `JTable` 不需要 CSS），因此放在沒有 Java 對應物、本來就是 TS 專屬的 `server/utils/sniper-registry.ts`（見下一節）裡維護，不汙染 `Column` 這個直接對照 Java enum 的檔案。
+`Column.ts` 的欄位（`name`、`valueInFn`）刻意只對到 Java `Column` enum 實際有的東西（`name` 欄位 + `valueIn()` 行為），不多帶一個 `key` 欄位——這是純粹給 `SnipersTable.vue` 的 `v-for` 當 Vue `:key` 用的欄位識別，是 TS/Vue 特有需求（Java 的 `JTable` 沒有 Vue 的 list key 概念），因此放在沒有 Java 對應物、本來就是 TS 專屬的 `server/utils/sniper-registry.ts`（見下一節）裡維護，不汙染 `Column` 這個直接對照 Java enum 的檔案。
 
 `SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
 

@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 export class AuctionSniperDriver {
   constructor(private readonly page: Page) {}
@@ -24,10 +24,19 @@ export class AuctionSniperDriver {
     statusText: string
   ): Promise<void> {
     const row = this.page.locator(`#auction-${itemId}`);
-    await expect(row.locator('td.itemId')).toHaveText(itemId);
-    await expect(row.locator('td.lastPrice')).toHaveText(String(lastPrice));
-    await expect(row.locator('td.lastBid')).toHaveText(String(lastBid));
-    await expect(row.locator('td.state')).toHaveText(statusText);
+    await expect(await this.cellFor(row, 'Item')).toHaveText(itemId);
+    await expect(await this.cellFor(row, 'Last Price')).toHaveText(String(lastPrice));
+    await expect(await this.cellFor(row, 'Last Bid')).toHaveText(String(lastBid));
+    await expect(await this.cellFor(row, 'State')).toHaveText(statusText);
+  }
+
+  private async cellFor(row: Locator, columnName: string): Promise<Locator> {
+    const columnNames = await this.page.locator('table thead th').allTextContents();
+    const columnIndex = columnNames.indexOf(columnName);
+    if (columnIndex === -1) {
+      throw new Error(`No column named "${columnName}"`);
+    }
+    return row.locator('td').nth(columnIndex);
   }
 
   async startBiddingWithStopPrice(itemId: string, stopPrice: number): Promise<void> {
