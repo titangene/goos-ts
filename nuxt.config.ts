@@ -16,6 +16,15 @@ export default defineNuxtConfig({
       websocket: true
     }
   },
+  // https://nuxt.com/docs/4.x/getting-started/testing#typescript-support-in-tests
+  // test/integration/app/ 會 import .vue 元件（走 @nuxt/test-utils 的
+  // mountSuspended），併入 app context 才能用 vue-tsc 正確檢查，不用另外
+  // 寫 *.vue 型別宣告檔繞過去。
+  typescript: {
+    tsConfig: {
+      include: ['../test/integration/app/**/*']
+    }
+  },
   runtimeConfig: {
     sniperId: 'sniper'
   }

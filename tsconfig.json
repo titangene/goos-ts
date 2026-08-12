@@ -1,5 +1,12 @@
 {
-  // https://nuxt.com/docs/guide/concepts/typescript
+  // https://nuxt.com/docs/4.x/directory-structure/tsconfig
+  // 官方明確建議這個檔案維持 references-only，不要直接改動內容，因為可能
+  // 覆蓋 Nuxt 或其他模組依賴的重要設定。app/、server/、shared/、
+  // nuxt.config.ts 等由下面這幾個 Nuxt 自動產生的 .nuxt/tsconfig.*.json
+  // 負責（test/integration/app/ 也經 nuxt.config.ts 的
+  // typescript.tsConfig.include 併入 app context，見該檔案註解）。
+  // test/、tools/ 這兩個 Nuxt 管不到的目錄，各自由其目錄下的
+  // tsconfig.json 獨立負責（見 test/tsconfig.json、tools/tsconfig.json）。
   "files": [],
   "references": [
     {

@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json && tsc --noEmit -p tools/tsconfig.json",
     "test:unit": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:app": "vitest run --config vitest.integration.app.config.ts",
