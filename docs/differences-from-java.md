@@ -200,7 +200,7 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 `SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
 
 - TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`/`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取。
-- Java 版 `fireTableRowsInserted(row, row)`/`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`/`server/api/snipers.get.ts` 都是重新整包查詢（`getColumnCount()`/`getRowCount()`/`getValueAt()`）建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
+- Java 版 `fireTableRowsInserted(row, row)`/`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`/`server/api/snipers.get.ts` 都是重新整包查詢建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
 
 ### `server/utils/sniper-registry.ts` 對應 Java 的哪裡
 

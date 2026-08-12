@@ -70,7 +70,12 @@ export function joinAuction(itemId: string, stopPrice: number): void {
 // auctionsniper.ui.Column 也沒有——這是純粹給 SnipersTable.vue 用的欄位識別，
 // 同時當 v-for 的 Vue :key 與 <td> 的 data-testid（供 e2e 測試定位欄位），
 // 跟 Column.values 同順序對應，只存在於這個 wire-payload 組裝層。
-const COLUMN_KEYS = ['itemId', 'lastPrice', 'lastBid', 'state'] as const;
+const COLUMN_KEYS = [
+  'itemId',
+  'lastPrice',
+  'lastBid',
+  'state'
+] as const satisfies readonly (keyof SniperRow)[];
 
 export function getTableData(): SnipersTableData {
   const columns: SnipersTableColumn[] = Column.values.map((column, index) => ({
@@ -78,13 +83,16 @@ export function getTableData(): SnipersTableData {
     key: COLUMN_KEYS[index]!
   }));
 
+  // getValueAt() 的欄位順序跟 Column.values／COLUMN_KEYS 一致（0: itemId、
+  // 1: lastPrice、2: lastBid、3: state），才能這樣按位置對應到具名欄位。
   const rows: SniperRow[] = [];
   for (let row = 0; row < tableModel.getRowCount(); row++) {
-    const values: (string | number)[] = [];
-    for (let column = 0; column < tableModel.getColumnCount(); column++) {
-      values.push(tableModel.getValueAt(row, column));
-    }
-    rows.push({ itemId: String(tableModel.getValueAt(row, 0)), values });
+    rows.push({
+      itemId: String(tableModel.getValueAt(row, 0)),
+      lastPrice: Number(tableModel.getValueAt(row, 1)),
+      lastBid: Number(tableModel.getValueAt(row, 2)),
+      state: String(tableModel.getValueAt(row, 3))
+    });
   }
 
   return { columns, rows };

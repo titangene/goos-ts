@@ -1,11 +1,13 @@
-export interface SnipersTableColumn {
-  name: string;
-  key: string;
-}
-
 export interface SniperRow {
   itemId: string;
-  values: (string | number)[];
+  lastPrice: number;
+  lastBid: number;
+  state: string;
+}
+
+export interface SnipersTableColumn {
+  name: string;
+  key: keyof SniperRow;
 }
 
 export interface SnapshotsMessage {
