@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuctionSniper } from '@server/auctionsniper/AuctionSniper.ts';
+
+import type { Auction } from '@server/auctionsniper/Auction.ts';
 import { PriceSource } from '@server/auctionsniper/AuctionEventListener.ts';
+import { AuctionSniper } from '@server/auctionsniper/AuctionSniper.ts';
+import type { SniperListener } from '@server/auctionsniper/SniperListener.ts';
 import { SniperSnapshot } from '@server/auctionsniper/SniperSnapshot.ts';
 import { SniperState } from '@server/auctionsniper/SniperState.ts';
-import type { Auction } from '@server/auctionsniper/Auction.ts';
-import type { SniperListener } from '@server/auctionsniper/SniperListener.ts';
 import { Item } from '@server/auctionsniper/UserRequestListener.ts';
 
 describe('The Auction Sniper', () => {

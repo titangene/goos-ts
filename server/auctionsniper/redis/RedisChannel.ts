@@ -1,4 +1,5 @@
 import type { RedisClientType } from 'redis';
+
 import type { MessageListener } from './MessageListener.ts';
 
 // node-redis 的 subscribe(channel, listener) 是 per-channel 各自的 callback，

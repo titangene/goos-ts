@@ -1,4 +1,5 @@
 import { readFile, rm } from 'node:fs/promises';
+
 import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
 
 export class AuctionLogDriver {

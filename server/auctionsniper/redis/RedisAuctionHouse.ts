@@ -1,11 +1,12 @@
 import { appendFileSync } from 'node:fs';
-import { RedisAuction } from './RedisAuction.ts';
-import { RedisConnection } from './RedisConnection.ts';
-import { LoggingRedisFailureReporter } from './LoggingRedisFailureReporter.ts';
-import { RedisAuctionException } from './RedisAuctionException.ts';
+
 import type { Logger } from './Logger.ts';
-import type { AuctionHouse } from '../AuctionHouse.ts';
+import { LoggingRedisFailureReporter } from './LoggingRedisFailureReporter.ts';
+import { RedisAuction } from './RedisAuction.ts';
+import { RedisAuctionException } from './RedisAuctionException.ts';
+import { RedisConnection } from './RedisConnection.ts';
 import type { Auction } from '../Auction.ts';
+import type { AuctionHouse } from '../AuctionHouse.ts';
 import type { Item } from '../UserRequestListener.ts';
 
 export class RedisAuctionHouse implements AuctionHouse {

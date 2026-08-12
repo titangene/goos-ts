@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuctionMessageTranslator } from '@server/auctionsniper/redis/AuctionMessageTranslator.ts';
+
 import { PriceSource } from '@server/auctionsniper/AuctionEventListener.ts';
 import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
+import { AuctionMessageTranslator } from '@server/auctionsniper/redis/AuctionMessageTranslator.ts';
 import type { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
 import type { RedisFailureReporter } from '@server/auctionsniper/redis/RedisFailureReporter.ts';
 

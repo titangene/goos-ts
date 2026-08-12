@@ -1,7 +1,8 @@
 // @ts-check
-import withNuxt from './.nuxt/eslint.config.mjs';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import importX from 'eslint-plugin-import-x';
+
+import withNuxt from './.nuxt/eslint.config.mjs';
 
 export default withNuxt(
   // Your custom configs here
@@ -14,7 +15,24 @@ export default withNuxt(
       }
     },
     rules: {
-      'import-x/extensions': ['error', 'always', { ignorePackages: true, checkTypeImports: true }]
+      'import-x/extensions': ['error', 'always', { ignorePackages: true, checkTypeImports: true }],
+      'import-x/order': [
+        'error',
+        {
+          groups: [
+            ['builtin', 'external'],
+            ['internal', 'parent', 'sibling', 'index', 'object']
+          ],
+          pathGroups: [
+            { pattern: '@server/**', group: 'internal' },
+            { pattern: '@app/**', group: 'internal' },
+            { pattern: '@test/**', group: 'internal' }
+          ],
+          pathGroupsExcludedImportTypes: ['builtin'],
+          'newlines-between': 'always',
+          alphabetize: { order: 'asc', caseInsensitive: true }
+        }
+      ]
     }
   },
   {

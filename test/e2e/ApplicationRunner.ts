@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
-import { AuctionSniperDriver } from './AuctionSniperDriver.ts';
+
 import { AuctionLogDriver } from './AuctionLogDriver.ts';
+import { AuctionSniperDriver } from './AuctionSniperDriver.ts';
 import type { RedisFakeAuctionServer } from './RedisFakeAuctionServer.ts';
 
 export const SNIPER_ID = 'sniper';

@@ -1,9 +1,9 @@
 import { Column } from './Column.ts';
 import type { AuctionSniper } from '../AuctionSniper.ts';
 import type { SniperListener } from '../SniperListener.ts';
+import type { PortfolioListener } from '../SniperPortfolio.ts';
 import type { SniperSnapshot } from '../SniperSnapshot.ts';
 import type { SniperState } from '../SniperState.ts';
-import type { PortfolioListener } from '../SniperPortfolio.ts';
 import { Defect } from '../util/Defect.ts';
 
 // 對應 Java 的 STATUS_TEXT，索引對應 SniperState 的 ordinal（宣告順序）。

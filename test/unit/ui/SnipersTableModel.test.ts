@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SnipersTableModel } from '@server/auctionsniper/ui/SnipersTableModel.ts';
-import { Column } from '@server/auctionsniper/ui/Column.ts';
+
+import type { Auction } from '@server/auctionsniper/Auction.ts';
 import { AuctionSniper } from '@server/auctionsniper/AuctionSniper.ts';
 import { SniperSnapshot } from '@server/auctionsniper/SniperSnapshot.ts';
 import { SniperState } from '@server/auctionsniper/SniperState.ts';
-import { Defect } from '@server/auctionsniper/util/Defect.ts';
-import type { Auction } from '@server/auctionsniper/Auction.ts';
+import { Column } from '@server/auctionsniper/ui/Column.ts';
+import { SnipersTableModel } from '@server/auctionsniper/ui/SnipersTableModel.ts';
 import { Item } from '@server/auctionsniper/UserRequestListener.ts';
+import { Defect } from '@server/auctionsniper/util/Defect.ts';
 
 const ITEM_ID = 'item 0';
 

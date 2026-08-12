@@ -1,7 +1,8 @@
 import { createClient } from 'redis';
 import type { RedisClientType } from 'redis';
-import { RedisChannel } from './RedisChannel.ts';
+
 import type { MessageListener } from './MessageListener.ts';
+import { RedisChannel } from './RedisChannel.ts';
 import { commandsChannel, eventsChannel } from './Topic.ts';
 
 const KNOWN_USERNAMES: readonly string[] = ['sniper'];

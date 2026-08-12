@@ -1,7 +1,7 @@
 import { PriceSource } from '../AuctionEventListener.ts';
 import type { AuctionEventListener } from '../AuctionEventListener.ts';
-import type { RedisChannel } from './RedisChannel.ts';
 import type { MessageListener } from './MessageListener.ts';
+import type { RedisChannel } from './RedisChannel.ts';
 import type { RedisFailureReporter } from './RedisFailureReporter.ts';
 
 export class AuctionMessageTranslator implements MessageListener {

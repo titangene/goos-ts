@@ -1,7 +1,7 @@
-import { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
-import { RedisConnection } from '@server/auctionsniper/redis/RedisConnection.ts';
 import { Message } from '@server/auctionsniper/redis/Message.ts';
 import type { MessageListener } from '@server/auctionsniper/redis/MessageListener.ts';
+import { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
+import { RedisConnection } from '@server/auctionsniper/redis/RedisConnection.ts';
 import { commandsChannel, eventsChannel } from '@server/auctionsniper/redis/Topic.ts';
 
 export class RedisFakeAuctionServer {

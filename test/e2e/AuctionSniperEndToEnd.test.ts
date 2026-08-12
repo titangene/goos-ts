@@ -1,4 +1,5 @@
 import { test } from '@playwright/test';
+
 import { ApplicationRunner, SNIPER_ID } from './ApplicationRunner.ts';
 import { RedisFakeAuctionServer } from './RedisFakeAuctionServer.ts';
 

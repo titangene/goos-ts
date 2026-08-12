@@ -1,11 +1,11 @@
-import { Announcer } from '../util/Announcer.ts';
+import { AuctionMessageTranslator } from './AuctionMessageTranslator.ts';
 import { Message } from './Message.ts';
 import type { RedisChannel } from './RedisChannel.ts';
 import type { RedisConnection } from './RedisConnection.ts';
-import { AuctionMessageTranslator } from './AuctionMessageTranslator.ts';
-import type { AuctionEventListener, PriceSource } from '../AuctionEventListener.ts';
 import type { RedisFailureReporter } from './RedisFailureReporter.ts';
 import type { Auction } from '../Auction.ts';
+import type { AuctionEventListener, PriceSource } from '../AuctionEventListener.ts';
+import { Announcer } from '../util/Announcer.ts';
 
 export class RedisAuction implements Auction {
   private readonly auctionEventListeners = Announcer.to<AuctionEventListener>();

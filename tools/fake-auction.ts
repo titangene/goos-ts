@@ -16,10 +16,11 @@
  * 輸入 "quit" 中斷連線並結束程式。
  */
 import { clearLine, createInterface, cursorTo, moveCursor } from 'node:readline';
+
+import type { MessageListener } from '../server/auctionsniper/redis/MessageListener.ts';
 import { RedisChannel } from '../server/auctionsniper/redis/RedisChannel.ts';
 import { RedisConnection } from '../server/auctionsniper/redis/RedisConnection.ts';
 import { commandsChannel, eventsChannel } from '../server/auctionsniper/redis/Topic.ts';
-import type { MessageListener } from '../server/auctionsniper/redis/MessageListener.ts';
 
 const SOL_VERSION_PREFIX = 'SOLVersion: 1.1; ';
 

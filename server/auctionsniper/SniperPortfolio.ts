@@ -1,6 +1,6 @@
-import { Announcer } from './util/Announcer.ts';
 import type { AuctionSniper } from './AuctionSniper.ts';
 import type { SniperCollector } from './SniperCollector.ts';
+import { Announcer } from './util/Announcer.ts';
 
 export interface PortfolioListener {
   sniperAdded(sniper: AuctionSniper): void;

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
 import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
 import { Item } from '@server/auctionsniper/UserRequestListener.ts';
-import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
 import { RedisFakeAuctionServer } from '@test/e2e/RedisFakeAuctionServer.ts';
 
 // 對照 goos-code 的

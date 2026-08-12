@@ -1,10 +1,10 @@
-import { Announcer } from './util/Announcer.ts';
+import type { Auction } from './Auction.ts';
 import { PriceSource } from './AuctionEventListener.ts';
 import type { AuctionEventListener } from './AuctionEventListener.ts';
-import type { Auction } from './Auction.ts';
 import type { SniperListener } from './SniperListener.ts';
 import { SniperSnapshot } from './SniperSnapshot.ts';
 import type { Item } from './UserRequestListener.ts';
+import { Announcer } from './util/Announcer.ts';
 
 export class AuctionSniper implements AuctionEventListener {
   private readonly listeners = Announcer.to<SniperListener>();
