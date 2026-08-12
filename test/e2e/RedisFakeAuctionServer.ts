@@ -24,6 +24,7 @@ export class RedisFakeAuctionServer {
       commandsChannel(this.itemId),
       this.messageListener
     );
+    await this.channel.ready;
   }
 
   async sendInvalidMessageContaining(brokenMessage: string): Promise<void> {

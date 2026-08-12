@@ -107,6 +107,7 @@ async function main(): Promise<void> {
     commandsChannel(itemId),
     listener
   );
+  await channel.ready;
 
   console.log(`Selling item ${itemId} on ${redisUrl}. Waiting for a sniper to join...`);
   console.log(
