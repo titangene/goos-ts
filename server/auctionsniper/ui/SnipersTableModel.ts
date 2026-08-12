@@ -6,17 +6,6 @@ import type { SniperSnapshot } from '@server/auctionsniper/SniperSnapshot.ts';
 import type { SniperState } from '@server/auctionsniper/SniperState.ts';
 import { Defect } from '@server/auctionsniper/util/Defect.ts';
 
-// 對應 Java 的 STATUS_TEXT，索引對應 SniperState 的 ordinal（宣告順序）。
-const STATUS_TEXT: readonly string[] = [
-  'Joining',
-  'Bidding',
-  'Winning',
-  'Losing',
-  'Lost',
-  'Won',
-  'Failed'
-];
-
 // 對應 Java 版 javax.swing.event.TableModelListener——只通知「有變動」，
 // 監聽者要自己透過 getRowCount()／getColumnCount()／getValueAt() 重新讀取，
 // 不像 Swing 有 TableModelEvent 帶行號範圍，這裡簡化成單一訊號。
@@ -25,6 +14,17 @@ export interface SnipersTableListener {
 }
 
 export class SnipersTableModel implements SniperListener, PortfolioListener {
+  // 索引對應 SniperState 的 ordinal（宣告順序）。
+  private static readonly STATUS_TEXT: readonly string[] = [
+    'Joining',
+    'Bidding',
+    'Winning',
+    'Losing',
+    'Lost',
+    'Won',
+    'Failed'
+  ];
+
   private snapshots: SniperSnapshot[] = [];
   private readonly listeners: SnipersTableListener[] = [];
 
@@ -45,7 +45,7 @@ export class SnipersTableModel implements SniperListener, PortfolioListener {
   }
 
   static textFor(state: SniperState): string {
-    return STATUS_TEXT[state]!;
+    return SnipersTableModel.STATUS_TEXT[state]!;
   }
 
   sniperStateChanged(newSnapshot: SniperSnapshot): void {
