@@ -1,5 +1,5 @@
 import { readFile, rm } from 'node:fs/promises';
-import { RedisAuctionHouse } from '../../server/auctionsniper/redis/RedisAuctionHouse.ts';
+import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
 
 export class AuctionLogDriver {
   async hasEntry(expectedSubstring: string): Promise<void> {

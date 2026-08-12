@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SniperSnapshot } from '../../server/auctionsniper/SniperSnapshot.ts';
-import { SniperState } from '../../server/auctionsniper/SniperState.ts';
+import { SniperSnapshot } from '@server/auctionsniper/SniperSnapshot.ts';
+import { SniperState } from '@server/auctionsniper/SniperState.ts';
 
 describe('SniperSnapshot', () => {
   it('transitions between states', () => {

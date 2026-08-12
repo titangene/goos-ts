@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SniperPortfolio } from '../../server/auctionsniper/SniperPortfolio.ts';
-import type { AuctionSniper } from '../../server/auctionsniper/AuctionSniper.ts';
+import { SniperPortfolio } from '@server/auctionsniper/SniperPortfolio.ts';
+import type { AuctionSniper } from '@server/auctionsniper/AuctionSniper.ts';
 
 describe('The sniper portfolio', () => {
   it('notifies listeners when a sniper is added', () => {

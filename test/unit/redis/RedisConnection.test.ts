@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RedisConnection } from '../../../server/auctionsniper/redis/RedisConnection.ts';
+import { RedisConnection } from '@server/auctionsniper/redis/RedisConnection.ts';
 
 describe('RedisConnection#login (ADR-0003: username-only whitelist, no password check)', () => {
   it('does not throw for a known username', () => {

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { RedisAuctionHouse } from '../../../server/auctionsniper/redis/RedisAuctionHouse.ts';
-import { Item } from '../../../server/auctionsniper/UserRequestListener.ts';
-import type { AuctionEventListener } from '../../../server/auctionsniper/AuctionEventListener.ts';
-import { RedisFakeAuctionServer } from '../../e2e/RedisFakeAuctionServer.ts';
+import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
+import { Item } from '@server/auctionsniper/UserRequestListener.ts';
+import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
+import { RedisFakeAuctionServer } from '@test/e2e/RedisFakeAuctionServer.ts';
 
 // 對照 goos-code 的
 // test/integration/test/integration/auctionsniper/xmpp/XMPPAuctionHouseTest.java

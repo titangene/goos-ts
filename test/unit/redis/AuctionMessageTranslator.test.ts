@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuctionMessageTranslator } from '../../../server/auctionsniper/redis/AuctionMessageTranslator.ts';
-import { PriceSource } from '../../../server/auctionsniper/AuctionEventListener.ts';
-import type { AuctionEventListener } from '../../../server/auctionsniper/AuctionEventListener.ts';
-import type { RedisChannel } from '../../../server/auctionsniper/redis/RedisChannel.ts';
-import type { RedisFailureReporter } from '../../../server/auctionsniper/redis/RedisFailureReporter.ts';
+import { AuctionMessageTranslator } from '@server/auctionsniper/redis/AuctionMessageTranslator.ts';
+import { PriceSource } from '@server/auctionsniper/AuctionEventListener.ts';
+import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
+import type { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
+import type { RedisFailureReporter } from '@server/auctionsniper/redis/RedisFailureReporter.ts';
 
 // 1:1 對照 goos-code 的 test/unit/test/auctionsniper/xmpp/AuctionMessageTranslatorTest.java
 // （5 個測項、SNIPER_ID、輸入的 SOL 字串皆沿用該檔案）。

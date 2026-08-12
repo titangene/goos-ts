@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SniperState, whenAuctionClosed } from '../../server/auctionsniper/SniperState.ts';
-import { Defect } from '../../server/auctionsniper/util/Defect.ts';
+import { SniperState, whenAuctionClosed } from '@server/auctionsniper/SniperState.ts';
+import { Defect } from '@server/auctionsniper/util/Defect.ts';
 
 describe('SniperState', () => {
   it('is won when auction closes while winning', () => {

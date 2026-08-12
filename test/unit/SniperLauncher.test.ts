@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SniperLauncher } from '../../server/auctionsniper/SniperLauncher.ts';
-import type { AuctionSniper } from '../../server/auctionsniper/AuctionSniper.ts';
-import { Item } from '../../server/auctionsniper/UserRequestListener.ts';
-import type { Auction } from '../../server/auctionsniper/Auction.ts';
-import type { AuctionHouse } from '../../server/auctionsniper/AuctionHouse.ts';
-import type { SniperCollector } from '../../server/auctionsniper/SniperCollector.ts';
+import { SniperLauncher } from '@server/auctionsniper/SniperLauncher.ts';
+import type { AuctionSniper } from '@server/auctionsniper/AuctionSniper.ts';
+import { Item } from '@server/auctionsniper/UserRequestListener.ts';
+import type { Auction } from '@server/auctionsniper/Auction.ts';
+import type { AuctionHouse } from '@server/auctionsniper/AuctionHouse.ts';
+import type { SniperCollector } from '@server/auctionsniper/SniperCollector.ts';
 
 describe('SniperLauncher', () => {
   it('adds new sniper to collector and then joins auction', () => {

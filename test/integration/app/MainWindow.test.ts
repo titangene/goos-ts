@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readBody } from 'h3';
 import { flushPromises } from '@vue/test-utils';
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime';
-import IndexPage from '../../../app/pages/index.vue';
+import IndexPage from '@app/pages/index.vue';
 
 registerEndpoint('/api/snipers', () => ({ columns: [], rows: [] }));
 

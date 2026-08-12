@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { LoggingRedisFailureReporter } from '../../../server/auctionsniper/redis/LoggingRedisFailureReporter.ts';
-import type { Logger } from '../../../server/auctionsniper/redis/Logger.ts';
+import { LoggingRedisFailureReporter } from '@server/auctionsniper/redis/LoggingRedisFailureReporter.ts';
+import type { Logger } from '@server/auctionsniper/redis/Logger.ts';
 
 // 對照 goos-code 的
 // test/unit/test/auctionsniper/xmpp/LoggingXMPPFailureReporterTest.java

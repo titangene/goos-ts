@@ -1,8 +1,8 @@
-import { RedisChannel } from '../../server/auctionsniper/redis/RedisChannel.ts';
-import { RedisConnection } from '../../server/auctionsniper/redis/RedisConnection.ts';
-import { Message } from '../../server/auctionsniper/redis/Message.ts';
-import type { MessageListener } from '../../server/auctionsniper/redis/MessageListener.ts';
-import { commandsChannel, eventsChannel } from '../../server/auctionsniper/redis/Topic.ts';
+import { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
+import { RedisConnection } from '@server/auctionsniper/redis/RedisConnection.ts';
+import { Message } from '@server/auctionsniper/redis/Message.ts';
+import type { MessageListener } from '@server/auctionsniper/redis/MessageListener.ts';
+import { commandsChannel, eventsChannel } from '@server/auctionsniper/redis/Topic.ts';
 
 export class RedisFakeAuctionServer {
   static readonly REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
