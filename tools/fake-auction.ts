@@ -1,6 +1,6 @@
 /**
  * 互動式的假拍賣現場，讓你可以手動操作 Auction Sniper app 的 UI。跟
- * test/e2e/RedisFakeAuctionServer.ts 用同一套 `auction:<itemId>:commands`／
+ * test/e2e/FakeAuctionServer.ts 用同一套 `auction:<itemId>:commands`／
  * `auction:<itemId>:events` Redis channel 與 SOL 純文字協定收發訊息。
  *
  * 用法：
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
   // 用 connection.publisher／connection.subscriber 反向建構——發布到
   // events channel、訂閱 commands channel，跟 RedisConnection.createChannel()
   // 內建給 sniper 端用的方向正好相反，作法對照
-  // test/e2e/RedisFakeAuctionServer.ts。
+  // test/e2e/FakeAuctionServer.ts。
   const listener: MessageListener = {
     processMessage(_channel: RedisChannel, rawMessage: string): void {
       const fields = parseCommand(rawMessage);

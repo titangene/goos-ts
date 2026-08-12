@@ -112,7 +112,7 @@ public class FakeAuctionServer {
 
 `SingleMessageListener` 宣告成外部類別 `FakeAuctionServer` 的內部類別（雖然這個例子沒有真的用到 `FakeAuctionServer.this` 存取外部欄位，但語言層級上就是隱含可以這樣做）。要建立實例得先有外部實例：`fakeAuctionServer.new SingleMessageListener()`。
 
-**TS（`test/e2e/RedisFakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
+**TS（`test/e2e/FakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
 
 ### 2.3 `private static` 巢狀類別——封裝實作細節
 
@@ -339,10 +339,10 @@ public class FakeAuctionServer {
 
 呼叫端要用 `auctionServer.getItemId()`（方法呼叫）。
 
-**TS（`test/e2e/RedisFakeAuctionServer.ts`）：**
+**TS（`test/e2e/FakeAuctionServer.ts`）：**
 
 ```ts
-export class RedisFakeAuctionServer {
+export class FakeAuctionServer {
   constructor(public readonly itemId: string) { ... }
 }
 ```

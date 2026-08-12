@@ -1,6 +1,6 @@
 # 手動模擬完整拍賣流程
 
-`tools/fake-auction.ts` 是一個互動式的假拍賣現場，用跟 `test/e2e/RedisFakeAuctionServer.ts` 一樣的協定（Redis Pub/Sub + SOL 純文字格式）訂閱 `auction:<itemId>:commands`、發布到 `auction:<itemId>:events`，讓你在終端機手動打指令、即時觀察 app 畫面的反應。
+`tools/fake-auction.ts` 是一個互動式的假拍賣現場，用跟 `test/e2e/FakeAuctionServer.ts` 一樣的協定（Redis Pub/Sub + SOL 純文字格式）訂閱 `auction:<itemId>:commands`、發布到 `auction:<itemId>:events`，讓你在終端機手動打指令、即時觀察 app 畫面的反應。
 
 輸入格式是 SOL 訊息本身的內容，只省略固定不變的 `SOLVersion: 1.1; ` 前綴（工具會自動幫你補上），例如輸入 `Event: CLOSE;` 實際發出的就是 `SOLVersion: 1.1; Event: CLOSE;`。
 

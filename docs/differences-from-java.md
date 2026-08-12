@@ -27,9 +27,9 @@
   SOLVersion: 1.1; Command: JOIN; Bidder: sniper;
   SOLVersion: 1.1; Command: BID; Price: 95; Bidder: sniper;
   ```
-- 這個差異會連帶影響到第 3 節提到的 `RedisFakeAuctionServer.ts`。
+- 這個差異會連帶影響到第 3 節提到的 `FakeAuctionServer.ts`。
 
-## 3. `RedisFakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
+## 3. `FakeAuctionServer.ts` 一樣能做純字串相等比對，只是預期值要現算
 
 `FakeAuctionServer.java` 從不解析收到的 JOIN/BID 訊息內容，靠的是**兩件事分開檢查**：
 
@@ -45,7 +45,7 @@ private void receivesAMessageMatching(String sniperId, Matcher<? super String> m
 
 - 訊息內容本身只做**字串完全相等**比對（`equalTo(JOIN_COMMAND_FORMAT)`），是誰送的另外用 `currentChat.getParticipant()`（連線層級）查——`JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 是固定字串/格式樣板，跟 sniperId 無關，因為身分已經由連線層級保證。
 - 因為第 2 節那個必要分歧（Bidder 塞進訊息內容），TS 版的 JOIN/BID 訊息不是固定字串。但 `Message.encode()` 本來就是 `RedisAuction.join()`/`bid()` 產生訊息的唯一來源（跟 Java 的 `JOIN_COMMAND_FORMAT`/`BID_COMMAND_FORMAT` 常數扮演同一個角色：production code 跟測試用同一份格式定義），呼叫測試方法時 sniperId 本來就是已知參數。
-- 所以 `test/e2e/RedisFakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`/`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
+- 所以 `test/e2e/FakeAuctionServer.ts` 直接用 `Message.encode(Message.Join(sniperId))`/`Message.encode(Message.Bid(sniperId, bid))` 算出「這個 sniper 應該送出的完整訊息」，再跟收到的內容做字串完全相等比對——身分檢查跟內容檢查合併成一次比對（因為身分本來就編碼在內容裡），不需要額外解析欄位，也不需要獨立的 `parseCommand()`。
 
 ## 4. `RedisClientType` 沒有 `getUser()`，所以包了一個 `RedisConnection`
 
@@ -112,11 +112,11 @@ export class RedisConnection {
 
 有了 `RedisConnection` 這層包裝，`RedisAuction` 的 `translatorFor(connection)` 也能跟 Java 一樣接收 `connection` 當參數、內部呼叫 `connection.getUser()`，不用額外傳一個 `sniperId` 參數進建構子。
 
-### `RedisFakeAuctionServer.ts` 也共用 `RedisConnection`，但反向建立 channel
+### `FakeAuctionServer.ts` 也共用 `RedisConnection`，但反向建立 channel
 
 `RedisConnection` 也不只服務 sniper 端：
 
-- TS 版 `test/e2e/RedisFakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。
+- TS 版 `test/e2e/FakeAuctionServer.ts` 一樣用它處理 `connect()`/`disconnect()`，對照 Java 的 `FakeAuctionServer.java` 同樣直接持有一個 `XMPPConnection` 欄位、呼叫 `connection.connect()`/`connection.disconnect()`。
 - 但 Java 版建立 `Chat` 的方式跟 `XMPPAuction` 不同——它從不主動呼叫 `createChat()`，而是用 `connection.getChatManager().addChatListener(...)` 被動等對方（sniper）建立 chat 後拿到 `currentChat`。
 - TS 版對應的作法是直接用 `connection.publisher`/`connection.subscriber` 建構方向相反的 `RedisChannel`（publish 用 events channel、subscribe 用 commands channel，跟 `RedisAuction` 的 `commandsChannel`/`eventsChannel` 方向正好相反），因為 node-redis 沒有 `ChatManager`/`addChatListener` 這種「被動等對方建立 chat」的機制，且 `RedisConnection.createChannel()` 內建的 channel 方向本來就是為了 sniper 端設計，不適用於 fake auction server 這種角色相反的情境。
 - 因此 `RedisConnection` 沒有另外提供反向的 `createChannel()`，`login()`/`getUser()` 也用不到（fake auction server 不是 sniper，沒有身分白名單需求）。

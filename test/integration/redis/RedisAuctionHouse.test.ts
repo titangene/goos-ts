@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
 import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
 import { Item } from '@server/auctionsniper/UserRequestListener.ts';
-import { RedisFakeAuctionServer } from '@test/e2e/RedisFakeAuctionServer.ts';
+import { FakeAuctionServer } from '@test/e2e/FakeAuctionServer.ts';
 
 // 對照 goos-code 的
 // test/integration/test/integration/auctionsniper/xmpp/XMPPAuctionHouseTest.java
@@ -17,12 +17,12 @@ function uniqueItemId(name: string): string {
 }
 
 describe('RedisAuctionHouse', () => {
-  let auctionServer: RedisFakeAuctionServer;
+  let auctionServer: FakeAuctionServer;
   let auctionHouse: RedisAuctionHouse;
 
   beforeEach(async () => {
-    auctionServer = new RedisFakeAuctionServer(uniqueItemId('item-54321'));
-    auctionHouse = await RedisAuctionHouse.connect(RedisFakeAuctionServer.REDIS_URL, SNIPER_ID);
+    auctionServer = new FakeAuctionServer(uniqueItemId('item-54321'));
+    auctionHouse = await RedisAuctionHouse.connect(FakeAuctionServer.REDIS_URL, SNIPER_ID);
     await auctionServer.startSellingItem();
   });
 

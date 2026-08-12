@@ -21,7 +21,7 @@ Auction Sniper — TypeScript + Nuxt + Redis + WebSocket 版本，改寫自 [Gro
 | Matcher           | Hamcrest                                                                | Vitest 內建 `expect`                                                                     |
 | 整合測試          | `test/integration`（Swing `MainWindow`、XMPP `XMPPAuctionHouse`）       | `test/integration`（Nuxt app、Redis `RedisAuctionHouse`），另加 `test/integration/app`   |
 | End-to-end 測試   | `test/end-to-end`（`ApplicationRunner` + WindowLicker 驅動 Swing 元件） | `test/e2e`（Playwright 驅動瀏覽器）                                                      |
-| 假拍賣現場        | `FakeAuctionServer.java`（連 XMPP）                                     | `test/e2e/RedisFakeAuctionServer.ts` + `tools/fake-auction.ts`（連 Redis）               |
+| 假拍賣現場        | `FakeAuctionServer.java`（連 XMPP）                                     | `test/e2e/FakeAuctionServer.ts` + `tools/fake-auction.ts`（連 Redis）                    |
 | CI 測試用依賴服務 | Openfire（XMPP server）                                                 | Redis（GitHub Actions `services:` 啟動）                                                 |
 
 ### 專案結構比較

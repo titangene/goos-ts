@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { AuctionLogDriver } from './AuctionLogDriver.ts';
 import { AuctionSniperDriver } from './AuctionSniperDriver.ts';
-import type { RedisFakeAuctionServer } from './RedisFakeAuctionServer.ts';
+import type { FakeAuctionServer } from './FakeAuctionServer.ts';
 
 export const SNIPER_ID = 'sniper';
 const NO_STOP_PRICE_LIMIT = 1_000_000_000;
@@ -15,23 +15,20 @@ export class ApplicationRunner {
     this.driver = new AuctionSniperDriver(page);
   }
 
-  async startBiddingIn(...auctions: RedisFakeAuctionServer[]): Promise<void> {
+  async startBiddingIn(...auctions: FakeAuctionServer[]): Promise<void> {
     await this.startSniper();
     for (const auction of auctions) {
       await this.openBiddingFor(auction, NO_STOP_PRICE_LIMIT);
     }
   }
 
-  async startBiddingWithStopPrice(
-    auction: RedisFakeAuctionServer,
-    stopPrice: number
-  ): Promise<void> {
+  async startBiddingWithStopPrice(auction: FakeAuctionServer, stopPrice: number): Promise<void> {
     await this.startSniper();
     await this.openBiddingFor(auction, stopPrice);
   }
 
   async hasShownSniperHasLostAuction(
-    auction: RedisFakeAuctionServer,
+    auction: FakeAuctionServer,
     lastPrice: number,
     lastBid: number
   ): Promise<void> {
@@ -39,36 +36,30 @@ export class ApplicationRunner {
   }
 
   async hasShownSniperIsBidding(
-    auction: RedisFakeAuctionServer,
+    auction: FakeAuctionServer,
     lastPrice: number,
     lastBid: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Bidding');
   }
 
-  async hasShownSniperIsWinning(
-    auction: RedisFakeAuctionServer,
-    winningBid: number
-  ): Promise<void> {
+  async hasShownSniperIsWinning(auction: FakeAuctionServer, winningBid: number): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, winningBid, winningBid, 'Winning');
   }
 
   async hasShownSniperIsLosing(
-    auction: RedisFakeAuctionServer,
+    auction: FakeAuctionServer,
     lastPrice: number,
     lastBid: number
   ): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Losing');
   }
 
-  async hasShownSniperHasWonAuction(
-    auction: RedisFakeAuctionServer,
-    lastPrice: number
-  ): Promise<void> {
+  async hasShownSniperHasWonAuction(auction: FakeAuctionServer, lastPrice: number): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastPrice, 'Won');
   }
 
-  async hasShownSniperHasFailed(auction: RedisFakeAuctionServer): Promise<void> {
+  async hasShownSniperHasFailed(auction: FakeAuctionServer): Promise<void> {
     await this.driver.showsSniperStatus(auction.itemId, 0, 0, 'Failed');
   }
 
@@ -82,7 +73,7 @@ export class ApplicationRunner {
     await this.driver.hasColumnTitles();
   }
 
-  private async openBiddingFor(auction: RedisFakeAuctionServer, stopPrice: number): Promise<void> {
+  private async openBiddingFor(auction: FakeAuctionServer, stopPrice: number): Promise<void> {
     await this.driver.startBiddingWithStopPrice(auction.itemId, stopPrice);
     await this.driver.showsSniperStatus(auction.itemId, 0, 0, 'Joining');
   }

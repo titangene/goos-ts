@@ -4,7 +4,7 @@ import { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
 import { RedisConnection } from '@server/auctionsniper/redis/RedisConnection.ts';
 import { commandsChannel, eventsChannel } from '@server/auctionsniper/redis/Topic.ts';
 
-export class RedisFakeAuctionServer {
+export class FakeAuctionServer {
   static readonly REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
   private readonly messageListener = new SingleMessageListener();
@@ -12,7 +12,7 @@ export class RedisFakeAuctionServer {
   private channel!: RedisChannel;
 
   constructor(public readonly itemId: string) {
-    this.connection = new RedisConnection(RedisFakeAuctionServer.REDIS_URL);
+    this.connection = new RedisConnection(FakeAuctionServer.REDIS_URL);
   }
 
   async startSellingItem(): Promise<void> {
