@@ -206,11 +206,26 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 
 這個檔案沒有單一個 Java 檔案可以 1:1 對照，因為它身兼兩種角色，一種有 Java 對應物，一種完全是 TS 專屬：
 
-- **有對應物的部分**：`initSniperLauncher()`/`joinAuction()` 對應 `Main.java` 裡建立 `SniperPortfolio`、`SniperLauncher`，以及把使用者請求轉呼叫 `SniperLauncher.joinAuction()` 的那段 wiring 邏輯：
+- **有對應物的部分**：`main()`/`joinAuction()` 對應 `Main.java` 的 `main()` 方法本體，逐行保留原本的呼叫順序與職責切分（`Main` 建構子觸發的 `startUserInterface()` 對應到模組載入時就建好的 `portfolio`/`tableModel` wiring；`disconnectWhenUICloses()` 對應到接收一個「怎麼註冊關閉時要執行的 handler」的 callback，實際呼叫端是 `server/plugins/init-sniper-launcher.ts` 傳進來的 `nitroApp.hooks.hook('close', ...)`；`addUserRequestListenerFor()` 建立 `SniperLauncher` 供 `joinAuction()` 轉呼叫）：
   ```java
   // Main.java
   private final SniperPortfolio portfolio = new SniperPortfolio();
-  ...
+
+  public static void main(String... args) throws Exception {
+    Main main = new Main();
+    XMPPAuctionHouse auctionHouse = XMPPAuctionHouse.connect(args[ARG_HOSTNAME], args[ARG_USERNAME], args[ARG_PASSWORD]);
+    main.disconnectWhenUICloses(auctionHouse);
+    main.addUserRequestListenerFor(auctionHouse);
+  }
+
+  private void disconnectWhenUICloses(final XMPPAuctionHouse auctionHouse) {
+    ui.addWindowListener(new WindowAdapter() {
+      @Override public void windowClosed(WindowEvent e) {
+        auctionHouse.disconnect();
+      }
+    });
+  }
+
   private void addUserRequestListenerFor(final AuctionHouse auctionHouse) {
     ui.addUserRequestListener(new SniperLauncher(auctionHouse, portfolio));
   }
@@ -218,15 +233,42 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
   ```ts
   // sniper-registry.ts
   const portfolio = new SniperPortfolio();
-  ...
-  export async function initSniperLauncher(sniperId: string): Promise<void> {
+
+  export async function main(
+    sniperId: string,
+    registerServerCloseHandler: (handler: () => Promise<void>) => void
+  ): Promise<void> {
     const auctionHouse = await RedisAuctionHouse.connect(redisUrl, sniperId);
+    disconnectWhenServerCloses(auctionHouse, registerServerCloseHandler);
+    addUserRequestListenerFor(auctionHouse);
+  }
+
+  function disconnectWhenServerCloses(
+    auctionHouse: RedisAuctionHouse,
+    registerServerCloseHandler: (handler: () => Promise<void>) => void
+  ): void {
+    registerServerCloseHandler(() => auctionHouse.disconnect());
+  }
+
+  function addUserRequestListenerFor(auctionHouse: RedisAuctionHouse): void {
     sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
   }
+
   export function joinAuction(itemId: string, stopPrice: number): void {
     sniperLauncher.joinAuction(new Item(itemId, stopPrice));
   }
   ```
+  ```ts
+  // server/plugins/init-sniper-launcher.ts
+  export default defineNitroPlugin(async nitroApp => {
+    const config = useRuntimeConfig();
+
+    await main(config.sniperId, handler => {
+      nitroApp.hooks.hook('close', handler);
+    });
+  });
+  ```
+  兩者的差異只在於 Java 的 `ui`（`MainWindow`）本身就是 `disconnectWhenUICloses()` 能直接拿到的欄位，TS 版沒有「視窗」可以掛 `WindowListener`，改成用 callback 參數把「關閉時要做什麼」交給真正握有 `nitroApp`（Nitro 伺服器生命週期）的呼叫端決定——`main()` 本身仍然不依賴任何 Nitro 型別，維持成一支框架無關的 orchestration 函式。
 - **沒有對應物的部分**：`getTableData()` 把 `SnipersTableModel` 的 `getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 走訪一遍，組成一份 `{ columns, rows }` 的純資料物件，供 `server/api/snipers.get.ts`（HTTP）、`server/routes/ws.ts`（WebSocket）序列化成 JSON 送給瀏覽器。Java 版完全沒有這一步——`MainWindow`（Swing `JFrame`）跟 `SnipersTableModel` 活在**同一個 JVM process** 裡，`JTable` 直接呼叫 `model.getValueAt(row, col)` 就能拿到資料渲染，中間沒有任何序列化或網路邊界。goos-ts 的 UI 是瀏覽器裡的 Vue app，跟跑 `SnipersTableModel` 的 Node process 是**兩個不同 process、隔著網路**，所以需要一個地方把「表格模型」轉成「可以序列化過網路的純資料」，`getTableData()` 就是在做這件事——這整個轉譯步驟是 client-server 架構的必然需求，Java 桌面應用完全不需要。
 
 ### `Announcer` 用 JS `Proxy` 取代 `java.lang.reflect.Proxy`

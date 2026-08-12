@@ -18,6 +18,9 @@ interface SnipersTableData {
 
 type SnapshotsListener = (data: SnipersTableData) => void;
 
+// 對應 Main.java 建構子觸發的 startUserInterface()：MainWindow 建構子裡的
+// makeSnipersTable(portfolio) 建立 SnipersTableModel、掛上 portfolio
+// listener。這裡沒有視窗可以顯示，改成模組載入時就把同一份 wiring 做好。
 const portfolio = new SniperPortfolio();
 const tableModel = new SnipersTableModel();
 portfolio.addPortfolioListener(tableModel);
@@ -32,11 +35,32 @@ tableModel.addListener({
 
 let sniperLauncher: SniperLauncher | undefined;
 
-export async function initSniperLauncher(sniperId: string): Promise<RedisAuctionHouse> {
+// 對應 Main.java 的 public static void main(String... args)：
+//   Main main = new Main();                      → portfolio/tableModel 已在模組載入時建好
+//   XMPPAuctionHouse.connect(...)                 → RedisAuctionHouse.connect(...)
+//   main.disconnectWhenUICloses(auctionHouse);    → disconnectWhenServerCloses(...)
+//   main.addUserRequestListenerFor(auctionHouse); → addUserRequestListenerFor(...)
+export async function main(
+  sniperId: string,
+  registerServerCloseHandler: (handler: () => Promise<void>) => void
+): Promise<void> {
   const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
   const auctionHouse = await RedisAuctionHouse.connect(redisUrl, sniperId);
+  disconnectWhenServerCloses(auctionHouse, registerServerCloseHandler);
+  addUserRequestListenerFor(auctionHouse);
+}
+
+function disconnectWhenServerCloses(
+  auctionHouse: RedisAuctionHouse,
+  registerServerCloseHandler: (handler: () => Promise<void>) => void
+): void {
+  registerServerCloseHandler(async () => {
+    await auctionHouse.disconnect();
+  });
+}
+
+function addUserRequestListenerFor(auctionHouse: RedisAuctionHouse): void {
   sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
-  return auctionHouse;
 }
 
 export function joinAuction(itemId: string, stopPrice: number): void {
