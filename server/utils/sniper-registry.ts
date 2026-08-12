@@ -67,9 +67,9 @@ export function joinAuction(itemId: string, stopPrice: number): void {
 }
 
 // Column（見 server/auctionsniper/ui/Column.ts）沒有 key，因為 Java 版的
-// auctionsniper.ui.Column 也沒有——這是純粹給 SnipersTable.vue 的 v-for 當
-// Vue :key 用的欄位識別，跟 Column.values 同順序對應，只存在於這個
-// wire-payload 組裝層。
+// auctionsniper.ui.Column 也沒有——這是純粹給 SnipersTable.vue 用的欄位識別，
+// 同時當 v-for 的 Vue :key 與 <td> 的 data-testid（供 e2e 測試定位欄位），
+// 跟 Column.values 同順序對應，只存在於這個 wire-payload 組裝層。
 const COLUMN_KEYS = ['itemId', 'lastPrice', 'lastBid', 'state'] as const;
 
 export function getTableData(): SnipersTableData {

@@ -33,7 +33,7 @@ onMounted(connect);
     </thead>
     <tbody>
       <tr v-for="row in rows" :id="`auction-${row.itemId}`" :key="row.itemId">
-        <td v-for="(column, index) in columns" :key="column.key">
+        <td v-for="(column, index) in columns" :key="column.key" :data-testid="column.key">
           {{ row.values[index] }}
         </td>
       </tr>
