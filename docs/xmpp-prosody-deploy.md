@@ -1,8 +1,8 @@
 # 部署 Prosody（Render）
 
-本專案的 XMPP 實驗版本（[ADR-0008](adr/ADR-0008-xmpp-server-selection.md)/[ADR-0011](adr/ADR-0011-xmpp-client-library-selection-xmpp-js.md)）需要一個真實的 Prosody（XMPP server）當拍賣協定的 broker，部署在 [Render](https://render.com/)，跟 Nuxt server/Redis（見 [`deploy.md`](deploy.md)）同一個平台。決策過程見 [ADR-0010](adr/ADR-0010-xmpp-deployment-platform.md)。
+本專案的 XMPP 實驗版本（[ADR-0008](adr/ADR-0008-xmpp-server-selection.md)/[ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md)）需要一個真實的 Prosody（XMPP server）當拍賣協定的 broker，部署在 [Render](https://render.com/)，跟 Nuxt server/Redis（見 [`deploy.md`](deploy.md)）同一個平台。決策過程見 [ADR-0010](adr/ADR-0010-xmpp-deployment-platform.md)。
 
-- **Web Service（`goos-ts-xmpp-prosody`）**：跑 Prosody（Docker 部署，image 設定見 `poc/docker/xmpp/`），對外只提供 XMPP over WebSocket（呼應 [ADR-0011](adr/ADR-0011-xmpp-client-library-selection-xmpp-js.md) Compliance #1 選定的 xmpp.js）。
+- **Web Service（`goos-ts-xmpp-prosody`）**：跑 Prosody（Docker 部署，image 設定見 `poc/docker/xmpp/`），對外只提供 XMPP over WebSocket（呼應 [ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md) Compliance #1 選定的 xmpp.js）。
 
 CD 流程見 `.github/workflows/cd.yml`，跟 Nuxt server 共用同一個 workflow、不同 job。
 

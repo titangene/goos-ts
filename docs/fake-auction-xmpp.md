@@ -4,7 +4,7 @@
 
 輸入格式是 SOL 訊息本身的內容，只省略固定不變的 `SOLVersion: 1.1; ` 前綴（工具會自動幫你補上），例如輸入 `Event: CLOSE;` 實際發出的就是 `SOLVersion: 1.1; Event: CLOSE;`。
 
-**這是實驗性路徑**（見 [ADR-0008](adr/ADR-0008-xmpp-server-selection.md)/[ADR-0011](adr/ADR-0011-xmpp-client-library-selection-xmpp-js.md)），要先把 app 的 production wiring 切到 XMPP（目前預設是 Redis，見 [ADR-0002](adr/ADR-0002-transport-selection.md)）才能照下面的步驟操作。
+**這是實驗性路徑**（見 [ADR-0008](adr/ADR-0008-xmpp-server-selection.md)/[ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md)），要先把 app 的 production wiring 切到 XMPP（目前預設是 Redis，見 [ADR-0002](adr/ADR-0002-transport-selection.md)）才能照下面的步驟操作。
 
 ## Bidder 欄位的正確寫法
 

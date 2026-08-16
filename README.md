@@ -92,7 +92,7 @@ npm test                    # 全部跑一遍
 
 ## XMPP 實驗版本（poc）
 
-`server/auctionsniper/xmpp/*` 是跟 Redis 版本並行、更貼近書中原始架構的實驗性實作（見 [ADR-0008](docs/adr/ADR-0008-xmpp-server-selection.md)/[ADR-0011](docs/adr/ADR-0011-xmpp-client-library-selection-xmpp-js.md)/[ADR-0010](docs/adr/ADR-0010-xmpp-deployment-platform.md)），不取代 Redis 版本，使用方式比照 Java 版的 Smack `XMPPConnection`/`ChatManager`/`Chat`，差異記錄在 [`xmpp-ts-vs-java-differences.md`](docs/xmpp-ts-vs-java-differences.md)。要跑 `npm run test:integration:xmpp` 或 `npm run fake-auction:xmpp`，本機需要一個真實的 Prosody server（跟 Redis 一樣不能用假的）：
+`server/auctionsniper/xmpp/*` 是跟 Redis 版本並行、更貼近書中原始架構的實驗性實作（見 [ADR-0008](docs/adr/ADR-0008-xmpp-server-selection.md)/[ADR-0009](docs/adr/ADR-0009-xmpp-client-library-selection.md)/[ADR-0010](docs/adr/ADR-0010-xmpp-deployment-platform.md)），不取代 Redis 版本，使用方式比照 Java 版的 Smack `XMPPConnection`/`ChatManager`/`Chat`，差異記錄在 [`xmpp-ts-vs-java-differences.md`](docs/xmpp-ts-vs-java-differences.md)。要跑 `npm run test:integration:xmpp` 或 `npm run fake-auction:xmpp`，本機需要一個真實的 Prosody server（跟 Redis 一樣不能用假的）：
 
 ```bash
 docker build -t prosody-local poc/spikes/prosody-back4app

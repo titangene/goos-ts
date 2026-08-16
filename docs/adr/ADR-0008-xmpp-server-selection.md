@@ -27,7 +27,7 @@ Chosen option: "Prosody"，因為它在 RAM 用量（~25–50MB）上比 Openfir
 本決定不涉及：
 
 - **部署平台選型**——見 [ADR-0010: XMPP 佈署平台選型——Back4app Containers](ADR-0010-xmpp-deployment-platform.md)。
-- **前端 client library 選型**——見 [ADR-0011: XMPP client library 選型（修訂）——xmpp.js](ADR-0011-xmpp-client-library-selection-xmpp-js.md)。
+- **前端 client library 選型**——見 [ADR-0009: XMPP client library 選型——xmpp.js](ADR-0009-xmpp-client-library-selection.md)。
 - **訊息格式**——沿用 [ADR-0007](ADR-0007-message-format.md) 既有的 SOL 純文字格式規則，不因換成真正的 XMPP server 而改變。
 - **取代 Redis 路徑**——[ADR-0002](ADR-0002-transport-selection.md) 選定的 Redis Pub/Sub 路徑維持不變、繼續是預設/正式路徑，兩者並存。
 
@@ -102,5 +102,5 @@ Erlang 撰寫、定位為行動裝置/IoT 高併發場景的 XMPP server。
 
 ## Changelog
 
-- 0.2 (2026-08-16): Non-goals 的 client library 交叉引用改指向 [ADR-0011](ADR-0011-xmpp-client-library-selection-xmpp-js.md)（[ADR-0009](ADR-0009-xmpp-client-library-selection.md) 選定的 Strophe.js 已被取代）。本 ADR 選定的 Prosody 本身不受影響，Status 維持 Accepted。
+- 0.2 (2026-08-16): Non-goals 的 client library 交叉引用文字更新——[ADR-0009](ADR-0009-xmpp-client-library-selection.md) 選定的函式庫從 Strophe.js 改為 xmpp.js，交叉引用的目標 ADR 編號不變。本 ADR 選定的 Prosody 本身不受影響，Status 維持 Accepted。
 - 0.1 (2026-08-16): Initial version

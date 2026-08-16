@@ -1,6 +1,6 @@
 # XMPP 版 TS 與 Java 版的刻意差異
 
-`server/auctionsniper/xmpp/*` 用 xmpp.js（`@xmpp/client`，見 [ADR-0011](adr/ADR-0011-xmpp-client-library-selection-xmpp-js.md)）連線 Prosody，使用方式盡量比照 `goos-code` 的 `src/auctionsniper/xmpp/*.java` 用 Smack library 的 `XMPPConnection`/`ChatManager`/`Chat`/`Message`/`MessageListener` 這一套物件模型，呼叫方式盡可能逐字對照。Smack 內部機制的完整查證筆記見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)。
+`server/auctionsniper/xmpp/*` 用 xmpp.js（`@xmpp/client`，見 [ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md)）連線 Prosody，使用方式盡量比照 `goos-code` 的 `src/auctionsniper/xmpp/*.java` 用 Smack library 的 `XMPPConnection`/`ChatManager`/`Chat`/`Message`/`MessageListener` 這一套物件模型，呼叫方式盡可能逐字對照。Smack 內部機制的完整查證筆記見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)。
 
 這份文件記錄**刻意**跟 Java 版不同的地方——每一項都有明確理由，不是漏改、也不是還沒對齊。
 
@@ -65,7 +65,7 @@ TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPCha
 
 ## 差異 5：型別定義依賴社群維護的 DefinitelyTyped 套件
 
-Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始碼的一部分；xmpp.js 的 TypeScript 型別則是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。這是 [ADR-0011](adr/ADR-0011-xmpp-client-library-selection-xmpp-js.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
+Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始碼的一部分；xmpp.js 的 TypeScript 型別則是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。這是 [ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
 
 ## 未涵蓋的檔案
 

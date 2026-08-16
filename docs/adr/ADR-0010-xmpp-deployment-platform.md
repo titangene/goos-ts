@@ -34,7 +34,7 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 本決定不涉及：
 
 - **XMPP server 選型**——見 [ADR-0008](ADR-0008-xmpp-server-selection.md)。
-- **Client library 選型**——見 [ADR-0011: XMPP client library 選型（修訂）——xmpp.js](ADR-0011-xmpp-client-library-selection-xmpp-js.md)。
+- **Client library 選型**——見 [ADR-0009: XMPP client library 選型——xmpp.js](ADR-0009-xmpp-client-library-selection.md)。
 - **長期穩定佈署的保證**——Render 免費方案有閒置一段時間後 spin down 的限制，重新喚醒需要一點時間，這對本 ADR 描述的「用完即丟」使用模式是可接受的限制，不是本 ADR 要解決的問題。
 
 ## Consequences
@@ -55,7 +55,7 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 
 1. **佈署平台唯一性**：Prosody（見 [ADR-0008](ADR-0008-xmpp-server-selection.md)）MUST 使用 Render 免費方案，MUST NOT 使用本 ADR 已評估並否決的其他平台，除非有新 ADR 明確取代本決定。
 2. **部署方式**：MUST 透過「GitHub repo + repo 內含 Dockerfile」的方式部署（`poc/docker/xmpp/`），比照 Nuxt server 既有的部署方式（見 [`deploy.md`](../deploy.md)），維持一致的 CD 流程。
-3. **對外連線協定**：對外連線 MUST 使用 WebSocket transport（呼應 [ADR-0011](ADR-0011-xmpp-client-library-selection-xmpp-js.md) Compliance #1 選定的 xmpp.js），MUST NOT 嘗試使用原生 XMPP TCP（5222）——Render Web Service 只轉發單一對外 HTTP port，不支援 TCP passthrough，這點已在 [`xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md) 實測確認。
+3. **對外連線協定**：對外連線 MUST 使用 WebSocket transport（呼應 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) Compliance #1 選定的 xmpp.js），MUST NOT 嘗試使用原生 XMPP TCP（5222）——Render Web Service 只轉發單一對外 HTTP port，不支援 TCP passthrough，這點已在 [`xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md) 實測確認。
 4. **Prosody 網路介面設定**：部署到 Render 的 Prosody 設定檔 MUST 明確設定 `http_interfaces = { "0.0.0.0", "::" }`，MUST NOT 依賴官方預設的 localhost-only 設定（`{ "127.0.0.1", "::1" }`）——原因見 [`xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md)「Prosody 設定要點」。
 5. **虛擬主機網域**：`PROSODY_VIRTUAL_HOSTS` 環境變數 MUST 設成 Render 實際配發的網域（從 Dashboard 的 Settings 頁面確認，而非手動輸入或推測），MUST NOT 使用推測的網域字串。
 6. **未加密連線放寬**：部署到 Render 的 Prosody 設定檔 MUST 同時設定 `c2s_require_encryption = false` 與 `allow_unencrypted_plain_auth = true`，MUST NOT 只設定其中一個或依賴官方預設值（兩者依序預設為 `true`/`false`）——這是兩道獨立的擋修：`c2s_require_encryption` 沒放寬會讓 Prosody 直接拒絕未加密連線本身（連 stream feature 都不給），`allow_unencrypted_plain_auth` 沒放寬則會讓 SASL 協商階段找不到可用機制；Render 在邊界做 TLS termination，Prosody 實際收到的仍是未加密連線，兩者都要放寬才能完成登入，原因見 [`xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md)「Prosody 設定要點」。
@@ -71,7 +71,7 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 - Good, because 支援 monorepo 指定子目錄當 Docker build context（`Root Directory`/`Docker Build Context Directory` 設定），不需要拆成獨立 repo。
 - Good, because 分配的網域是持久網域，不會過期或改變。
 - Good, because CD 可以直接沿用 Nuxt server 既有的 Render CLI 部署機制（`render deploys create --commit --wait --confirm`），不需要額外設計 CI-gating 的變通做法。
-- Bad, because 只轉發單一對外 HTTP port，不支援原生 XMPP TCP，只能用 WebSocket transport——但這跟 [ADR-0011](ADR-0011-xmpp-client-library-selection-xmpp-js.md) 選定的 xmpp.js WebSocket transport 完全相容，不構成額外犧牲。
+- Bad, because 只轉發單一對外 HTTP port，不支援原生 XMPP TCP，只能用 WebSocket transport——但這跟 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) 選定的 xmpp.js WebSocket transport 完全相容，不構成額外犧牲。
 - Bad, because 免費方案有閒置一段時間後 spin down 的限制，重新喚醒需要一點時間。
 
 ### Zeabur
