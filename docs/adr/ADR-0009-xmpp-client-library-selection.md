@@ -1,6 +1,6 @@
 # ADR-0009: XMPP client library 選型——Strophe.js
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0011: XMPP client library 選型（修訂）——xmpp.js](ADR-0011-xmpp-client-library-selection-xmpp-js.md)
 **Date:** 2026-08-16
 **Author:** titangene
 
@@ -25,7 +25,7 @@ Chosen option: "Strophe.js"，因為它是三者中封裝需求最少、且 2026
 本決定不涉及：
 
 - **XMPP server 選型**——見 [ADR-0008](ADR-0008-xmpp-server-selection.md)。
-- **部署平台選型**——見 [ADR-0010: XMPP 佈署平台選型——Back4app Containers](ADR-0010-xmpp-deployment-platform.md)。
+- **部署平台選型**——見 [ADR-0010: XMPP 佈署平台選型——Render](ADR-0010-xmpp-deployment-platform.md)。
 - **瀏覽器直連 XMPP**——目前架構下瀏覽器不直接使用任何 XMPP client library（見 [ADR-0007](ADR-0007-message-format.md)），若未來要脫離這個轉發架構、讓瀏覽器直連 XMPP，屬於更大的架構決策，須另開 ADR 討論，不可視為本 ADR 已預先核准。
 
 ## Consequences
@@ -78,3 +78,10 @@ JavaScript/TypeScript 撰寫的 XMPP library，支援 BOSH（XEP-0124/0206）與
 ## More Information
 
 三個候選的完整比較（含傳輸支援矩陣、SASL 機制、npm registry 直接查證的型別發佈狀態）在本 ADR 起草前的對話討論中已交叉核對，未逐一附上原始查證指令，但關鍵結論（`@xmpp/client` package.json 無 `types` 欄位、`@types/xmpp__client` 由 DefinitelyTyped 維護）已透過 `npm view`/`curl registry.npmjs.org` 直接查證，非憑印象推論。
+
+本 ADR 選定的 Strophe.js 已被 [ADR-0011: XMPP client library 選型（修訂）——xmpp.js](ADR-0011-xmpp-client-library-selection-xmpp-js.md) 取代：把 production wiring 實際切到 XMPP、跟 Nuxt SSR 同一個 process 執行後，才發現 Strophe.js 在 Node.js 下的建置版本會把 `document`/`DOMParser`/`XMLSerializer`/`navigator` 污染到 `globalThis`，破壞 `vue-router` 的 SSR 環境偵測——這是本 ADR 起草當時查證範圍（僅涵蓋 Node.js 端獨立跑的情境）沒有涵蓋到的問題。詳細診斷過程與新選型理由見 ADR-0011。
+
+## Changelog
+
+- 0.2 (2026-08-16): Status 改為 Superseded by ADR-0011（Strophe.js 在 Nuxt SSR process 內污染 globalThis、破壞 vue-router 環境偵測，詳見 ADR-0011）。
+- 0.1 (2026-08-16): Initial version

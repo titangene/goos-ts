@@ -1,7 +1,6 @@
-import { stx } from 'strophe.js';
-
 import { AuctionMessageTranslator } from './AuctionMessageTranslator.ts';
-import type { Connection } from './StropheTypes.ts';
+import type { XMPPChat } from './XMPPChat.ts';
+import type { XMPPConnection } from './XMPPConnection.ts';
 import type { XMPPFailureReporter } from './XMPPFailureReporter.ts';
 import type { Auction } from '@server/auctionsniper/Auction.ts';
 import type {
@@ -26,26 +25,17 @@ export function bidCommand(amount: number): string {
 
 export class XMPPAuction implements Auction {
   private readonly auctionEventListeners = Announcer.to<AuctionEventListener>();
-  private readonly connection: Connection;
-  private readonly auctionJID: string;
-  private handlerRef: ReturnType<Connection['addHandler']> | null;
+  private readonly chat: XMPPChat;
 
-  constructor(connection: Connection, auctionJID: string, failureReporter: XMPPFailureReporter) {
-    this.connection = connection;
-    this.auctionJID = auctionJID;
-    const translator = this.translatorFor(failureReporter);
-    // ADR-0009 Compliance #3：用 addHandler 的 from 參數依對話（auctionJID）
-    // 過濾，對應 Java 版 connection.getChatManager().createChat(auctionJID,
-    // translator) 建立的 1:1 Chat 語意——Strophe 沒有 Chat 物件，這裡直接
-    // 註冊一個只接收該 auctionJID 訊息的 handler。
-    this.handlerRef = this.connection.addHandler(
-      stanza => translator.processMessage(stanza),
-      null,
-      'message',
-      'chat',
-      null,
-      this.auctionJID
-    );
+  constructor(
+    connection: XMPPConnection,
+    auctionJID: string,
+    failureReporter: XMPPFailureReporter
+  ) {
+    const translator = this.translatorFor(connection, failureReporter);
+    // 對應 Java 版 connection.getChatManager().createChat(auctionJID,
+    // translator)。
+    this.chat = connection.getChatManager().createChat(auctionJID, translator);
     this.addAuctionEventListener(this.chatDisconnectorFor(translator));
   }
 
@@ -61,36 +51,32 @@ export class XMPPAuction implements Auction {
     this.auctionEventListeners.addListener(listener);
   }
 
-  private translatorFor(failureReporter: XMPPFailureReporter): AuctionMessageTranslator {
+  private translatorFor(
+    connection: XMPPConnection,
+    failureReporter: XMPPFailureReporter
+  ): AuctionMessageTranslator {
     return new AuctionMessageTranslator(
-      this.connection.jid,
+      connection.getUser(),
       this.auctionEventListeners.announce(),
       failureReporter
     );
   }
 
-  // translator 參數本身沒被用到（用 handlerRef 記住的 handler 參照就夠
-  // 移除），保留這個參數只是為了跟 Java 版 chatDisconnectorFor(final
-  // AuctionMessageTranslator translator) 的方法簽章維持結構對應。
-  private chatDisconnectorFor(_translator: AuctionMessageTranslator): AuctionEventListener {
+  // translator 參數本身沒被用到，保留這個參數只是為了跟 Java 版
+  // chatDisconnectorFor(final AuctionMessageTranslator translator) 的方法
+  // 簽章維持結構對應。
+  private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
     return {
-      auctionFailed: () => {
-        if (this.handlerRef) {
-          this.connection.deleteHandler(this.handlerRef);
-          this.handlerRef = null;
-        }
-      },
+      auctionFailed: () => this.chat.removeMessageListener(translator),
       auctionClosed: () => {},
       currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {}
     };
   }
 
   private sendMessage(message: string): void {
-    // Strophe 的 send() 是 fire-and-forget（void，不丟例外），不像 Smack 的
+    // xmpp.js 的 send() 是 fire-and-forget（Promise，但不像 Smack 的
     // chat.sendMessage() 會丟 checked XMPPException 讓 Java 版包一層
-    // try/catch + e.printStackTrace()——這裡沒有對應的例外可以接。
-    this.connection.send(
-      stx`<message to="${this.auctionJID}" type="chat" xmlns="jabber:client"><body>${message}</body></message>`
-    );
+    // try/catch + e.printStackTrace()），這裡沒有對應的例外可以接。
+    this.chat.sendMessage(message);
   }
 }

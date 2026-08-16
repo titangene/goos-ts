@@ -1,15 +1,14 @@
-import type { Stanza } from './StropheTypes.ts';
+import type { MessageListener } from './MessageListener.ts';
+import type { XMPPChat } from './XMPPChat.ts';
 import type { XMPPFailureReporter } from './XMPPFailureReporter.ts';
+import type { XMPPMessage } from './XMPPMessage.ts';
 import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventListener.ts';
 import { PriceSource } from '@server/auctionsniper/AuctionEventListener.ts';
 
 // 對應 Java 版 auctionsniper.xmpp.AuctionMessageTranslator，implements
-// org.jivesoftware.smack.MessageListener。Strophe 沒有 Chat 物件，
-// processMessage() 因此只收 stanza（不像 Java 版收 (Chat chat, Message message)
-// 兩個參數），這個方法本身的簽章對應 Strophe.Connection#addHandler 的 callback
-// 型別（見 StropheTypes.ts），回傳 true 讓 handler 保持註冊——移除 handler
-// 是 XMPPAuction 的 chatDisconnectorFor() 職責，不是這個方法自己決定。
-export class AuctionMessageTranslator {
+// org.jivesoftware.smack.MessageListener。chat 參數（見 MessageListener.ts）
+// 在 Java 版本身也沒被用到，這裡維持同樣的「保留但不用」慣例。
+export class AuctionMessageTranslator implements MessageListener {
   private readonly listener: AuctionEventListener;
   private readonly sniperId: string;
   private readonly failureReporter: XMPPFailureReporter;
@@ -24,10 +23,8 @@ export class AuctionMessageTranslator {
     this.failureReporter = failureReporter;
   }
 
-  processMessage(stanza: Stanza): boolean {
-    // xmldom（Strophe 在 Node.js 底下使用的 XML DOM 實作）沒有實作
-    // querySelector，只能用 getElementsByTagName（已實測驗證）。
-    const messageBody = stanza.getElementsByTagName('body')[0]?.textContent ?? '';
+  processMessage(_chat: XMPPChat, message: XMPPMessage): void {
+    const messageBody = message.getBody();
     try {
       this.translate(messageBody);
     } catch (parseException) {
@@ -38,7 +35,6 @@ export class AuctionMessageTranslator {
       );
       this.listener.auctionFailed();
     }
-    return true;
   }
 
   private translate(messageBody: string): void {

@@ -1,16 +1,18 @@
 /**
- * 互動式的假拍賣現場，XMPP 版本（見 ADR-0008/0009/0010）。跟
- * test/integration/xmpp/FakeAuctionServer.ts 一樣連 Prosody，但這支是給人
- * 手動操作用的 CLI，不是測試替身，兩者不共用程式碼（比照
- * tools/fake-auction.ts 不 import test/e2e/FakeAuctionServer.ts 的既有慣例）。
+ * 互動式的假拍賣現場，XMPP 版本（見 ADR-0008/0010/0011）。跟
+ * test/integration/xmpp/FakeAuctionServer.ts 一樣連 Prosody、用同一套
+ * XMPPConnection/XMPPChatManager 抽象（見
+ * docs/xmpp-ts-vs-java-differences.md），但這支是給人手動操作用的 CLI，
+ * 不是測試替身，兩者不共用程式碼（比照 tools/fake-auction.ts 不 import
+ * test/e2e/FakeAuctionServer.ts 的既有慣例）。
  *
  * 用法：
  *   npm run fake-auction:xmpp -- <itemId>            連本機 Prosody
  *   npm run fake-auction:xmpp:remote -- <itemId>     連 XMPP_SERVICE_URL/
  *                                                      XMPP_DOMAIN 指定的
  *                                                      Prosody（例如已部署
- *                                                      的 Back4app，見
- *                                                      poc/docs/xmpp-prosody-back4app-spike.md；
+ *                                                      到 Render 的服務，見
+ *                                                      poc/docs/xmpp-prosody-deploy.md；
  *                                                      在 .env.local 設定）
  *
  * itemId 要對應到 Prosody 上已經用 `prosodyctl register` 註冊過的帳號
@@ -19,11 +21,15 @@
  *
  * sniper 加入後，直接輸入要發布的 SOL 訊息本文即可，用法跟
  * tools/fake-auction.ts 一致。輸入 "quit" 中斷連線並結束程式。
+ *
+ * 模擬「自己出的價成交」時，Bidder 欄位要填完整 JID（例如
+ * sniper@localhost/Auction），不是單純使用者名稱，見
+ * docs/fake-auction-xmpp.md「Bidder 欄位的正確寫法」。
  */
 import { clearLine, createInterface, cursorTo, moveCursor } from 'node:readline';
-import { Strophe, stx } from 'strophe.js';
 
-import type { Connection, Stanza } from '@server/auctionsniper/xmpp/StropheTypes.ts';
+import type { XMPPChat } from '@server/auctionsniper/xmpp/XMPPChat.ts';
+import { XMPPConnection } from '@server/auctionsniper/xmpp/XMPPConnection.ts';
 
 const SOL_VERSION_PREFIX = 'SOLVersion: 1.1; ';
 const AUCTION_RESOURCE = 'Auction';
@@ -39,24 +45,6 @@ function parseCommand(messageBody: string): Map<string, string> {
     fields.set(trimmed.slice(0, colonIndex).trim(), trimmed.slice(colonIndex + 1).trim());
   }
   return fields;
-}
-
-function connect(jid: string, password: string, serviceUrl: string): Promise<Connection> {
-  const connection = new Strophe.Connection(serviceUrl);
-  return new Promise((resolve, reject) => {
-    connection.connect(jid, password, status => {
-      if (status === Strophe.Status.CONNECTED) {
-        resolve(connection);
-      } else if (
-        status === Strophe.Status.AUTHFAIL ||
-        status === Strophe.Status.CONNFAIL ||
-        status === Strophe.Status.ERROR ||
-        status === Strophe.Status.CONNTIMEOUT
-      ) {
-        reject(new Error(`Could not connect to ${serviceUrl}: Strophe.Status ${status}`));
-      }
-    });
-  });
 }
 
 async function main(): Promise<void> {
@@ -78,9 +66,21 @@ async function main(): Promise<void> {
   const domain = remote ? process.env.XMPP_DOMAIN! : 'localhost';
 
   const jid = `auction-${itemId}@${domain}/${AUCTION_RESOURCE}`;
-  const connection = await connect(jid, AUCTION_PASSWORD, serviceUrl);
+  let connection: XMPPConnection;
+  try {
+    connection = await XMPPConnection.connect(
+      serviceUrl,
+      domain,
+      `auction-${itemId}`,
+      AUCTION_PASSWORD,
+      AUCTION_RESOURCE
+    );
+  } catch (error) {
+    console.error(`Could not connect to ${serviceUrl}:`, error);
+    process.exit(1);
+  }
 
-  let sniperJID: string | null = null;
+  let sniperChat: XMPPChat | null = null;
 
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '>>> ' });
 
@@ -98,28 +98,26 @@ async function main(): Promise<void> {
     promptAgain(true);
   }
 
-  // fake-auction-xmpp 這裡扮演拍賣現場，不指定 from 過濾（對應 Java 版
-  // ChatManager 被動接受任何 sniper 主動建立的 chat），收到第一個訊息時記
-  // 住對方完整 JID，之後發送 PRICE/CLOSE 都送給這個 JID。
-  connection.addHandler(
-    (stanza: Stanza) => {
-      const body = stanza.getElementsByTagName('body')[0]?.textContent ?? '';
-      const from = stanza.getAttribute('from');
-      const fields = parseCommand(body);
-      const command = fields.get('Command');
+  // fake-auction-xmpp 這裡扮演拍賣現場，用 addChatListener() 被動接受任何
+  // sniper 主動建立的 chat（對應 Java 版 ChatManagerListener#chatCreated()），
+  // 收到第一個訊息時記住對方的 XMPPChat，之後發送 PRICE/CLOSE 都透過同一個
+  // chat 送出。
+  connection.getChatManager().addChatListener(chat => {
+    sniperChat = chat;
+    chat.addMessageListener({
+      processMessage: (_chat, message) => {
+        const body = message.getBody();
+        const fields = parseCommand(body);
+        const command = fields.get('Command');
 
-      if (command === 'JOIN') {
-        sniperJID = from;
-        printAsync(`Sniper joined: ${from}`);
-      } else if (command === 'BID') {
-        printAsync(`< received: Bid ${fields.get('Price')} from ${from}`);
+        if (command === 'JOIN') {
+          printAsync(`Sniper joined: ${chat.getParticipant()}`);
+        } else if (command === 'BID') {
+          printAsync(`< received: Bid ${fields.get('Price')} from ${chat.getParticipant()}`);
+        }
       }
-      return true;
-    },
-    null,
-    'message',
-    'chat'
-  );
+    });
+  });
 
   console.log(`Selling item ${itemId} as ${jid} on ${serviceUrl}. Waiting for a sniper to join...`);
   console.log(
@@ -143,23 +141,20 @@ async function main(): Promise<void> {
       return;
     }
 
-    if (!sniperJID) {
+    if (!sniperChat) {
       console.log('(no sniper has joined yet)');
       promptAgain();
       return;
     }
 
     const rawMessage = `${SOL_VERSION_PREFIX}${trimmed}`;
-    connection.send(
-      stx`<message to="${sniperJID}" type="chat" xmlns="jabber:client"><body>${rawMessage}</body></message>`
-    );
+    sniperChat.sendMessage(rawMessage);
     console.log(`> sent: ${rawMessage}`);
     promptAgain();
   });
 
   rl.on('close', () => {
-    connection.disconnect();
-    process.exit(0);
+    void connection.disconnect().then(() => process.exit(0));
   });
 }
 
