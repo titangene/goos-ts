@@ -22,11 +22,11 @@ poc 分支本身的目的是「練習 GOOS 精神下的 TDD」（見 [ADR-0001: 
 
 ## Decision Outcome
 
-Chosen option: "Prosody"，因為它在 RAM 用量（~25–50MB）上比 Openfire、ejabberd 輕一個數量級以上，官方提供 `prosodyctl register` CLI 可以完全自動化建立帳號（不需要引入 Playwright 之類的瀏覽器自動化去模擬 GUI 操作，比 Openfire 更貼近書中「test script creates accounts」的自動化語感），且已透過 [`poc/docs/xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) 實際部署驗證：WebSocket handshake 成功、XMPP 子協定正確協商、三個 [ADR-0003: 拍賣協定身分識別改用 Username-Only 白名單取代真實密碼驗證](ADR-0003-username-only-identity.md) 白名單帳號皆自動建立成功。
+Chosen option: "Prosody"，因為它在 RAM 用量（~25–50MB）上比 Openfire、ejabberd 輕一個數量級以上，官方提供 `prosodyctl register` CLI 可以完全自動化建立帳號（不需要引入 Playwright 之類的瀏覽器自動化去模擬 GUI 操作，比 Openfire 更貼近書中「test script creates accounts」的自動化語感），且已透過 [`poc/docs/xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md) 實際部署驗證：WebSocket handshake 成功、XMPP 子協定正確協商、三個 [ADR-0003: 拍賣協定身分識別改用 Username-Only 白名單取代真實密碼驗證](ADR-0003-username-only-identity.md) 白名單帳號皆自動建立成功。
 
 本決定不涉及：
 
-- **部署平台選型**——見 [ADR-0010: XMPP 佈署平台選型——Back4app Containers](ADR-0010-xmpp-deployment-platform.md)。
+- **部署平台選型**——見 [ADR-0010: XMPP 佈署平台選型——Render](ADR-0010-xmpp-deployment-platform.md)。
 - **前端 client library 選型**——見 [ADR-0009: XMPP client library 選型——xmpp.js](ADR-0009-xmpp-client-library-selection.md)。
 - **訊息格式**——沿用 [ADR-0007](ADR-0007-message-format.md) 既有的 SOL 純文字格式規則，不因換成真正的 XMPP server 而改變。
 - **取代 Redis 路徑**——[ADR-0002](ADR-0002-transport-selection.md) 選定的 Redis Pub/Sub 路徑維持不變、繼續是預設/正式路徑，兩者並存。
@@ -61,8 +61,8 @@ Lua 撰寫的輕量 XMPP server，官方文件形容為「Lightweight XMPP serve
 - Good, because RAM 用量約 25–50MB，是所有候選中最輕量的（[xmpp.org 官方介紹](https://xmpp.org/software/prosody-im/)、[部署實測紀錄](https://voxelmanip.se/2025/06/25/setting-up-an-xmpp-server-with-prosody/)）。
 - Good, because 官方 CLI `prosodyctl register <user> <host> <password>` 可以單行指令批次註冊帳號，直接可腳本化（[官方文件](https://prosody.im/doc/creating_accounts)）。
 - Good, because 內建 `mod_websocket`（0.10 版起已內建，非外掛），已實測 WebSocket handshake 成功並正確協商 `xmpp` 子協定。
-- Good, because 有官方維護的 Docker image（`prosodyim/prosody`），已實測用它部署到 Back4app Containers 成功。
-- Neutral, because 明文 HTTP 介面（用來服務 `mod_websocket`）預設只監聽 localhost（`http_interfaces = { "127.0.0.1", "::1" }`），這是 Prosody 官方刻意的安全預設，不是 bug；部署到需要明文 HTTP 對外開放的平台時（例如 Back4app 這種在邊界做 TLS termination 的 PaaS）需要額外設定 `http_interfaces`（詳見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 2）。
+- Good, because 有官方維護的 Docker image（`prosodyim/prosody`），已實測用它部署成功（見 [`xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md)）。
+- Neutral, because 明文 HTTP 介面（用來服務 `mod_websocket`）預設只監聽 localhost（`http_interfaces = { "127.0.0.1", "::1" }`），這是 Prosody 官方刻意的安全預設，不是 bug；部署到需要明文 HTTP 對外開放的平台時（例如在邊界做 TLS termination 的 PaaS）需要額外設定 `http_interfaces`（詳見 [`xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md)「Prosody 設定要點」）。
 
 ### ejabberd
 
@@ -97,7 +97,7 @@ Erlang 撰寫、定位為行動裝置/IoT 高併發場景的 XMPP server。
 
 ## More Information
 
-- 部署可行性的完整實測過程（含三個實測抓到的 bug 與修法）記錄在 [`poc/docs/xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md)。
+- 部署可行性的完整設定與驗證過程記錄在 [`poc/docs/xmpp-prosody-deploy.md`](../xmpp-prosody-deploy.md)。
 - 若未來 Redis 路徑與 XMPP 路徑需要二選一（例如維護成本超出負荷），應重新評估並建立新 ADR 明確裁決，而不是任由兩套實作各自演化。
 
 ## Changelog
