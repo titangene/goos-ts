@@ -49,7 +49,7 @@ Auction Sniper — TypeScript + Nuxt + XMPP + WebSocket 版本，改寫自 [Grow
 
 ```bash
 docker build -t prosody-local docker/xmpp
-docker run -p 5280:5280 \
+docker run -d -p 5280:5280 \
   -e PROSODY_ENABLE_MODULES=websocket \
   -e PROSODY_VIRTUAL_HOSTS=localhost \
   prosody-local
