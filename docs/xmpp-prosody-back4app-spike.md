@@ -126,7 +126,7 @@ usermanager info User account created: auction-item-54321@goosxmppprosody-w7d3ib
 usermanager info User account created: auction-item-65432@goosxmppprosody-w7d3ibt2.b4a.run
 ```
 
-這次驗證只做到 WebSocket handshake 成功（HTTP 101 + 正確協商 `xmpp` 子協定），**沒有**進一步測試完整的 SASL 登入流程；真正的登入/收發訊息驗證會在 `server/auctionsniper/xmpp` 的整合測試裡進行。
+這一輪只做到 WebSocket handshake 成功（HTTP 101 + 正確協商 `xmpp` 子協定），還沒測完整的 SASL 登入流程——這個缺口在 bug 4 補上兩個設定（`c2s_require_encryption`、`allow_unencrypted_plain_auth`）後，已經用 `server/auctionsniper/xmpp` 的整合測試（`npm run test:integration:xmpp`，接本機 Docker 跑的 Prosody）驗證通過：真實 SASL 登入、JOIN/PRICE/CLOSE 訊息收發、`auctionClosed` 事件正確觸發，完整流程都跑得通。Back4app 部署本身沒有重新跑過這個完整流程（只驗證過 WebSocket handshake），但因為用的是同一份 `prosody.cfg.lua`，bug 4 的兩個設定同樣會生效，理論上沒有理由行為不同。
 
 ## 已知限制
 
