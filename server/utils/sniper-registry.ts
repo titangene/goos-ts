@@ -1,9 +1,11 @@
+import type { AuctionHouse } from '@server/auctionsniper/AuctionHouse.ts';
 import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
 import { SniperLauncher } from '@server/auctionsniper/SniperLauncher.ts';
 import { SniperPortfolio } from '@server/auctionsniper/SniperPortfolio.ts';
 import { Column } from '@server/auctionsniper/ui/Column.ts';
 import { SnipersTableModel } from '@server/auctionsniper/ui/SnipersTableModel.ts';
 import { Item } from '@server/auctionsniper/UserRequestListener.ts';
+import { XMPPAuctionHouse } from '@server/auctionsniper/xmpp/XMPPAuctionHouse.ts';
 import type { SnipersTableColumn, SniperRow } from '@shared/types.ts';
 
 interface SnipersTableData {
@@ -30,23 +32,44 @@ tableModel.addListener({
 
 let sniperLauncher: SniperLauncher | undefined;
 
+// XMPP 帳號密碼固定是 sniperId 本身（ADR-0003 username-only 白名單精神
+// 延伸到 XMPP 路徑：Prosody 上實際註冊的密碼是 'sniper'，跟 sniperId 湊巧
+// 同名，不是巧合——見 poc/docker/xmpp/register-and-start.sh）。
+const XMPP_SNIPER_PASSWORD = 'sniper';
+
 // 對應 Main.java 的 public static void main(String... args)：
 //   Main main = new Main();                      → portfolio/tableModel 已在模組載入時建好
-//   XMPPAuctionHouse.connect(...)                 → RedisAuctionHouse.connect(...)
+//   XMPPAuctionHouse.connect(...)                 → connectAuctionHouse(...)
 //   main.disconnectWhenUICloses(auctionHouse);    → disconnectWhenServerCloses(...)
 //   main.addUserRequestListenerFor(auctionHouse); → addUserRequestListenerFor(...)
+//
+// AUCTION_TRANSPORT 是 TS 版特有的切換點，Java 版沒有對應物（Java 只有
+// XMPP 一條路）：ADR-0002 選定的 Redis 是預設/正式路徑，ADR-0008 起新增的
+// XMPP 路徑是並行的實驗性路徑，兩者互不取代，由這個環境變數決定這次啟動
+// 要連哪一邊，預設 redis。
 export async function main(
   sniperId: string,
   registerServerCloseHandler: (handler: () => Promise<void>) => void
 ): Promise<void> {
-  const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
-  const auctionHouse = await RedisAuctionHouse.connect(redisUrl, sniperId);
+  const auctionHouse = await connectAuctionHouse(sniperId);
   disconnectWhenServerCloses(auctionHouse, registerServerCloseHandler);
   addUserRequestListenerFor(auctionHouse);
 }
 
+async function connectAuctionHouse(
+  sniperId: string
+): Promise<RedisAuctionHouse | XMPPAuctionHouse> {
+  if (process.env.AUCTION_TRANSPORT === 'xmpp') {
+    const serviceUrl = process.env.XMPP_SERVICE_URL ?? 'ws://localhost:5280/xmpp-websocket';
+    const domain = process.env.XMPP_DOMAIN ?? 'localhost';
+    return XMPPAuctionHouse.connect(serviceUrl, domain, sniperId, XMPP_SNIPER_PASSWORD);
+  }
+  const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+  return RedisAuctionHouse.connect(redisUrl, sniperId);
+}
+
 function disconnectWhenServerCloses(
-  auctionHouse: RedisAuctionHouse,
+  auctionHouse: RedisAuctionHouse | XMPPAuctionHouse,
   registerServerCloseHandler: (handler: () => Promise<void>) => void
 ): void {
   registerServerCloseHandler(async () => {
@@ -54,7 +77,7 @@ function disconnectWhenServerCloses(
   });
 }
 
-function addUserRequestListenerFor(auctionHouse: RedisAuctionHouse): void {
+function addUserRequestListenerFor(auctionHouse: AuctionHouse): void {
   sniperLauncher = new SniperLauncher(auctionHouse, portfolio);
 }
 
@@ -83,7 +106,7 @@ export function getTableData(): SnipersTableData {
     key: COLUMN_KEYS[index]!
   }));
 
-  // getValueAt() 的欄位順序跟 Column.values／COLUMN_KEYS 一致（0: itemId、
+  // getValueAt() 的欄位順序跟 Column.values/COLUMN_KEYS 一致（0: itemId、
   // 1: lastPrice、2: lastBid、3: state），才能這樣按位置對應到具名欄位。
   const rows: SniperRow[] = [];
   for (let row = 0; row < tableModel.getRowCount(); row++) {

@@ -31,8 +31,8 @@ export class AuctionSniperDriver {
   }
 
   async startBiddingWithStopPrice(itemId: string, stopPrice: number): Promise<void> {
-    await this.page.fill('#new-item-id', itemId);
-    await this.page.fill('#new-item-stop-price', String(stopPrice));
-    await this.page.click('#join-button');
+    await this.page.getByRole('textbox', { name: 'Item Id' }).fill(itemId);
+    await this.page.getByRole('spinbutton', { name: 'Stop Price' }).fill(String(stopPrice));
+    await this.page.getByRole('button', { name: 'Join' }).click();
   }
 }

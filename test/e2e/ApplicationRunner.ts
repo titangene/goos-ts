@@ -3,6 +3,8 @@ import type { Page } from '@playwright/test';
 import { AuctionLogDriver } from './AuctionLogDriver.ts';
 import { AuctionSniperDriver } from './AuctionSniperDriver.ts';
 import type { FakeAuctionServer } from './FakeAuctionServer.ts';
+import { SniperState } from '@server/auctionsniper/SniperState.ts';
+import { SnipersTableModel } from '@server/auctionsniper/ui/SnipersTableModel.ts';
 
 export const SNIPER_ID = 'sniper';
 const NO_STOP_PRICE_LIMIT = 1_000_000_000;
@@ -32,7 +34,12 @@ export class ApplicationRunner {
     lastPrice: number,
     lastBid: number
   ): Promise<void> {
-    await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Lost');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      lastPrice,
+      lastBid,
+      SnipersTableModel.textFor(SniperState.LOST)
+    );
   }
 
   async hasShownSniperIsBidding(
@@ -40,11 +47,21 @@ export class ApplicationRunner {
     lastPrice: number,
     lastBid: number
   ): Promise<void> {
-    await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Bidding');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      lastPrice,
+      lastBid,
+      SnipersTableModel.textFor(SniperState.BIDDING)
+    );
   }
 
   async hasShownSniperIsWinning(auction: FakeAuctionServer, winningBid: number): Promise<void> {
-    await this.driver.showsSniperStatus(auction.itemId, winningBid, winningBid, 'Winning');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      winningBid,
+      winningBid,
+      SnipersTableModel.textFor(SniperState.WINNING)
+    );
   }
 
   async hasShownSniperIsLosing(
@@ -52,15 +69,30 @@ export class ApplicationRunner {
     lastPrice: number,
     lastBid: number
   ): Promise<void> {
-    await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastBid, 'Losing');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      lastPrice,
+      lastBid,
+      SnipersTableModel.textFor(SniperState.LOSING)
+    );
   }
 
   async hasShownSniperHasWonAuction(auction: FakeAuctionServer, lastPrice: number): Promise<void> {
-    await this.driver.showsSniperStatus(auction.itemId, lastPrice, lastPrice, 'Won');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      lastPrice,
+      lastPrice,
+      SnipersTableModel.textFor(SniperState.WON)
+    );
   }
 
   async hasShownSniperHasFailed(auction: FakeAuctionServer): Promise<void> {
-    await this.driver.showsSniperStatus(auction.itemId, 0, 0, 'Failed');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      0,
+      0,
+      SnipersTableModel.textFor(SniperState.FAILED)
+    );
   }
 
   async reportsInvalidMessage(brokenMessage: string): Promise<void> {
@@ -75,6 +107,11 @@ export class ApplicationRunner {
 
   private async openBiddingFor(auction: FakeAuctionServer, stopPrice: number): Promise<void> {
     await this.driver.startBiddingWithStopPrice(auction.itemId, stopPrice);
-    await this.driver.showsSniperStatus(auction.itemId, 0, 0, 'Joining');
+    await this.driver.showsSniperStatus(
+      auction.itemId,
+      0,
+      0,
+      SnipersTableModel.textFor(SniperState.JOINING)
+    );
   }
 }
