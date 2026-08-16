@@ -18,6 +18,7 @@
 ## Considered Options
 
 - Render（Web Service，Docker 部署）
+- Back4app Containers
 - Zeabur
 - Koyeb
 - Fly.io
@@ -74,6 +75,16 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 - Bad, because 只轉發單一對外 HTTP port，不支援原生 XMPP TCP，只能用 WebSocket transport——但這跟 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) 選定的 xmpp.js WebSocket transport 完全相容，不構成額外犧牲。
 - Bad, because 免費方案有閒置一段時間後 spin down 的限制，重新喚醒需要一點時間。
 
+### Back4app Containers
+
+免費、免信用卡的 Docker 容器佈署平台，實測部署驗證成功過（WebSocket handshake、`http_interfaces`/加密放寬等 Prosody 設定皆已驗證可行），但最終沒有採用，理由如下：
+
+- Good, because 已直接查證免信用卡（`No credit card required`）、免費方案是真正的 $0/月，且已實際部署驗證 WebSocket 連線成功。
+- Good, because 支援 monorepo 指定子目錄當 build context（`Root Directory` 設定），不需要拆成獨立 repo。
+- Bad, because 免費方案的網域是 Temporary URL，官方標示 60 分鐘後失效——這對「用完即丟」的驗證模式本身還好，但一旦有其他服務（例如 Nuxt server）需要引用這個網域當 `XMPP_SERVICE_URL`/`XMPP_DOMAIN`，網域失效就會連帶讓依賴它的部署設定跟著過期，每次要驗證前都得重新確認、重新部署，維護成本比表面上高。
+- Bad, because 查證當下沒有找到官方文件、CLI 或 API 支援「指定 commit 觸發部署並等待結果」這種機制，只確認到「監聽 GitHub push 事件、自動部署」一種路徑，跟本專案既有的「CI 通過才部署」CD 設計（`cd.yml` 搭配 Render CLI `deploys create --commit --wait --confirm`，見 [`deploy.md`](../deploy.md)）不相容，要沿用同等的 CI-gating 保護需要額外設計 workaround（例如另開一條 deploy 分支），複雜度明顯高於直接跟 Nuxt server/Redis 共用 Render 既有機制。
+- Bad, because 跟 Nuxt server/Redis 所在的 Render 是不同平台，需要多維護一組帳號/Dashboard，不像 Render 那樣可以直接沿用既有 workspace。
+
 ### Zeabur
 
 - Bad, because 實測發現「Shared clusters are deprecated. Please rent a Server and use server-XXXXXXXX as the region code.」——免費 shared cluster 部署功能已被平台下架，現在必須先付費租用 Server 才能部署任何東西，這點在 `zeabur project create` 的 API 回應中直接確認，不是文件推測。
@@ -114,4 +125,5 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 
 ## Changelog
 
+- 0.2 (2026-08-17): 補上 Back4app Containers 的 Pros and Cons——這是本 ADR 重寫前實際部署驗證過、一度採用的平台，這次補充記錄後來改選 Render 的具體理由（Temporary URL 時效性、CD 機制與現有 Render CI-gating 流程不相容、需要多維護一組帳號），讓「為什麼不是 Back4app」有明確依據可查，不是只有 Render 單方面的優點陳述。
 - 0.1 (2026-08-17): Initial version
