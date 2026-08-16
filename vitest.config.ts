@@ -28,6 +28,14 @@ export default defineConfig({
           environment: 'node'
         }
       },
+      {
+        resolve: { alias },
+        test: {
+          name: 'integration-xmpp',
+          include: ['test/integration/xmpp/**/*.test.ts'],
+          environment: 'node'
+        }
+      },
       await defineVitestProject({
         test: {
           name: 'integration-app',

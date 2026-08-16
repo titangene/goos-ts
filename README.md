@@ -90,6 +90,28 @@ npm test                    # 全部跑一遍
 
 用 `tools/fake-auction.ts` 互動式模擬拍賣現場、驗證完整拍賣流程，見 [`docs/fake-auction.md`](docs/fake-auction.md)。
 
+## XMPP 實驗版本（poc）
+
+`server/auctionsniper/xmpp/*` 是跟 Redis 版本並行、更貼近書中原始架構的實驗性實作（見 [ADR-0008](docs/adr/ADR-0008-xmpp-server-selection.md)／[ADR-0009](docs/adr/ADR-0009-xmpp-client-library-selection.md)／[ADR-0010](docs/adr/ADR-0010-xmpp-deployment-platform.md)），不取代 Redis 版本。要跑 `npm run test:integration:xmpp` 或 `npm run fake-auction:xmpp`，本機需要一個真實的 Prosody server（跟 Redis 一樣不能用假的）：
+
+```bash
+docker build -t prosody-local poc/spikes/prosody-back4app
+docker run -p 5280:5280 \
+  -e PROSODY_ENABLE_MODULES=websocket \
+  -e PROSODY_VIRTUAL_HOSTS=localhost \
+  prosody-local
+```
+
+（沿用 [`poc/spikes/prosody-back4app/`](spikes/prosody-back4app) 那份部署 spike 的 Dockerfile，本機測試不需要另外處理 [`xmpp-prosody-back4app-spike.md`](docs/xmpp-prosody-back4app-spike.md) 記錄的 bug 1/bug 3——那兩個是 Back4app 平台特有的限制，本機 Docker 沒有這些問題；bug 2〔明文 HTTP 預設只綁 localhost〕已經直接寫進 spike 的 `prosody.cfg.lua`，本機也適用。）
+
+容器啟動時會自動註冊 [ADR-0003](docs/adr/ADR-0003-username-only-identity.md) 白名單的三個帳號（`sniper`/`sniper`、`auction-item-54321`/`auction`、`auction-item-65432`/`auction`），對應到 `test/integration/xmpp/XMPPAuctionHouse.test.ts` 固定使用的 `item-54321`。
+
+```bash
+npm run test:integration:xmpp   # 整合測試（接真實 Prosody，不在 npm test 彙總指令內，需要另外跑）
+npm run fake-auction:xmpp -- item-54321          # 連本機 Prosody
+npm run fake-auction:xmpp:remote -- item-54321   # 連 XMPP_SERVICE_URL/XMPP_DOMAIN 指定的 Prosody（.env.local）
+```
+
 ## 部署
 
 部署平台、CD 流程、針對已部署環境模擬（`--remote`）、重置已部署環境狀態等說明，見 [`docs/deploy.md`](docs/deploy.md)。
