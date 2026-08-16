@@ -17,30 +17,30 @@
 
 ## Decision Outcome
 
-拍賣協定的連線層**不做真實密碼驗證**，改用一個 TS 常數陣列列出已知合法的 username。傳入的 username 若不在名單內，白名單比對本身只拋出一般的例外，不直接拋出對應 `XMPPAuctionException` 角色的自訂例外——對應 Java 版 `connection.login()` 拋出的是 Smack 底層的 `XMPPException`，包裝成 `XMPPAuctionException` 是 `XMPPAuctionHouse.connect()` 外層 try/catch 的責任，不是 `login()` 自己的責任。TS 版維持同樣的兩層結構。
+拍賣協定的連線層**不提供使用者自行設定/管理密碼的介面或流程**。合法帳號是 Prosody 上以 `prosodyctl register` 事先靜態註冊好的一組固定帳號（`sniper`/`sniper`、`auction-item-54321`/`auction`、`auction-item-65432`/`auction`，見 `poc/docker/xmpp/register-and-start.sh`），密碼是跟帳號綁死的已知常數，不對外暴露輸入介面——瀏覽器端 `/api/join` 只接受 `itemId`/`stopPrice`（見 `server/api/join.post.ts`），sniperId 本身是伺服器啟動時的設定值（`NUXT_SNIPER_ID`），對應的密碼由 `server/utils/sniper-registry.ts` 內建帶入，不是使用者輸入。
 
-這個替換只影響連線建立的邊界程式碼，MUST NOT 影響 `Auction`/`AuctionHouse` 介面以下的業務邏輯，且保留了「connect 可能失敗、失敗要包裝成自訂例外」這個書中既有的錯誤處理結構——因此仍能練習「處理第三方系統連線失敗」的 TDD 情境，即使書中 `test/integration/.../XMPPAuctionHouseTest.java` 本身沒有測試連線失敗的案例，這個結構在 Java 原始碼中完全支援、只是沒被測試覆蓋到。
+SASL 驗證本身仍然 100% 委託給 Prosody 這個真實的第三方系統：帳密不在已註冊清單內時，`XMPPConnection.connect()` 會拋出底層例外（例如密碼錯誤丟出的 `SASLError`），不直接拋出 `XMPPAuctionException`——包裝成 `XMPPAuctionException` 是 `XMPPAuctionHouse.connect()` 外層 try/catch 的責任，不是連線本身的責任，對應 Java 版 `connection.login()` 拋出 Smack 底層 `XMPPException`、由呼叫端包裝的兩層結構一致。TS 版維持同樣的兩層結構，也因此仍保留了「connect 可能失敗、失敗要包裝成自訂例外」這個書中既有的錯誤處理結構，即使書中 `test/integration/.../XMPPAuctionHouseTest.java` 本身沒有測試連線失敗的案例，這個結構在 Java 原始碼中完全支援、只是沒被測試覆蓋到。
 
-Non-goals：本決定不涉及任何形式的密碼、token、或外部帳號系統整合；不做「開放註冊」；不引入任何持久化的使用者資料儲存。
+Non-goals：本決定不涉及使用者自行註冊、動態新增帳號、或任何形式的密碼重設/管理流程；帳號本身的持久化完全交給 Prosody 自己的帳號系統負責，Nuxt server 這一側不另外儲存任何帳密資料。
 
 ## Consequences
 
 **Positive:**
 
-- 不需要任何持久化的帳號資料庫，簡化了部署。
+- 不需要任何額外的帳號管理介面（註冊、密碼重設等），簡化了應用層。
 - 保留了「連線可能因未知身分而失敗」這個可測試的錯誤路徑，維持跟書中 `XMPPAuctionException` 對應的錯誤處理練習價值。
 
 **Negative:**
 
-- 未來若需要新增合法帳號，需要修改程式碼中的常數陣列並重新部署，不像真實帳號系統可以動態註冊。
+- 未來若需要新增合法帳號，需要重新執行 `prosodyctl register`（或修改 `poc/docker/xmpp/register-and-start.sh` 重新部署），不像真實帳號系統可以動態自助註冊。
 
 ## Compliance
 
-1. **不做密碼驗證**：拍賣協定連線層 MUST NOT 對傳入的密碼做任何驗證邏輯。
-2. **白名單比對**：傳入的 username MUST 對照一份靜態的已知名單（TS 常數陣列）比對，MUST NOT 引入外部帳號系統或資料庫查詢。
-3. **失敗需在外層包裝例外**：username 不在名單內時，白名單比對本身 MUST 拋出例外；拍賣協定連線的最外層（對應 Java 版 `XMPPAuctionHouse.connect()`）MUST 攔截這個例外並包裝成對應 `XMPPAuctionException` 角色的自訂例外，MUST NOT 讓底層錯誤未經包裝直接往呼叫端拋。
-4. **不持久化帳號資料**：合法 username 名單 MUST NOT 需要任何形式的持久化儲存或外部服務查詢。
+1. **不提供使用者自訂密碼**：拍賣協定連線層 MUST NOT 提供任何讓使用者自行設定、輸入或管理密碼的介面；密碼 MUST 是跟帳號綁死的固定已知值，僅用來滿足 XMPP SASL 協定本身需要密碼欄位這件事。
+2. **帳號清單固定且靜態**：合法帳號 MUST 是 Prosody 上以 `prosodyctl register`（或等價的官方 CLI/API）預先靜態註冊好的固定清單，MUST NOT 開放使用者自行註冊新帳號、或提供任何動態新增白名單的機制。
+3. **失敗需在外層包裝例外**：帳密不在已註冊清單內、或 SASL 驗證失敗時，底層例外 MUST 在拍賣協定連線的最外層（對應 Java 版 `XMPPAuctionHouse.connect()`）被攔截並包裝成 `XMPPAuctionException`，MUST NOT 讓底層錯誤未經包裝直接往呼叫端拋。
+4. **帳號持久化交給 Prosody**：MUST NOT 在 Nuxt server 這一側額外儲存、快取或管理任何帳密資料，帳號的持久化與驗證完全交給 Prosody 自己的帳號系統負責。
 
 ## Alternatives Considered
 
-- **真實密碼驗證**（維持現有 XMPP/Matrix 那種真帳密登入模式）：符合書中原貌，但需要引入外部帳號系統或客製化 auth provider，違反「不增加多餘邏輯」的硬性限制，且跟 [ADR-0002: 拍賣協定的訊息傳輸機制選型——Redis Pub/Sub](ADR-0002-transport-selection.md) 選定的 Redis Pub/Sub 沒有內建帳密機制的事實不符——Redis Pub/Sub 本身沒有強制性的帳密驗證流程，比 XMPP/Matrix 更適合搭配這個決策。
+- **由使用者自行輸入/管理密碼**（例如在畫面上加一個密碼欄位，串接真正可自助註冊的帳號系統）：更貼近一般應用程式的登入體驗，但需要額外的註冊/密碼管理/重設流程，這些都是原書 `XMPPAuctionHouse`/`AuctionMessageTranslator` 完全沒有的邏輯，違反 [ADR-0001](ADR-0001-decision-principles.md) 準則 1（不增加多餘邏輯）的硬性限制，且不是這個練習 TDD 的 poc 專案需要的複雜度。

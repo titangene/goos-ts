@@ -6,7 +6,7 @@
 
 ## Context
 
-[ADR-0008: 拍賣協定的 XMPP server 選型——Prosody](ADR-0008-xmpp-server-selection.md) 決定 poc 分支要額外實作一套 XMPP 版本，broker 選定 Prosody。要連線 Prosody，需要在 Node.js process 裡選一個 JS/TS 的 XMPP client library：`tools/fake-auction-xmpp.ts`（扮演拍賣現場，對應 Java 版 `FakeAuctionServer.java`）與 `server/auctionsniper/xmpp/*`（Sniper 端，對應 Java 版 `src/auctionsniper/xmpp/*.java`）。依照 [ADR-0007: 拍賣協定訊息格式維持書中 XMPP 純文字格式](ADR-0007-message-format.md) 既有的架構，瀏覽器不直接連 XMPP，這一端都是 Node.js process，因此本次選型只需要考慮 Node.js 環境下的表現，不需要特別考慮瀏覽器 bundle size 等前端專屬的取捨。
+[ADR-0008: 拍賣協定的 XMPP server 選型——Prosody](ADR-0008-xmpp-server-selection.md) 決定拍賣協定的 broker 選定 Prosody。要連線 Prosody，需要在 Node.js process 裡選一個 JS/TS 的 XMPP client library：`tools/fake-auction.ts`（扮演拍賣現場，對應 Java 版 `FakeAuctionServer.java`）與 `server/auctionsniper/xmpp/*`（Sniper 端，對應 Java 版 `src/auctionsniper/xmpp/*.java`）。瀏覽器不直接連 XMPP（維持既有的 Nuxt server 轉發架構，見 `server/routes/ws.ts`），這一端都是 Node.js process，因此本次選型只需要考慮 Node.js 環境下的表現，不需要特別考慮瀏覽器 bundle size 等前端專屬的取捨。
 
 本 ADR 最初選定 Strophe.js，`server/auctionsniper/xmpp/*` 也已照該決定實作完成、整合測試也已通過。但把 production wiring（`server/utils/sniper-registry.ts`）從 Redis 切到 XMPP、實際啟動 Nuxt dev server 之後，才發現一個當初查證範圍沒有涵蓋到的問題：瀏覽器打開首頁時，SSR 階段丟出 `ReferenceError: history is not defined`，crash 位置在 `vue-router` 內部的 `createRouter()`。
 
@@ -32,7 +32,7 @@ Chosen option: "改用 xmpp.js（`@xmpp/client`）"，因為已實測驗證 `imp
 
 - **XMPP server 選型**——見 [ADR-0008](ADR-0008-xmpp-server-selection.md)。
 - **部署平台選型**——見 [ADR-0010](ADR-0010-xmpp-deployment-platform.md)。
-- **瀏覽器直連 XMPP**——瀏覽器不直接使用任何 XMPP client library，維持既有的 Nuxt server 轉發架構（見 [ADR-0007](ADR-0007-message-format.md)），若未來要脫離這個轉發架構、讓瀏覽器直連 XMPP，屬於更大的架構決策，須另開 ADR 討論，不可視為本 ADR 已預先核准。
+- **瀏覽器直連 XMPP**——瀏覽器不直接使用任何 XMPP client library，維持既有的 Nuxt server 轉發架構（`server/routes/ws.ts`），若未來要脫離這個轉發架構、讓瀏覽器直連 XMPP，屬於更大的架構決策，須另開 ADR 討論，不可視為本 ADR 已預先核准。
 
 ## Consequences
 
@@ -49,8 +49,8 @@ Chosen option: "改用 xmpp.js（`@xmpp/client`）"，因為已實測驗證 `imp
 
 ## Compliance
 
-1. **Client library 唯一性**：`tools/fake-auction-xmpp.ts`、`server/auctionsniper/xmpp/*` 這兩個 Node.js 端 MUST 使用 xmpp.js（`@xmpp/client`）連線 Prosody，MUST NOT 使用 Strophe.js 或 StanzaJS，除非有新 ADR 明確取代本決定。
-2. **瀏覽器不使用 XMPP client library**：MUST NOT 在瀏覽器端引入任何 XMPP client library 直接連線 Prosody；瀏覽器與拍賣協定之間的邊界維持 [ADR-0007](ADR-0007-message-format.md) 既有的 Nuxt server 轉發架構，若要改變這個邊界須另開 ADR。
+1. **Client library 唯一性**：`tools/fake-auction.ts`、`server/auctionsniper/xmpp/*` 這兩個 Node.js 端 MUST 使用 xmpp.js（`@xmpp/client`）連線 Prosody，MUST NOT 使用 Strophe.js 或 StanzaJS，除非有新 ADR 明確取代本決定。
+2. **瀏覽器不使用 XMPP client library**：MUST NOT 在瀏覽器端引入任何 XMPP client library 直接連線 Prosody；瀏覽器與拍賣協定之間的邊界維持既有的 Nuxt server 轉發架構（`server/routes/ws.ts`），若要改變這個邊界須另開 ADR。
 3. **訊息路由分派方式**：依 `from` JID 區分不同對話的訊息時，MUST 透過 `XMPPConnection.getChatManager()` 回傳的 `XMPPChatManager` 建立/查找 `XMPPChat`（比照 Smack `connection.getChatManager()`），MUST NOT 在 `XMPPChatManager.dispatch()` 之外的地方（例如 `XMPPAuction`/`AuctionMessageTranslator`/測試替身）自行判斷 `stanza.attrs.from` 做路由。
 4. **禁止用 process/thread 隔離繞過函式庫層級的 globalThis 污染**：MUST NOT 為了讓某個有 globalThis 副作用的函式庫能在 Nuxt server process 內使用，改用 worker_thread 或 child_process 隔離作為長期解法——這類方案只是把污染搬到另一個 process/thread，不是移除污染本身，且會引入額外的生命週期管理與訊息協定複雜度（見 Decision Outcome 的原型驗證結果）。若未來要在 Nuxt server process 內引入新的第三方函式庫，MUST 先驗證該函式庫是否有等效的 globalThis 副作用。
 
@@ -93,6 +93,7 @@ worker_thread 原型驗證期間的完整診斷過程（`globalThis` 污染的�
 
 ## Changelog
 
+- 0.4 (2026-08-17): Redis 路徑（原 ADR-0002/0004/0006/0007）已整個移除，XMPP 成為唯一的拍賣協定實作，移除文中「跟 Redis 並行」的框架語言與已刪除的 `ADR-0007`/`fake-auction-xmpp.ts` 交叉引用，改指向現存檔名（`tools/fake-auction.ts`）與 `server/routes/ws.ts` 既有架構。
 - 0.3 (2026-08-16): `server/auctionsniper/xmpp/*` 的物件模型從「比照 Redis 版的 Channel 抽象」改為「比照 Java 版 Smack 的 Chat/ChatManager 抽象」（`XMPPChannel` → `XMPPChatManager`/`XMPPChat`），Compliance #3 與 Consequences 相關敘述一併更新。
 - 0.2 (2026-08-16): 改選 xmpp.js，取代最初選定的 Strophe.js——Strophe.js 在 Nuxt SSR process 內污染 `globalThis`、破壞 `vue-router` 環境偵測，詳見 Context/Decision Outcome。
 - 0.1 (2026-08-16): Initial version，選定 Strophe.js。

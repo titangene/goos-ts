@@ -6,11 +6,11 @@
 
 ## Context
 
-goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS) 書中 Java Auction Sniper 範例的 TypeScript 練習專案，目的是練習 TDD 開發流程，而不是打造一套正式的拍賣系統。書中 Java 版用 XMPP + Openfire 當拍賣協定，goos-ts 目前用 Redis Pub/Sub 取代 XMPP、WebSocket 取代 Swing 的 UI 推播機制。
+goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS) 書中 Java Auction Sniper 範例的 TypeScript 練習專案，目的是練習 TDD 開發流程，而不是打造一套正式的拍賣系統。書中 Java 版用 XMPP + Openfire 當拍賣協定，goos-ts 比照書中架構，用 xmpp.js 連線 Prosody（見 [ADR-0008](ADR-0008-xmpp-server-selection.md)/[ADR-0009](ADR-0009-xmpp-client-library-selection.md)），WebSocket 取代 Swing 的 UI 推播機制。
 
 書中選擇 XMPP 的理由：作者需要「一個真實存在、非同步、第三方的基礎設施，用來示範如何對它做 TDD」，且明確承認這不是務實的正式架構（"This isn't a realistic architecture: XMPP is neither reliable nor secure, and so is unsuitable for transactions... Ensuring any of those qualities is outside our scope."）。
 
-在評估拍賣協定要用什麼取代 Redis Pub/Sub 的過程中（見 [ADR-0002: 拍賣協定的訊息傳輸機制選型——Redis Pub/Sub](ADR-0002-transport-selection.md)），反覆浮現同一組判準，且各篇 ADR 都會引用這組判準來解釋取捨，因此需要獨立記錄，避免每篇 ADR 重複解釋一次同樣的優先順序邏輯。
+在評估拍賣協定實作細節（XMPP server 選型、client library 選型、部署平台等，見 [ADR-0008](ADR-0008-xmpp-server-selection.md)/[ADR-0009](ADR-0009-xmpp-client-library-selection.md)/[ADR-0010](ADR-0010-xmpp-deployment-platform.md)）的過程中，反覆浮現同一組判準，且各篇 ADR 都會引用這組判準來解釋取捨，因此需要獨立記錄，避免每篇 ADR 重複解釋一次同樣的優先順序邏輯。
 
 ## Decision Outcome
 
@@ -32,13 +32,9 @@ goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS
 
 **Negative:**
 
-- 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0002: 拍賣協定的訊息傳輸機制選型——Redis Pub/Sub](ADR-0002-transport-selection.md)、[ADR-0006: Redis Channel 拓樸設計——分離 Commands/Events Channel](ADR-0006-channel-topology.md) 等已接受的結論。
+- 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0008: 拍賣協定的 XMPP server 選型——Prosody](ADR-0008-xmpp-server-selection.md)、[ADR-0009: XMPP client library 選型——xmpp.js](ADR-0009-xmpp-client-library-selection.md)、[ADR-0010: XMPP 佈署平台選型——Render](ADR-0010-xmpp-deployment-platform.md) 等已接受的結論。
 
 ## Compliance
 
 1. **優先順序裁決**：任何影響拍賣協定實作方式、broker 選型、或部署方式的決策，MUST 依照本 ADR 訂出的優先順序（不增加多餘邏輯 > 貼近書中精神/雙軌 TDD 練習 > 簡單/低成本）裁決衝突。
 2. **變更準則需要新 ADR**：若新決策的判斷準則與本 ADR 衝突或需要調整優先順序，MUST 建立新的 ADR 明確取代或修正本 ADR，MUST NOT 在其他 ADR 內默默改變優先順序而不留下紀錄。
-
-## Alternatives Considered
-
-- **以開發便利性/TDD 開發回饋循環速度為最優先**（而非貼近書中精神）：討論初期一度傾向這個順序，因而傾向選擇 MQTT + Aedes 內嵌 broker（可完全嵌入 Node.js process、不需外部服務，對本機/CI 回饋循環最友善）。最終否決，因為內嵌 broker 直接抽掉了書中選 XMPP 最根本的理由——需要一個練習者不完全掌控生命週期的外部第三方系統；若把開發便利性放在貼近書中精神之上，會讓整個重構偏離最初「練習 GOOS 精神下的 TDD」這個目的。
