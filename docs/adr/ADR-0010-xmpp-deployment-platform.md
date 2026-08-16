@@ -57,7 +57,7 @@ Chosen option: "Back4app Containers"，因為它是這次查證中唯一同時�
 3. **對外連線協定**：對外連線 MUST 使用 WebSocket transport（呼應 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) Compliance #1 選定的 Strophe.js），MUST NOT 嘗試使用原生 XMPP TCP（5222）——Back4app 邊界只對外開放標準 443 port，Dashboard 設定的「Port」欄位是內部轉發用的 port、不是直接對外開放的 port，這點已在 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 1 實測確認。
 4. **Prosody 網路介面設定**：部署到 Back4app 的 Prosody 設定檔 MUST 明確設定 `http_interfaces = { "0.0.0.0", "::" }`，MUST NOT 依賴官方預設的 localhost-only 設定（`{ "127.0.0.1", "::1" }`）——原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 2。
 5. **虛擬主機網域**：`PROSODY_VIRTUAL_HOSTS` 環境變數 MUST 設成 Back4app 實際配發的網域（從 Dashboard 的 Domain 設定頁確認，而非手動輸入或從畫面截圖辨識），MUST NOT 使用推測或過期的網域字串——原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 3。
-6. **SASL 認證放寬**：部署到 Back4app 的 Prosody 設定檔 MUST 設定 `allow_unencrypted_plain_auth = true`，MUST NOT 依賴官方預設值（`false`）——Back4app 在邊界做 TLS termination，Prosody 實際收到的仍是未加密連線，官方預設值會導致 Prosody 完全不提供任何 SASL 機制、連線卡在認證協商階段，原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 4。
+6. **未加密連線放寬**：部署到 Back4app 的 Prosody 設定檔 MUST 同時設定 `c2s_require_encryption = false` 與 `allow_unencrypted_plain_auth = true`，MUST NOT 只設定其中一個或依賴官方預設值（兩者依序預設為 `true`／`false`）——這是兩道獨立的擋修：`c2s_require_encryption` 沒放寬會讓 Prosody 直接拒絕未加密連線本身（連 stream feature 都不給），`allow_unencrypted_plain_auth` 沒放寬則會讓 SASL 協商階段找不到可用機制；Back4app 在邊界做 TLS termination，Prosody 實際收到的仍是未加密連線，兩者都要放寬才能完成登入，原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 4。
 
 ## Pros and Cons of the Options
 
@@ -119,5 +119,6 @@ Chosen option: "Back4app Containers"，因為它是這次查證中唯一同時�
 
 ## Changelog
 
+- 0.3 (2026-08-16): 修正 Compliance #6——原本只加 `allow_unencrypted_plain_auth`，實測發現這個設定不夠，`c2s_require_encryption`（Prosody 0.12 起預設 `true`）會在更早的階段就拒絕未加密連線，兩個設定都要放寬才能真正完成登入，見 bug 4 更新後的內容。
 - 0.2 (2026-08-16): 補上 Compliance #6（`allow_unencrypted_plain_auth`）——原本只驗證到 WebSocket handshake 成功就判定部署可行，之後接上 `server/auctionsniper/xmpp` 整合測試才發現 SASL 認證階段會失敗（bug 4），這個決定本身（選 Back4app）沒有變，但 Prosody 設定需要多這一條規則。
 - 0.1 (2026-08-16): Initial version

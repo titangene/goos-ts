@@ -11,16 +11,26 @@
 -- 不能透過官方 image 預設的 conf.d include（放在檔案最後面）加，
 -- 那樣只會套用到最後一個 VirtualHost，不會是真正的 global 設定。
 --
--- 同樣的道理，Prosody 也不會在「未加密」連線上提供任何 SASL 認證機制
--- （官方文件：allow_unencrypted_plain_auth 預設 false，PLAIN/LOGIN 這兩個
--- 機制在未加密連線上預設被禁用，見 https://prosody.im/doc/modules/mod_saslauth）。
+-- 同樣的道理，Prosody 從 0.12 版起走「預設安全」路線，兩個設定都要放寬
+-- 才能在未加密連線上完成登入，缺一個都不行：
+--
+-- 1. c2s_require_encryption 官方文件（mod_tls）明確寫預設值是 true——只要
+--    有憑證存在（官方 image 一定會自動產生），Prosody 就會直接拒絕未加密
+--    連線本身，甚至不提供任何 stream feature，client 端看到的是
+--    <stream:error><undefined-condition/>No stream features to proceed
+--    with</stream:error>，比下面 SASL 那層更早發生。
+-- 2. allow_unencrypted_plain_auth 官方文件（mod_saslauth）預設 false，
+--    PLAIN/LOGIN 這兩個機制在未加密連線上預設被禁用，就算過了第 1 關，
+--    Strophe.js 端會看到「Server did not offer a supported authentication
+--    mechanism」。
+--
 -- 不管是本機 `ws://`（本來就沒有 TLS）還是 Back4app 部署（邊界做 TLS
 -- termination，Prosody 實際收到的仍是明文 WebSocket），從 Prosody 自己的
--- 視角看都是「未加密連線」，所以一定要開這個選項，否則連線會卡在
--- SASL 協商階段（"Server did not offer a supported authentication
--- mechanism"），見 poc/docs/xmpp-prosody-back4app-spike.md bug 4。這是刻意
--- 放寬安全限制的決定，理由跟 ADR-0003 一致：這是練習 TDD 用的 poc 專案，
--- 不是要打造安全的正式系統。
+-- 視角看都是「未加密連線」，這兩個設定都要放寬，見
+-- poc/docs/xmpp-prosody-back4app-spike.md bug 4。這是刻意放寬安全限制的
+-- 決定，理由跟 ADR-0003 一致：這是練習 TDD 用的 poc 專案，不是要打造安全
+-- 的正式系統。
+c2s_require_encryption = false
 allow_unencrypted_plain_auth = true
 
 local _unpack = Lua.table.unpack;
