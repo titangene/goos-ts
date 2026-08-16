@@ -3,9 +3,9 @@
 本專案部署在 [Render](https://render.com/)，有兩個 Web Service：
 
 - **Nuxt server（`goos-ts`）**：跑 Nuxt server（`npm run build` 建置、`node .output/server/index.mjs` 啟動）。
-- **XMPP server（`goos-ts-xmpp-prosody`）**：跑 Prosody（Docker 部署，image 設定見 `docker/xmpp/`），拍賣協定的 broker（見 [ADR-0008](adr/ADR-0008-xmpp-server-selection.md)/[ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md)），對外只提供 XMPP over WebSocket（呼應 [ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md) Compliance #1 選定的 xmpp.js）。
+- **XMPP server（`goos-ts-xmpp-prosody`）**：跑 Prosody（Docker 部署，image 設定見 `docker/xmpp/`），拍賣協定的 broker（見 [ADR-0002](adr/ADR-0002-xmpp-server-selection.md)/[ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md)），對外只提供 XMPP over WebSocket（呼應 [ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md) Compliance #1 選定的 xmpp.js）。
 
-兩者都在 Singapore region，CD 流程共用同一個 `.github/workflows/cd.yml`（以 `strategy.matrix` 區分要部署的服務）。決策過程見 [ADR-0010](adr/ADR-0010-xmpp-deployment-platform.md)。
+兩者都在 Singapore region，CD 流程共用同一個 `.github/workflows/cd.yml`（以 `strategy.matrix` 區分要部署的服務）。決策過程見 [ADR-0004](adr/ADR-0004-xmpp-deployment-platform.md)。
 
 ## 建立 Nuxt Web Service
 
@@ -71,7 +71,7 @@ Render Dashboard → **New** → **Web Service**：
   - `PORT` = `5280`——告訴 Render 要把對外流量轉發到 container 內部哪個 port（[Render 官方文件](https://render.com/docs/web-services)：`We recommend binding your HTTP server to the port defined by the PORT environment variable`，預設 `10000`），對應 Prosody 明文 HTTP port 的預設值。
   - `PROSODY_VIRTUAL_HOSTS` = 這個服務建立後 Render 分配的網域（從 Dashboard 的 **Settings** 頁面確認，而非手動輸入或推測——建立服務前不會知道最終網域，需要先建立、拿到網域後再回填這個環境變數並重新部署）。
 
-按 **Deploy Web Service**，Render 會自動 pull 該分支的 commit 並在雲端建置、啟動。啟動時會自動註冊 [ADR-0003](adr/ADR-0003-username-only-identity.md) 白名單的三個帳號（`sniper`/`sniper`、`auction-item-54321`/`auction`、`auction-item-65432`/`auction`）。
+按 **Deploy Web Service**，Render 會自動 pull 該分支的 commit 並在雲端建置、啟動。啟動時會自動註冊 [ADR-0002](adr/ADR-0002-xmpp-server-selection.md) 白名單的三個帳號（`sniper`/`sniper`、`auction-item-54321`/`auction`、`auction-item-65432`/`auction`）。
 
 拿到 Prosody 的網域後，回頭把它填進 Nuxt Web Service 的 `XMPP_SERVICE_URL`/`XMPP_DOMAIN`（見上方「建立 Nuxt Web Service」）並重新部署。
 
@@ -117,9 +117,9 @@ XMPP_DOMAIN=<服務網域> \
 `docker/xmpp/prosody.cfg.lua` 相對官方預設設定檔（[`prosody-13.0.cfg.lua`](https://github.com/prosody/prosody-docker/blob/master/configs/prosody-13.0.cfg.lua)）額外做了兩件事，兩者都是因為 Render（以及大多數 PaaS）在邊界做 TLS termination、用明文 HTTP 轉發到 container，所以 Prosody 實際收到的連線從自己的視角看永遠是「未加密連線」：
 
 1. **`http_interfaces = { "0.0.0.0", "::" }`**：Prosody 從某個版本起，明文 HTTP（預設 5280）改成預設只監聽 localhost（`{ "127.0.0.1", "::1" }`），只有 HTTPS（5281）預設對外。這一行必須放在任何 `VirtualHost` 之前（Prosody 設定檔用「`VirtualHost` 之前的內容才是 global」這個規則），不能透過官方預設的 conf.d include（放在檔案最後面）加，那樣只會套用到最後一個 `VirtualHost`。
-2. **`c2s_require_encryption = false` 與 `allow_unencrypted_plain_auth = true`**：Prosody 從 0.12 版起走「預設安全」路線，兩個設定都要放寬才能在未加密連線上完成登入，缺一個都不行——`c2s_require_encryption`（預設 `true`）沒放寬會讓 Prosody 直接拒絕未加密連線本身，連 stream feature 都不給；`allow_unencrypted_plain_auth`（預設 `false`）沒放寬則會讓 SASL 協商階段找不到可用機制。這是刻意放寬安全限制的決定，理由跟 [ADR-0003](adr/ADR-0003-username-only-identity.md) 一致：這是練習 TDD 用的 poc 專案，不是要打造安全的正式系統。
+2. **`c2s_require_encryption = false` 與 `allow_unencrypted_plain_auth = true`**：Prosody 從 0.12 版起走「預設安全」路線，兩個設定都要放寬才能在未加密連線上完成登入，缺一個都不行——`c2s_require_encryption`（預設 `true`）沒放寬會讓 Prosody 直接拒絕未加密連線本身，連 stream feature 都不給；`allow_unencrypted_plain_auth`（預設 `false`）沒放寬則會讓 SASL 協商階段找不到可用機制。這是刻意放寬安全限制的決定，理由跟 [ADR-0002](adr/ADR-0002-xmpp-server-selection.md) 一致：這是練習 TDD 用的 poc 專案，不是要打造安全的正式系統。
 
-容器啟動時的 entrypoint（`docker/xmpp/register-and-start.sh`）會自動用 `prosodyctl register` 註冊 [ADR-0003](adr/ADR-0003-username-only-identity.md) 白名單的三個帳號，取代官方 image 只能透過 `LOCAL`/`PASSWORD`/`DOMAIN` 三個環境變數註冊「單一」帳號的限制。
+容器啟動時的 entrypoint（`docker/xmpp/register-and-start.sh`）會自動用 `prosodyctl register` 註冊 [ADR-0002](adr/ADR-0002-xmpp-server-selection.md) 白名單的三個帳號，取代官方 image 只能透過 `LOCAL`/`PASSWORD`/`DOMAIN` 三個環境變數註冊「單一」帳號的限制。
 
 ## 針對已部署環境模擬（`--remote`）
 
@@ -154,4 +154,4 @@ npm run fake-auction:remote -- item-54321
 
 ## 已知限制
 
-- **Free plan 閒置休眠**：Render 免費方案閒置一段時間後會 spin down，重新喚醒需要一點時間，[ADR-0010](adr/ADR-0010-xmpp-deployment-platform.md) Context 描述的用途（練習 CI/CD、偶爾驗證）可以接受。
+- **Free plan 閒置休眠**：Render 免費方案閒置一段時間後會 spin down，重新喚醒需要一點時間，[ADR-0004](adr/ADR-0004-xmpp-deployment-platform.md) Context 描述的用途（練習 CI/CD、偶爾驗證）可以接受。

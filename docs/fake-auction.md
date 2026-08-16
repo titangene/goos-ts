@@ -52,6 +52,14 @@ Event: PRICE; CurrentPrice: 95; Increment: 10; Bidder: sniper@localhost/Auction;
 
 State 應該變成 **Winning**。
 
+用 `npm run fake-auction:remote`（見 [`deploy.md`](deploy.md)「針對已部署環境模擬」）連已部署的 Prosody 時，JID 的 domain 要換成 `.env.local` 裡的 `XMPP_DOMAIN`，不是 `localhost`。例如 `XMPP_DOMAIN=goos-ts-xmpp-prosody.onrender.com` 時：
+
+```
+Event: PRICE; CurrentPrice: 95; Increment: 10; Bidder: sniper@goos-ts-xmpp-prosody.onrender.com/Auction;
+```
+
+State 應該變成 **Winning**。
+
 **6. 模擬別人加價超過你的停止價，讓你輸掉：**
 
 ```

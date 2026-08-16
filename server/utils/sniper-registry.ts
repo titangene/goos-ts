@@ -31,7 +31,7 @@ tableModel.addListener({
 
 let sniperLauncher: SniperLauncher | undefined;
 
-// XMPP 帳號密碼固定是 sniperId 本身（ADR-0003 username-only 白名單精神
+// XMPP 帳號密碼固定是 sniperId 本身（ADR-0002 username-only 白名單精神
 // 延伸到 XMPP 路徑：Prosody 上實際註冊的密碼是 'sniper'，跟 sniperId 湊巧
 // 同名，不是巧合——見 poc/docker/xmpp/register-and-start.sh）。
 const XMPP_SNIPER_PASSWORD = 'sniper';

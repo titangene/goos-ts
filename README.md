@@ -12,7 +12,7 @@ Auction Sniper — TypeScript + Nuxt + XMPP + WebSocket 版本，改寫自 [Grow
 | ----------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 語言              | Java                                                                    | TypeScript                                                                                                                                                           |
 | UI                | Swing（桌面 GUI）                                                       | Vue 3 + Nuxt 4（瀏覽器）                                                                                                                                             |
-| 拍賣訊息協定      | XMPP（Smack library，需搭配 Openfire server）                           | XMPP（xmpp.js `@xmpp/client`，連 Prosody，見 [ADR-0008](docs/adr/ADR-0008-xmpp-server-selection.md)/[ADR-0009](docs/adr/ADR-0009-xmpp-client-library-selection.md)） |
+| 拍賣訊息協定      | XMPP（Smack library，需搭配 Openfire server）                           | XMPP（xmpp.js `@xmpp/client`，連 Prosody，見 [ADR-0002](docs/adr/ADR-0002-xmpp-server-selection.md)/[ADR-0003](docs/adr/ADR-0003-xmpp-client-library-selection.md)） |
 | UI 即時更新機制   | `SwingThreadSniperListener`（`SwingUtilities.invokeLater` 切回 EDT）    | WebSocket（`server/routes/ws.ts` 推送到瀏覽器）                                                                                                                      |
 | 建置工具          | Ant（`build.xml`）                                                      | npm scripts + Nuxt/Vite                                                                                                                                              |
 | 依賴管理          | 手動管理 `lib/` 下的 jar 檔                                             | npm（`package.json`）                                                                                                                                                |
@@ -55,7 +55,7 @@ docker run -p 5280:5280 \
   prosody-local
 ```
 
-容器啟動時會自動註冊 [ADR-0003](docs/adr/ADR-0003-username-only-identity.md) 白名單的三個帳號（`sniper`/`sniper`、`auction-item-54321`/`auction`、`auction-item-65432`/`auction`），對應到 `test/integration/XMPPAuctionHouse.test.ts` 固定使用的 `item-54321`。
+容器啟動時會自動註冊 [ADR-0002](docs/adr/ADR-0002-xmpp-server-selection.md) 白名單的三個帳號（`sniper`/`sniper`、`auction-item-54321`/`auction`、`auction-item-65432`/`auction`），對應到 `test/integration/XMPPAuctionHouse.test.ts` 固定使用的 `item-54321`。
 
 ## 安裝
 

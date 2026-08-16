@@ -1,4 +1,4 @@
-# ADR-0010: XMPP 佈署平台選型——Render
+# ADR-0004: XMPP 佈署平台選型——Render
 
 **Status:** Accepted
 **Date:** 2026-08-17
@@ -6,13 +6,13 @@
 
 ## Context
 
-[ADR-0008: 拍賣協定的 XMPP server 選型——Prosody](ADR-0008-xmpp-server-selection.md) 決定用 Prosody 當 XMPP broker。這裡要決定的是 Prosody 要佈署在哪個平台。
+[ADR-0002: 拍賣協定的 XMPP server 選型與身分識別——Prosody](ADR-0002-xmpp-server-selection.md) 決定用 Prosody 當 XMPP broker。這裡要決定的是 Prosody 要佈署在哪個平台。
 
 這次的 Prosody 部署不需要長期運作的伺服器。依 [ADR-0001: 建立拍賣協定重構的決策準則與優先順序](ADR-0001-decision-principles.md) 準則 4（簡單/低成本，只考慮免費部署方案），這次的用途明確是「練習 CI/CD、偶爾驗證」——只有在改完程式碼、重新部署後，需要確認佈署上去的 Nuxt server 跟 XMPP server 能否透過 `fake-auction.ts --remote` 完整模擬拍賣流程時才會用到，驗證完就不再使用，等到下一次修改再重新跑一次。這代表：
 
 - 免費方案的閒置休眠、cold start 完全可以接受，不需要 always-on。
 - 不需要信用卡是硬性偏好（poc 練習用途，不想在探索階段就綁定付款方式）。
-- 需要支援 Docker 部署 Prosody（見 [ADR-0008](ADR-0008-xmpp-server-selection.md)）。
+- 需要支援 Docker 部署 Prosody（見 [ADR-0002](ADR-0002-xmpp-server-selection.md)）。
 - 盡量跟現有 Nuxt server（見 [`deploy.md`](../deploy.md)）部署在同一個平台，減少多開帳號、多維護一套 CD 機制的心力。
 
 ## Considered Options
@@ -34,8 +34,8 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 
 本決定不涉及：
 
-- **XMPP server 選型**——見 [ADR-0008](ADR-0008-xmpp-server-selection.md)。
-- **Client library 選型**——見 [ADR-0009: XMPP client library 選型——xmpp.js](ADR-0009-xmpp-client-library-selection.md)。
+- **XMPP server 選型**——見 [ADR-0002](ADR-0002-xmpp-server-selection.md)。
+- **Client library 選型**——見 [ADR-0003: XMPP client library 選型——xmpp.js](ADR-0003-xmpp-client-library-selection.md)。
 - **長期穩定佈署的保證**——Render 免費方案有閒置一段時間後 spin down 的限制，重新喚醒需要一點時間，這對本 ADR 描述的「用完即丟」使用模式是可接受的限制，不是本 ADR 要解決的問題。
 
 ## Consequences
@@ -54,9 +54,9 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 
 ## Compliance
 
-1. **佈署平台唯一性**：Prosody（見 [ADR-0008](ADR-0008-xmpp-server-selection.md)）MUST 使用 Render 免費方案，MUST NOT 使用本 ADR 已評估並否決的其他平台，除非有新 ADR 明確取代本決定。
+1. **佈署平台唯一性**：Prosody（見 [ADR-0002](ADR-0002-xmpp-server-selection.md)）MUST 使用 Render 免費方案，MUST NOT 使用本 ADR 已評估並否決的其他平台，除非有新 ADR 明確取代本決定。
 2. **部署方式**：MUST 透過「GitHub repo + repo 內含 Dockerfile」的方式部署（`poc/docker/xmpp/`），比照 Nuxt server 既有的部署方式（見 [`deploy.md`](../deploy.md)），維持一致的 CD 流程。
-3. **對外連線協定**：對外連線 MUST 使用 WebSocket transport（呼應 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) Compliance #1 選定的 xmpp.js），MUST NOT 嘗試使用原生 XMPP TCP（5222）——Render Web Service 只轉發單一對外 HTTP port，不支援 TCP passthrough，這點已在 [`deploy.md`](../deploy.md) 實測確認。
+3. **對外連線協定**：對外連線 MUST 使用 WebSocket transport（呼應 [ADR-0003](ADR-0003-xmpp-client-library-selection.md) Compliance #1 選定的 xmpp.js），MUST NOT 嘗試使用原生 XMPP TCP（5222）——Render Web Service 只轉發單一對外 HTTP port，不支援 TCP passthrough，這點已在 [`deploy.md`](../deploy.md) 實測確認。
 4. **Prosody 網路介面設定**：部署到 Render 的 Prosody 設定檔 MUST 明確設定 `http_interfaces = { "0.0.0.0", "::" }`，MUST NOT 依賴官方預設的 localhost-only 設定（`{ "127.0.0.1", "::1" }`）——原因見 [`deploy.md`](../deploy.md)「Prosody 設定要點」。
 5. **虛擬主機網域**：`PROSODY_VIRTUAL_HOSTS` 環境變數 MUST 設成 Render 實際配發的網域（從 Dashboard 的 Settings 頁面確認，而非手動輸入或推測），MUST NOT 使用推測的網域字串。
 6. **未加密連線放寬**：部署到 Render 的 Prosody 設定檔 MUST 同時設定 `c2s_require_encryption = false` 與 `allow_unencrypted_plain_auth = true`，MUST NOT 只設定其中一個或依賴官方預設值（兩者依序預設為 `true`/`false`）——這是兩道獨立的擋修：`c2s_require_encryption` 沒放寬會讓 Prosody 直接拒絕未加密連線本身（連 stream feature 都不給），`allow_unencrypted_plain_auth` 沒放寬則會讓 SASL 協商階段找不到可用機制；Render 在邊界做 TLS termination，Prosody 實際收到的仍是未加密連線，兩者都要放寬才能完成登入，原因見 [`deploy.md`](../deploy.md)「Prosody 設定要點」。
@@ -72,7 +72,7 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 - Good, because 支援 monorepo 指定子目錄當 Docker build context（`Root Directory`/`Docker Build Context Directory` 設定），不需要拆成獨立 repo。
 - Good, because 分配的網域是持久網域，不會過期或改變。
 - Good, because CD 可以直接沿用 Nuxt server 既有的 Render CLI 部署機制（`render deploys create --commit --wait --confirm`），不需要額外設計 CI-gating 的變通做法。
-- Bad, because 只轉發單一對外 HTTP port，不支援原生 XMPP TCP，只能用 WebSocket transport——但這跟 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) 選定的 xmpp.js WebSocket transport 完全相容，不構成額外犧牲。
+- Bad, because 只轉發單一對外 HTTP port，不支援原生 XMPP TCP，只能用 WebSocket transport——但這跟 [ADR-0003](ADR-0003-xmpp-client-library-selection.md) 選定的 xmpp.js WebSocket transport 完全相容，不構成額外犧牲。
 - Bad, because 免費方案有閒置一段時間後 spin down 的限制，重新喚醒需要一點時間。
 
 ### Back4app Containers
@@ -122,8 +122,3 @@ Chosen option: "Render"，因為它同時滿足「免費、免信用卡、支援
 ## More Information
 
 完整部署設定步驟、實測過程與驗證方式記錄在 [`poc/docs/deploy.md`](../deploy.md)。
-
-## Changelog
-
-- 0.2 (2026-08-17): 補上 Back4app Containers 的 Pros and Cons——這是本 ADR 重寫前實際部署驗證過、一度採用的平台，這次補充記錄後來改選 Render 的具體理由（Temporary URL 時效性、CD 機制與現有 Render CI-gating 流程不相容、需要多維護一組帳號），讓「為什麼不是 Back4app」有明確依據可查，不是只有 Render 單方面的優點陳述。
-- 0.1 (2026-08-17): Initial version

@@ -1,14 +1,14 @@
 # TS 版與 Java 版的刻意差異
 
-`server/auctionsniper/xmpp/*` 用 xmpp.js（`@xmpp/client`，見 [ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md)）連線 Prosody，使用方式盡量比照 `goos-code` 的 `src/auctionsniper/xmpp/*.java` 用 Smack library 的 `XMPPConnection`/`ChatManager`/`Chat`/`Message`/`MessageListener` 這一套物件模型，呼叫方式盡可能逐字對照。Smack 內部機制的完整查證筆記見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)。
+`server/auctionsniper/xmpp/*` 用 xmpp.js（`@xmpp/client`，見 [ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md)）連線 Prosody，使用方式盡量比照 `goos-code` 的 `src/auctionsniper/xmpp/*.java` 用 Smack library 的 `XMPPConnection`/`ChatManager`/`Chat`/`Message`/`MessageListener` 這一套物件模型，呼叫方式盡可能逐字對照。Smack 內部機制的完整查證筆記見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)。
 
 這份文件記錄**刻意**跟 Java 版不同的地方——每一項都有明確理由，不是漏改、也不是還沒對齊。決策依據見 [`docs/adr/`](adr/)。
 
 跟 [`java-to-typescript-language-notes.md`](java-to-typescript-language-notes.md) 的分工：這份文件講「拍賣協定/domain 層為什麼要這樣改」，那份文件講「Java 語言本身的機制（enum 多型、巢狀類別、checked exception…）TypeScript 沒有對應物，所以程式碼結構才會不一樣」。
 
-## 1. 身分識別改用 username-only 白名單，不做使用者自訂密碼驗證（見 ADR-0003）
+## 1. 身分識別改用 username-only 白名單，不做使用者自訂密碼驗證（見 ADR-0002）
 
-拍賣協定的連線層不提供使用者自行設定/管理密碼的介面：合法帳號是 Prosody 上事先靜態註冊好的固定帳號（`sniper`/`sniper`、`auction-item-<id>`/`auction`），密碼是跟帳號綁死的已知常數。詳見 [ADR-0003: 拍賣協定身分識別改用 Username-Only 白名單取代真實密碼驗證](adr/ADR-0003-username-only-identity.md)。
+拍賣協定的連線層不提供使用者自行設定/管理密碼的介面：合法帳號是 Prosody 上事先靜態註冊好的固定帳號（`sniper`/`sniper`、`auction-item-<id>`/`auction`），密碼是跟帳號綁死的已知常數。詳見 [ADR-0002: 拍賣協定的 XMPP server 選型與身分識別——Prosody](adr/ADR-0002-xmpp-server-selection.md)。
 
 ## 2. 跟 Smack 一致的部分
 
@@ -72,7 +72,7 @@ TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPCha
 
 ## 7. 型別定義依賴社群維護的 DefinitelyTyped 套件
 
-Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始碼的一部分；xmpp.js 的 TypeScript 型別則是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。這是 [ADR-0009](adr/ADR-0009-xmpp-client-library-selection.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
+Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始碼的一部分；xmpp.js 的 TypeScript 型別則是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。這是 [ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
 
 ## 8. Domain/util 層的框架轉換差異
 

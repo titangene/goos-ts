@@ -46,7 +46,7 @@ export class XMPPAuctionHouse implements AuctionHouse {
     // 密碼驗證 100% 委託給 Prosody 這個真實的第三方 XMPP server（跟書中
     // Java 版 XMPPAuctionHouse.connect() 把帳密原封不動交給
     // connection.login() 一致），這裡只負責把連線/驗證失敗包裝成
-    // XMPPAuctionException（見 ADR-0003 Context）。
+    // XMPPAuctionException（見 ADR-0002 Context）。
     try {
       const connection = await XMPPConnection.connect(
         serviceUrl,

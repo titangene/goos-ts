@@ -9,8 +9,8 @@ import { FakeAuctionServer } from '@test/e2e/FakeAuctionServer.ts';
 // 對照 goos-code 的
 // test/integration/test/integration/auctionsniper/xmpp/XMPPAuctionHouseTest.java
 // 的 receivesEventsFromAuctionServerAfterJoining()。需要真實 Prosody（見
-// ADR-0008 Compliance #1）。itemId 用固定字串（跟 Java 版一致），因為
-// XMPP 帳號要照 ADR-0003 白名單事先在 Prosody 註冊過，隨機出來的 itemId
+// ADR-0002 Compliance #1）。itemId 用固定字串（跟 Java 版一致），因為
+// XMPP 帳號要照 ADR-0002 白名單事先在 Prosody 註冊過，隨機出來的 itemId
 // 不會有對應帳號。SNIPER_ID/SNIPER_PASSWORD/SNIPER_XMPP_ID 從
 // test/e2e/ApplicationRunner.ts 匯入，對應 Java 版 import
 // test.endtoend.auctionsniper.ApplicationRunner 直接重用同一份常數的慣例

@@ -1,5 +1,5 @@
 /**
- * 互動式的假拍賣現場，用 xmpp.js 連 Prosody（見 ADR-0008/0009/0010），
+ * 互動式的假拍賣現場，用 xmpp.js 連 Prosody（見 ADR-0002/0003/0004），
  * 跟 test/e2e/FakeAuctionServer.ts 一樣連 Prosody、用同一套
  * XMPPConnection/XMPPChatManager 抽象（見 docs/differences-from-java.md），
  * 但這支是給人手動操作用的 CLI，不是測試替身，兩者不共用程式碼。
@@ -14,7 +14,7 @@
  *                                                 .env.local 設定）
  *
  * itemId 要對應到 Prosody 上已經用 `prosodyctl register` 註冊過的帳號
- * `auction-<itemId>`（ADR-0003 白名單），不是隨便一個字串都能用。
+ * `auction-<itemId>`（ADR-0002 白名單），不是隨便一個字串都能用。
  *
  * sniper 加入後，直接輸入要發布的 SOL 訊息本文即可。輸入 "quit" 中斷連線
  * 並結束程式。

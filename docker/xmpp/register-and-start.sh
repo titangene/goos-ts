@@ -3,7 +3,7 @@ set -e
 
 # 沿用官方 image entrypoint.sh 的 uid/gid 修正邏輯（見
 # https://github.com/prosody/prosody-docker/blob/master/entrypoint.sh），
-# 只把原本「單一帳號」的 LOCAL/PASSWORD/DOMAIN 註冊區塊換成 ADR-0003 白名單的
+# 只把原本「單一帳號」的 LOCAL/PASSWORD/DOMAIN 註冊區塊換成 ADR-0002 白名單的
 # 三個帳號，其餘邏輯逐行照抄，避免跳過官方原有的權限修正步驟。
 
 data_dir_owner="$(stat -c %u "/var/lib/prosody/")"

@@ -6,11 +6,11 @@
 
 ## Context
 
-goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS) 書中 Java Auction Sniper 範例的 TypeScript 練習專案，目的是練習 TDD 開發流程，而不是打造一套正式的拍賣系統。書中 Java 版用 XMPP + Openfire 當拍賣協定，goos-ts 比照書中架構，用 xmpp.js 連線 Prosody（見 [ADR-0008](ADR-0008-xmpp-server-selection.md)/[ADR-0009](ADR-0009-xmpp-client-library-selection.md)），WebSocket 取代 Swing 的 UI 推播機制。
+goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS) 書中 Java Auction Sniper 範例的 TypeScript 練習專案，目的是練習 TDD 開發流程，而不是打造一套正式的拍賣系統。書中 Java 版用 XMPP + Openfire 當拍賣協定，goos-ts 比照書中架構，用 xmpp.js 連線 Prosody（見 [ADR-0002](ADR-0002-xmpp-server-selection.md)/[ADR-0003](ADR-0003-xmpp-client-library-selection.md)），WebSocket 取代 Swing 的 UI 推播機制。
 
 書中選擇 XMPP 的理由：作者需要「一個真實存在、非同步、第三方的基礎設施，用來示範如何對它做 TDD」，且明確承認這不是務實的正式架構（"This isn't a realistic architecture: XMPP is neither reliable nor secure, and so is unsuitable for transactions... Ensuring any of those qualities is outside our scope."）。
 
-在評估拍賣協定實作細節（XMPP server 選型、client library 選型、部署平台等，見 [ADR-0008](ADR-0008-xmpp-server-selection.md)/[ADR-0009](ADR-0009-xmpp-client-library-selection.md)/[ADR-0010](ADR-0010-xmpp-deployment-platform.md)）的過程中，反覆浮現同一組判準，且各篇 ADR 都會引用這組判準來解釋取捨，因此需要獨立記錄，避免每篇 ADR 重複解釋一次同樣的優先順序邏輯。
+在評估拍賣協定實作細節（XMPP server 選型、client library 選型、部署平台等，見 [ADR-0002](ADR-0002-xmpp-server-selection.md)/[ADR-0003](ADR-0003-xmpp-client-library-selection.md)/[ADR-0004](ADR-0004-xmpp-deployment-platform.md)）的過程中，反覆浮現同一組判準，且各篇 ADR 都會引用這組判準來解釋取捨，因此需要獨立記錄，避免每篇 ADR 重複解釋一次同樣的優先順序邏輯。
 
 ## Decision Outcome
 
@@ -32,7 +32,7 @@ goos-ts 是改寫自《Growing Object-Oriented Software, Guided by Tests》(GOOS
 
 **Negative:**
 
-- 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0008: 拍賣協定的 XMPP server 選型——Prosody](ADR-0008-xmpp-server-selection.md)、[ADR-0009: XMPP client library 選型——xmpp.js](ADR-0009-xmpp-client-library-selection.md)、[ADR-0010: XMPP 佈署平台選型——Render](ADR-0010-xmpp-deployment-platform.md) 等已接受的結論。
+- 若準則的優先順序本身有爭議或需要調整，會牽動已經依此判斷做出的所有下游決策，需要重新評估 [ADR-0002: 拍賣協定的 XMPP server 選型與身分識別——Prosody](ADR-0002-xmpp-server-selection.md)、[ADR-0003: XMPP client library 選型——xmpp.js](ADR-0003-xmpp-client-library-selection.md)、[ADR-0004: XMPP 佈署平台選型——Render](ADR-0004-xmpp-deployment-platform.md) 等已接受的結論。
 
 ## Compliance
 

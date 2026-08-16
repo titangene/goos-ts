@@ -28,7 +28,7 @@
 -- termination，Prosody 實際收到的仍是明文 WebSocket），從 Prosody 自己的
 -- 視角看都是「未加密連線」，這兩個設定都要放寬，見
 -- poc/docs/deploy.md「未加密連線放寬」。這是刻意放寬安全限制的
--- 決定，理由跟 ADR-0003 一致：這是練習 TDD 用的 poc 專案，不是要打造安全
+-- 決定，理由跟 ADR-0002 一致：這是練習 TDD 用的 poc 專案，不是要打造安全
 -- 的正式系統。
 c2s_require_encryption = false
 allow_unencrypted_plain_auth = true

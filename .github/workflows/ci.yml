@@ -31,7 +31,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      # ADR-0008：拍賣協定用 XMPP（Prosody），CI 需要一個真實的 Prosody
+      # ADR-0002：拍賣協定用 XMPP（Prosody），CI 需要一個真實的 Prosody
       # server 給整合測試/e2e 用（見 docker/xmpp/）。GitHub Actions 的
       # services: 只能拉預先建置好的 image，這裡的 image 需要自己 build，
       # 所以改用 docker build/run 兩個步驟，不用 services: 區塊。
