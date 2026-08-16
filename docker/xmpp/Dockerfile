@@ -1,5 +1,5 @@
-# Prosody XMPP server 部署 spike — 驗證 Back4app Containers 免費方案是否能
-# 正確對外提供 XMPP over WebSocket（見 poc/docs/adr/ADR-0002 的評估過程）。
+# Prosody XMPP server 部署用的 image，對外提供 XMPP over WebSocket（見
+# poc/docs/adr/ADR-0010 的評估過程）。
 #
 # 沿用官方 image（prosodyim/prosody），只覆寫 entrypoint 以在啟動時自動註冊
 # ADR-0003 白名單帳號（sniper/sniper、auction-item-54321/auction、

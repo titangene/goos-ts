@@ -1,10 +1,10 @@
--- Prosody 部署 spike 用的設定檔——複製自官方 prosodyim/prosody image 內建的
+-- Prosody 部署用的設定檔——複製自官方 prosodyim/prosody image 內建的
 -- prosody-13.0.cfg.lua（見 https://github.com/prosody/prosody-docker/blob/master/configs/prosody-13.0.cfg.lua），
 -- 差異是加了 http_interfaces 跟 allow_unencrypted_plain_auth 這兩行。
 --
 -- Prosody 從某個版本起，明文 HTTP（預設 5280）改成預設只監聽 localhost
 -- （http_interfaces = { "127.0.0.1", "::1" }），只有 HTTPS（5281）預設對外。
--- Back4app（以及大多數 PaaS）的做法是自己在邊界做 TLS termination，
+-- Render（以及大多數 PaaS）的做法是自己在邊界做 TLS termination，
 -- 用明文 HTTP 連到 container 內部指定的 port，所以需要明文 HTTP 對外監聽，
 -- 而不是走 Prosody 自己的 HTTPS。這一行必須放在任何 VirtualHost 之前
 -- （Prosody 設定檔用「VirtualHost 之前 = global」這個規則），
@@ -24,10 +24,10 @@
 --    Strophe.js 端會看到「Server did not offer a supported authentication
 --    mechanism」。
 --
--- 不管是本機 `ws://`（本來就沒有 TLS）還是 Back4app 部署（邊界做 TLS
+-- 不管是本機 `ws://`（本來就沒有 TLS）還是 Render 部署（邊界做 TLS
 -- termination，Prosody 實際收到的仍是明文 WebSocket），從 Prosody 自己的
 -- 視角看都是「未加密連線」，這兩個設定都要放寬，見
--- poc/docs/xmpp-prosody-back4app-spike.md bug 4。這是刻意放寬安全限制的
+-- poc/docs/xmpp-prosody-deploy.md「未加密連線放寬」。這是刻意放寬安全限制的
 -- 決定，理由跟 ADR-0003 一致：這是練習 TDD 用的 poc 專案，不是要打造安全
 -- 的正式系統。
 c2s_require_encryption = false
@@ -48,7 +48,7 @@ plugin_paths = _split(ENV_PROSODY_PLUGIN_PATHS or "/etc/prosody/modules")
 
 admins = _split(ENV_PROSODY_ADMINS)
 
--- 這是這次唯一新增的一行：讓明文 HTTP（給 Back4app 的健康檢查/反向代理用）
+-- 這是這次唯一新增的一行：讓明文 HTTP（給 Render 的健康檢查/反向代理用）
 -- 對外監聽，而不是官方預設的 localhost-only。
 http_interfaces = { "0.0.0.0", "::" }
 

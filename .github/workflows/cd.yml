@@ -8,9 +8,16 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Render
+    name: Deploy ${{ matrix.service.name }} to Render
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        service:
+          - name: Nuxt server
+            id_secret: RENDER_SERVICE_ID
+          - name: XMPP Prosody
+            id_secret: RENDER_XMPP_SERVICE_ID
 
     steps:
       - name: Install Render CLI
@@ -26,5 +33,5 @@ jobs:
         run: render deploys create "$RENDER_SERVICE_ID" --commit "$COMMIT_SHA" --wait --confirm --output text
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          RENDER_SERVICE_ID: ${{ secrets[matrix.service.id_secret] }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
