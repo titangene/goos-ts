@@ -2,6 +2,8 @@
 
 這份文件記錄 Java 語言/執行環境本身的機制（不是協定或架構層級的決策）在轉譯成 TypeScript 時，單看兩邊原始碼**不容易直覺看出「為什麼長得不一樣」**的地方。跟 [`differences-from-java.md`](differences-from-java.md) 的分工是：那份文件講「拍賣協定/domain 層為什麼要這樣改」，這份文件講「Java 這個語法/機制本身，TypeScript 沒有對應物或運作方式完全不同，所以程式碼結構才會不一樣」。
 
+例子優先取自 `server/auctionsniper/xmpp/*`/`test/e2e-xmpp/*`（xmpp.js 版），不是 `server/auctionsniper/redis/*`/`test/e2e/*`（Redis 版）：xmpp.js 版兩端協定跟 Java 版一樣是 XMPP，命名、結構刻意逐字對照 Smack（見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)），比 Redis 版更適合拿來對照「純語言機制」的差異，不會被協定本身的差異（Redis vs XMPP）混進來干擾。這次改版也順手刪掉了幾段原本存在、但改成對照 xmpp.js 版後發現差異已經消失的段落，每處都有寫刪除原因。
+
 ## 1. Enum 的每個成員各自覆寫方法
 
 Java 的 `enum` 可以讓每個常數各自提供不同的方法實作（等於是每個常數都是一個匿名子類別）。TypeScript 的 `enum` 純粹是值的集合，不能附加行為，更不可能讓每個成員各自覆寫方法。
@@ -112,7 +114,7 @@ public class FakeAuctionServer {
 
 `SingleMessageListener` 宣告成外部類別 `FakeAuctionServer` 的內部類別（雖然這個例子沒有真的用到 `FakeAuctionServer.this` 存取外部欄位，但語言層級上就是隱含可以這樣做）。要建立實例得先有外部實例：`fakeAuctionServer.new SingleMessageListener()`。
 
-**TS（`test/e2e/FakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
+**TS（`test/e2e-xmpp/FakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
 
 ### 2.3 `private static` 巢狀類別——封裝實作細節
 
@@ -136,7 +138,7 @@ public class AuctionMessageTranslator implements MessageListener {
 }
 ```
 
-**TS（`server/auctionsniper/redis/AuctionMessageTranslator.ts`）：** `AuctionEvent`、`MissingValueException` 都拉成同檔案內**沒有 `export`** 的頂層 class——沒有 `export` 就等於這個模組外部完全 import 不到，達到跟 Java `private static class` 一樣的封裝效果，只是機制從「巢狀 + `private`」變成「模組邊界（沒有 `export`）」。
+**TS（`server/auctionsniper/xmpp/AuctionMessageTranslator.ts`）：** `AuctionEvent`、`MissingValueException` 都拉成同檔案內**沒有 `export`** 的頂層 class——沒有 `export` 就等於這個模組外部完全 import 不到，達到跟 Java `private static class` 一樣的封裝效果，只是機制從「巢狀 + `private`」變成「模組邊界（沒有 `export`）」。
 
 ## 3. 匿名類別（Anonymous Classes）
 
@@ -154,26 +156,30 @@ private AuctionEventListener chatDisconnectorFor(final AuctionMessageTranslator 
 }
 ```
 
-**TS（`RedisAuction.ts`）：**
+**TS（`XMPPAuction.ts`）：**
 
 ```ts
-private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
+private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
   return {
-    auctionFailed: () => this.channel.removeMessageListener(translator),
+    auctionFailed: () => this.chat.removeMessageListener(translator),
     auctionClosed: () => {},
-    currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {},
+    currentPrice: (_price: number, _increment: number, _priceSource: PriceSource) => {}
   };
 }
 ```
 
-TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。
+TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。方法名稱、`chat` 欄位都逐字沿用 Java 版，這是 xmpp.js 版跟 Java 版兩端協定一致才做得到的（見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)）。
 
-方法名稱從 `chatDisconnectorFor` 改成 `channelDisconnectorFor`（`chat` 欄位也改成 `channel`），是這份文件少數**刻意**不逐字沿用 Java 名稱的地方——原因見 [`differences-from-java.md` 第 7 節](differences-from-java.md#7-redischannel-沿用-node-redis-的-per-channel-callback-機制)，`Chat` 這個名字底下會誤導讀者以為有 Smack `Chat` 那種協定天生的點對點保證。
+另一個同樣模式、而且更完整的例子——`FakeAuctionServer.java` 被動接收 chat 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { public void chatCreated(Chat chat, boolean createdLocally) { ... } })`，xmpp.js 版**沒有省略這段邏輯**（`XMPPChatManager` 補上了對等的 `addChatListener()`，見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)），只是同樣把匿名類別換成箭頭函式：
 
-其他同樣模式的例子（Java 用匿名類別，對應的 TS 檔案改用物件字面量或箭頭函式）：
+```ts
+connection.getChatManager().addChatListener(chat => {
+  this.currentChat = chat;
+  chat.addMessageListener(this.messageListener);
+});
+```
 
-- `FakeAuctionServer.java` 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { ... })`——這段邏輯本身在 TS 版因為 `RedisConnection.createChannel()` 直接建構 `RedisChannel`（不需要「等對方建立 chat 才能拿到」這個非同步通知），整段被省略，細節見 [`differences-from-java.md` 第 4 節](differences-from-java.md#4-redisclienttype-沒有-getuser所以包了一個-redisconnection)。
-- `Main.java` 的 `SwingUtilities.invokeAndWait(new Runnable() { public void run() { ... } })`、`ui.addWindowListener(new WindowAdapter() { ... })`——這兩處都沒有 TS 對應物，因為 `Main.java` 整個檔案的職責（啟動 Swing UI、視窗關閉時斷線）被 Nuxt 的 plugin 生命週期（`server/plugins/init-sniper-launcher.ts`）取代，不是逐行對應的翻譯關係。這裡列出來只是作為「Java 匿名類別 → TS 箭頭函式/物件字面量」這個一般性模式的示範。
+`Main.java` 的 `SwingUtilities.invokeAndWait(new Runnable() { public void run() { ... } })`、`ui.addWindowListener(new WindowAdapter() { ... })` 這兩處則沒有 TS 對應物，因為 `Main.java` 整個檔案的職責（啟動 Swing UI、視窗關閉時斷線）被 Nuxt 的 plugin 生命週期（`server/plugins/init-sniper-launcher.ts`）取代，不是逐行對應的翻譯關係，這裡列出來只是作為同一個一般性模式的另一個示範。
 
 ## 4. Checked Exception（受檢例外）
 
@@ -197,22 +203,25 @@ public static XMPPAuctionHouse connect(String hostname, String username, String 
 
 `connect()` 簽章上的 `throws XMPPAuctionException` 是**呼叫端看得到、編譯器會檢查**的契約——呼叫 `XMPPAuctionHouse.connect(...)` 的地方，不處理這個例外的話根本編譯不過。
 
-**TS（`RedisAuctionHouse.ts`）：**
+**TS（`XMPPAuctionHouse.ts`）：**
 
 ```ts
-static async connect(redisUrl: string, sniperId: string): Promise<RedisAuctionHouse> {
-  const connection = new RedisConnection(redisUrl);
+static async connect(
+  serviceUrl: string,
+  domain: string,
+  username: string,
+  password: string
+): Promise<XMPPAuctionHouse> {
   try {
-    await connection.connect();
-    connection.login(sniperId);
-    return new RedisAuctionHouse(connection);
+    const connection = await XMPPConnection.connect(serviceUrl, domain, username, password, AUCTION_RESOURCE);
+    return new XMPPAuctionHouse(connection, domain);
   } catch (cause) {
-    throw new RedisAuctionException(`Could not connect to auction: ${String(cause)}`, cause);
+    throw new XMPPAuctionException(`Could not connect to auction: ${serviceUrl}`, cause);
   }
 }
 ```
 
-函式內部的 try/catch 包裝邏輯逐行對應，但 `Promise<RedisAuctionHouse>` 這個回傳型別完全沒有「這個函式可能 reject 成 `RedisAuctionException`」的資訊——呼叫端得自己讀程式碼或文件才知道要接。這是 TypeScript/JavaScript 本身的限制，不是這個專案的取捨。
+函式內部的 try/catch 包裝邏輯逐行對應，但 `Promise<XMPPAuctionHouse>` 這個回傳型別完全沒有「這個函式可能 reject 成 `XMPPAuctionException`」的資訊——呼叫端得自己讀程式碼或文件才知道要接。這是 TypeScript/JavaScript 本身的限制，不是這個專案的取捨。
 
 同樣道理，`AuctionEvent.get(fieldName)` 在 Java 宣告 `throws MissingValueException`（`AuctionMessageTranslator.AuctionEvent`），TS 版的 `get(fieldName)` 就是普通的 `throw new MissingValueException(fieldName)`，簽章上不會出現 `: never` 或任何「這個方法會拋例外」的型別標記。
 
@@ -236,9 +245,9 @@ private AuctionEventListener chatDisconnectorFor(final AuctionMessageTranslator 
 TypeScript/JavaScript 的閉包沒有這個限制：**任何**區域變數，不管是 `const` 還是 `let`，都可以被內層函式自由捕獲，不需要任何特殊標記：
 
 ```ts
-private channelDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
+private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventListener {
   return {
-    auctionFailed: () => this.channel.removeMessageListener(translator),
+    auctionFailed: () => this.chat.removeMessageListener(translator),
     ...
   };
 }
@@ -321,7 +330,7 @@ public static void main(String... args) throws Exception {
 }
 ```
 
-`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；設定值（對應 Java 的命令列參數 `args[ARG_HOSTNAME]` 等）改用環境變數（`REDIS_URL`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
+`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；Java 命令列參數 `args[ARG_HOSTNAME]`/`args[ARG_USERNAME]`/`args[ARG_PASSWORD]` 對應的設定值改用環境變數（XMPP 路徑是 `XMPP_SERVICE_URL`/`XMPP_DOMAIN`，見 `server/utils/sniper-registry.ts` 的 `connectAuctionHouse()`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。`connectAuctionHouse()` 另外多一個 `AUCTION_TRANSPORT` 環境變數決定要連 Redis 還是 XMPP——這是 TS 版特有的切換點，Java 版沒有對應物（Java 只有 XMPP 一條路，見 [ADR-0008](adr/ADR-0008-xmpp-server-selection.md) Compliance #3：XMPP 路徑是跟 Redis 並行的實驗性路徑，不是取代）。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
 
 ## 10. Getter 方法 vs 直接公開欄位
 
@@ -339,7 +348,7 @@ public class FakeAuctionServer {
 
 呼叫端要用 `auctionServer.getItemId()`（方法呼叫）。
 
-**TS（`test/e2e/FakeAuctionServer.ts`）：**
+**TS（`test/e2e-xmpp/FakeAuctionServer.ts`）：**
 
 ```ts
 export class FakeAuctionServer {
@@ -351,7 +360,7 @@ export class FakeAuctionServer {
 
 ## 11. 執行緒（Thread）——兩種不同用途
 
-Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版都沒有對應物，但原因不一樣：
+Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的對應情況不一樣：
 
 - **`SwingThreadSniperListener`**：把通知轉派到 Swing 的 Event Dispatch Thread，見 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)。
 - **`test/end-to-end/ApplicationRunner.java` 的 `startSniper()`**：在**背景執行緒**啟動整個應用程式（`Main.main(...)`），讓測試主執行緒可以繼續往下執行、用 WindowLicker 的 `AWTEventQueueProber` 輪詢等待 UI 準備好：
@@ -377,7 +386,26 @@ Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版都�
   }
   ```
 
-  `goos-ts` 的對應方法 `ApplicationRunner.ts` 的 `startSniper()` 完全不需要背景執行緒：Playwright 的 `page.goto('/')`（`AuctionSniperDriver.goto()`）本身就是非同步、不會阻塞——瀏覽器頁面載入跟測試程式碼**本來就是兩個獨立的執行環境**（頁面在瀏覽器 process 裡跑，測試程式碼在 Node process 裡跑），不需要像 Java 那樣手動開一個執行緒把應用程式跟測試斷開。
+  `test/e2e-xmpp/ApplicationRunner.ts` 的 `startSniper()` 其實**有**對應物，而且是這份文件少數「TS 版反而需要主動補一個 Java 有、直覺以為用不到的機制」的例子：
+
+  ```ts
+  private async startSniper(): Promise<void> {
+    await this.logDriver.clearLog();
+    this.serverProcess = spawn('node', ['.output/server/index.mjs'], {
+      env: { ...process.env, PORT: String(PORT), AUCTION_TRANSPORT: 'xmpp', NUXT_SNIPER_ID: SNIPER_ID },
+      stdio: 'ignore'
+    });
+    await waitForServerReady(BASE_URL);
+    await this.driver.goto(BASE_URL);
+    await this.driver.hasColumnTitles();
+  }
+  ```
+
+  Java 每個測試方法都在背景執行緒重新跑一次 `Main.main(...)`，等於每個測試都拿到一份全新的 `SniperPortfolio`/`MainWindow` 物件圖（同一個 JVM 內，`new Main()` 就是全新物件）。Node.js 的模組層級狀態（`sniper-registry.ts` 的 `portfolio`/`tableModel`）是**綁在 process 上**的，同一個 process 內沒有「重新 `new` 一次就拿到全新模組狀態」這回事——因此 TS 版要達到跟 Java 版同樣的「每個測試互不污染」，只能整個 server process 重開，用 `child_process.spawn()` 取代 Java 的 `new Thread(...).start()`，`ApplicationRunner.stop()`（`process.kill()`）取代 `driver.dispose()`（兩者都會觸發各自語言版本的「連線關閉」監聽器：TS 版是 `server/plugins/init-sniper-launcher.ts` 掛的 `nitroApp.hooks.hook('close', ...)`，對應 Java 版 `Main.java` 的 `disconnectWhenUICloses()`）。
+
+  `test/e2e/ApplicationRunner.ts`（Redis 版）則完全不需要這個機制：整個測試期間共用同一個由 Playwright `webServer` 管理的長駐 server，靠 `uniqueItemId()` 讓每個測試的資料互不衝突即可，不需要對應 Java 這個「每個測試全新物件圖」的設計——這是因為 Redis 頻道名稱可以隨便取，XMPP 帳號則要照 [ADR-0003](adr/ADR-0003-username-only-identity.md) 白名單事先在 Prosody 註冊過，隨機字串沒有對應帳號，兩條路徑分別選了不同的隔離策略，見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)。
+
+  **實測發現：這個「背景啟動」設計本身帶有的競速，Java 版跟 TS 版都有，不是 TS port 引入的新問題。**`Main.main()` 的 `XMPPAuctionHouse.connect(...)` 是背景執行緒裡的同步呼叫，`driver.hasColumnTitles()` 只確認 `MainWindow` 已顯示（`new Main()` 建構子裡用 `SwingUtilities.invokeAndWait` 同步做完），不保證 `connect()`／`main.addUserRequestListenerFor()` 已經跑完；TS 版同理，`waitForServerReady()` 只確認 HTTP server 已經在聽，不保證 `sniper-registry.ts` 的 `XMPPAuctionHouse.connect()` 已完成。這個競速在 TS 版建置 `test/e2e-xmpp/` 套件時**實測撞到過**：第一次呼叫 `openBiddingFor()` 偶爾會撞見 `/api/join` 回 500（`SniperLauncher is not initialized yet`），`ApplicationRunner.ts` 的 `openBiddingFor()` 因此用短暫重試（最多 5 次、每次 1 秒逾時）取代任意猜測的固定等待時間，把這個先天競速吸收掉，只在每個測試第一次呼叫時才可能真的重試，之後同一個測試內的呼叫連線早就緒了。
 
 ## 12. `@Override` 註解
 
