@@ -178,3 +178,8 @@ Eclipse Mosquitto，最主流的開源 MQTT broker 參考實作，C 語言撰寫
 
 - 若未來 [ADR-0001](ADR-0001-decision-principles.md) 的準則優先順序改變（例如更看重開發便利性勝過貼近書中精神，或需要 Redis Pub/Sub 不具備的 QoS/持久化保證），本決定應重新評估。
 - 若拍賣協定需要在 Node.js process 之外的其他語言/平台間互通，Redis Pub/Sub 的生態廣度不如 MQTT，屆時 MQTT + Mosquitto 會是最可能的替代結論。
+
+## Changelog
+
+- 0.2 (2026-08-16): [ADR-0008: 拍賣協定的 XMPP server 選型——Prosody](ADR-0008-xmpp-server-selection.md) 起，poc 分支新增一條與本 ADR 並行的實驗性 XMPP 實作路徑（`server/auctionsniper/xmpp/*`），用來額外驗證更貼近書中原始架構的做法。本 ADR 的 Status 維持 Accepted、Compliance #1（MUST 使用 Redis Pub/Sub、MUST NOT 使用 XMPP）文字不變，Redis 依然是預設/正式協定；ADR-0008 Compliance #3 明確約束新路徑 MUST NOT 取代或移除本 ADR 選定的 Redis 路徑。此附註純粹避免日後只讀本 ADR 的人誤以為 XMPP 已被完全排除。
+- 0.1 (2026-08-11): Initial version
