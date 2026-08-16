@@ -8,7 +8,7 @@ import { XMPPChatManager } from './XMPPChatManager.ts';
 // @xmpp/client。connect() 把 Java 版分開的 new XMPPConnection(hostname) +
 // connection.connect() + connection.login(...) 三步驟合併成一個 async
 // factory，因為 @xmpp/client 本身的 client()/start() 就是這樣設計的，見
-// docs/xmpp-ts-vs-java-differences.md。
+// docs/differences-from-java.md。
 export class XMPPConnection {
   private readonly chatManager: XMPPChatManager;
 
@@ -26,8 +26,7 @@ export class XMPPConnection {
     });
   }
 
-  // 對應 Java 版 connection.getUser()：回傳含 resource 的完整 JID，比照
-  // Redis 版 RedisConnection.getUser() 沿用同樣的命名。
+  // 對應 Java 版 connection.getUser()：回傳含 resource 的完整 JID。
   getUser(): string {
     // start() resolve 後 xmppClient.jid 一定已經綁定，型別上是 JID | null
     // 只是因為連線建立之前也合法是 null。

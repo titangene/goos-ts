@@ -1,28 +1,36 @@
 /**
- * 互動式的假拍賣現場，讓你可以手動操作 Auction Sniper app 的 UI。跟
- * test/e2e/FakeAuctionServer.ts 用同一套 `auction:<itemId>:commands`／
- * `auction:<itemId>:events` Redis channel 與 SOL 純文字協定收發訊息。
+ * 互動式的假拍賣現場，用 xmpp.js 連 Prosody（見 ADR-0008/0009/0010），
+ * 跟 test/e2e/FakeAuctionServer.ts 一樣連 Prosody、用同一套
+ * XMPPConnection/XMPPChatManager 抽象（見 docs/differences-from-java.md），
+ * 但這支是給人手動操作用的 CLI，不是測試替身，兩者不共用程式碼。
  *
  * 用法：
- *   npm run fake-auction -- <itemId>            連本機 Redis
- *   npm run fake-auction:remote -- <itemId>     連 REDIS_URL 指定的 Redis
- *                                                （例如已部署的 Redis；
- *                                                 在 .env.local 設定 REDIS_URL）
+ *   npm run fake-auction -- <itemId>            連本機 Prosody
+ *   npm run fake-auction:remote -- <itemId>     連 XMPP_SERVICE_URL/
+ *                                                 XMPP_DOMAIN 指定的
+ *                                                 Prosody（例如已部署到
+ *                                                 Render 的服務，見
+ *                                                 poc/docs/deploy.md；在
+ *                                                 .env.local 設定）
  *
- * sniper 加入後，直接輸入要發布的 SOL 訊息本文即可——只省略固定會自動幫你
- * 補上的 "SOLVersion: 1.1; " 前綴。例如：
- *   Event: PRICE; CurrentPrice: 90; Increment: 5; Bidder: other bidder;
- *   Event: CLOSE;
- * 輸入 "quit" 中斷連線並結束程式。
+ * itemId 要對應到 Prosody 上已經用 `prosodyctl register` 註冊過的帳號
+ * `auction-<itemId>`（ADR-0003 白名單），不是隨便一個字串都能用。
+ *
+ * sniper 加入後，直接輸入要發布的 SOL 訊息本文即可。輸入 "quit" 中斷連線
+ * 並結束程式。
+ *
+ * 模擬「自己出的價成交」時，Bidder 欄位要填完整 JID（例如
+ * sniper@localhost/Auction），不是單純使用者名稱，見
+ * docs/fake-auction.md「Bidder 欄位的正確寫法」。
  */
 import { clearLine, createInterface, cursorTo, moveCursor } from 'node:readline';
 
-import type { MessageListener } from '@server/auctionsniper/redis/MessageListener.ts';
-import { RedisChannel } from '@server/auctionsniper/redis/RedisChannel.ts';
-import { RedisConnection } from '@server/auctionsniper/redis/RedisConnection.ts';
-import { commandsChannel, eventsChannel } from '@server/auctionsniper/redis/Topic.ts';
+import type { XMPPChat } from '@server/auctionsniper/xmpp/XMPPChat.ts';
+import { XMPPConnection } from '@server/auctionsniper/xmpp/XMPPConnection.ts';
 
 const SOL_VERSION_PREFIX = 'SOLVersion: 1.1; ';
+const AUCTION_RESOURCE = 'Auction';
+const AUCTION_PASSWORD = 'auction';
 
 function parseCommand(messageBody: string): Map<string, string> {
   const fields = new Map<string, string>();
@@ -45,31 +53,39 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  if (remote && !process.env.REDIS_URL) {
-    console.error('--remote requires REDIS_URL to be set (e.g. via --env-file=.env.local)');
+  if (remote && (!process.env.XMPP_SERVICE_URL || !process.env.XMPP_DOMAIN)) {
+    console.error(
+      '--remote requires XMPP_SERVICE_URL and XMPP_DOMAIN to be set (e.g. via --env-file=.env.local)'
+    );
     process.exit(1);
   }
-  const redisUrl = remote ? process.env.REDIS_URL! : 'redis://localhost:6379';
+  const serviceUrl = remote ? process.env.XMPP_SERVICE_URL! : 'ws://localhost:5280/xmpp-websocket';
+  const domain = remote ? process.env.XMPP_DOMAIN! : 'localhost';
 
-  const connection = new RedisConnection(redisUrl);
-  await connection.connect();
+  const jid = `auction-${itemId}@${domain}/${AUCTION_RESOURCE}`;
+  let connection: XMPPConnection;
+  try {
+    connection = await XMPPConnection.connect(
+      serviceUrl,
+      domain,
+      `auction-${itemId}`,
+      AUCTION_PASSWORD,
+      AUCTION_RESOURCE
+    );
+  } catch (error) {
+    console.error(`Could not connect to ${serviceUrl}:`, error);
+    process.exit(1);
+  }
 
-  let sniperJoined = false;
+  let sniperChat: XMPPChat | null = null;
 
   const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: '>>> ' });
 
-  // 每次顯示提示字元前先印一個空白行，讓這一輪的輸出跟下一次輸入之間有
-  // 視覺區隔，">>> " 才不會緊接著上一行輸出。
   function promptAgain(preserveCursor = false): void {
     console.log();
     rl.prompt(preserveCursor);
   }
 
-  // Redis pub/sub 訊息什麼時候到達完全由 sniper 決定，跟 readline 的提示
-  // 字元無關。清掉的不只是目前這行 ">>> "，還要連同上面 promptAgain() 留
-  // 下的空白行一起清掉，這樣像「sent」後面緊接著到的「received」才會直接
-  // 接在上一行輸出下面，不會被硬插一個空白行；同時也避免非同步訊息直接疊
-  // 印在還沒被清掉的提示字元上，導致下一行使用者輸入看起來沒有提示字元。
   function printAsync(message: string): void {
     clearLine(process.stdout, 0);
     cursorTo(process.stdout, 0);
@@ -79,37 +95,28 @@ async function main(): Promise<void> {
     promptAgain(true);
   }
 
-  // fake-auction 這裡扮演拍賣現場，不是 sniper，所以不呼叫
-  // RedisConnection.login()／getUser()（不需要身分白名單）。channel 也直接
-  // 用 connection.publisher／connection.subscriber 反向建構——發布到
-  // events channel、訂閱 commands channel，跟 RedisConnection.createChannel()
-  // 內建給 sniper 端用的方向正好相反，作法對照
-  // test/e2e/FakeAuctionServer.ts。
-  const listener: MessageListener = {
-    processMessage(_channel: RedisChannel, rawMessage: string): void {
-      const fields = parseCommand(rawMessage);
-      const command = fields.get('Command');
-      const bidder = fields.get('Bidder');
+  // fake-auction 這裡扮演拍賣現場，用 addChatListener() 被動接受任何
+  // sniper 主動建立的 chat（對應 Java 版 ChatManagerListener#chatCreated()），
+  // 收到第一個訊息時記住對方的 XMPPChat，之後發送 PRICE/CLOSE 都透過同一個
+  // chat 送出。
+  connection.getChatManager().addChatListener(chat => {
+    sniperChat = chat;
+    chat.addMessageListener({
+      processMessage: (_chat, message) => {
+        const body = message.getBody();
+        const fields = parseCommand(body);
+        const command = fields.get('Command');
 
-      if (command === 'JOIN') {
-        sniperJoined = true;
-        printAsync(`Sniper joined: ${bidder}`);
-      } else if (command === 'BID') {
-        printAsync(`< received: Bid ${fields.get('Price')} from ${bidder}`);
+        if (command === 'JOIN') {
+          printAsync(`Sniper joined: ${chat.getParticipant()}`);
+        } else if (command === 'BID') {
+          printAsync(`< received: Bid ${fields.get('Price')} from ${chat.getParticipant()}`);
+        }
       }
-    }
-  };
+    });
+  });
 
-  const channel = new RedisChannel(
-    connection.publisher,
-    connection.subscriber,
-    eventsChannel(itemId),
-    commandsChannel(itemId),
-    listener
-  );
-  await channel.ready;
-
-  console.log(`Selling item ${itemId} on ${redisUrl}. Waiting for a sniper to join...`);
+  console.log(`Selling item ${itemId} as ${jid} on ${serviceUrl}. Waiting for a sniper to join...`);
   console.log(
     `Type a SOL message body (without the "${SOL_VERSION_PREFIX}" prefix) to send it, e.g.:`
   );
@@ -131,14 +138,14 @@ async function main(): Promise<void> {
       return;
     }
 
-    if (!sniperJoined) {
+    if (!sniperChat) {
       console.log('(no sniper has joined yet)');
       promptAgain();
       return;
     }
 
     const rawMessage = `${SOL_VERSION_PREFIX}${trimmed}`;
-    channel.sendMessage(rawMessage);
+    sniperChat.sendMessage(rawMessage);
     console.log(`> sent: ${rawMessage}`);
     promptAgain();
   });

@@ -10,14 +10,12 @@ import type {
 import { Announcer } from '@server/auctionsniper/util/Announcer.ts';
 
 // 對應 Java 版 auctionsniper.xmpp.XMPPAuction。書中原文的 JOIN/BID 訊息完全
-// 沒有 Bidder 欄位（不像 Redis 版的 Message.ts，因為 Redis Pub/Sub 沒有
-// XMPP 連線層級的身分，見 docs/differences-from-java.md 第 2 節）：真正的
-// XMPP chat 天生帶有寄件人身分（對方看得到 stanza 的 from 屬性），不需要
-// 在訊息內容裡另外重複帶一次。
+// 沒有 Bidder 欄位：真正的 XMPP chat 天生帶有寄件人身分（對方看得到 stanza
+// 的 from 屬性），不需要在訊息內容裡另外重複帶一次。
 // 對應 Java 版 XMPPAuction.JOIN_COMMAND_FORMAT/BID_COMMAND_FORMAT——書中把
 // 這兩個常數宣告成 public static final，讓 production code 跟測試（見
-// test/integration/xmpp/FakeAuctionServer.ts）共用同一份格式定義，這裡一併
-// export 出去維持同樣的用途。
+// test/e2e/FakeAuctionServer.ts）共用同一份格式定義，這裡一併 export 出去
+// 維持同樣的用途。
 export const JOIN_COMMAND_FORMAT = 'SOLVersion: 1.1; Command: JOIN;';
 export function bidCommand(amount: number): string {
   return `SOLVersion: 1.1; Command: BID; Price: ${amount};`;

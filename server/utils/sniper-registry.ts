@@ -1,5 +1,4 @@
 import type { AuctionHouse } from '@server/auctionsniper/AuctionHouse.ts';
-import { RedisAuctionHouse } from '@server/auctionsniper/redis/RedisAuctionHouse.ts';
 import { SniperLauncher } from '@server/auctionsniper/SniperLauncher.ts';
 import { SniperPortfolio } from '@server/auctionsniper/SniperPortfolio.ts';
 import { Column } from '@server/auctionsniper/ui/Column.ts';
@@ -42,11 +41,6 @@ const XMPP_SNIPER_PASSWORD = 'sniper';
 //   XMPPAuctionHouse.connect(...)                 → connectAuctionHouse(...)
 //   main.disconnectWhenUICloses(auctionHouse);    → disconnectWhenServerCloses(...)
 //   main.addUserRequestListenerFor(auctionHouse); → addUserRequestListenerFor(...)
-//
-// AUCTION_TRANSPORT 是 TS 版特有的切換點，Java 版沒有對應物（Java 只有
-// XMPP 一條路）：ADR-0002 選定的 Redis 是預設/正式路徑，ADR-0008 起新增的
-// XMPP 路徑是並行的實驗性路徑，兩者互不取代，由這個環境變數決定這次啟動
-// 要連哪一邊，預設 redis。
 export async function main(
   sniperId: string,
   registerServerCloseHandler: (handler: () => Promise<void>) => void
@@ -56,20 +50,14 @@ export async function main(
   addUserRequestListenerFor(auctionHouse);
 }
 
-async function connectAuctionHouse(
-  sniperId: string
-): Promise<RedisAuctionHouse | XMPPAuctionHouse> {
-  if (process.env.AUCTION_TRANSPORT === 'xmpp') {
-    const serviceUrl = process.env.XMPP_SERVICE_URL ?? 'ws://localhost:5280/xmpp-websocket';
-    const domain = process.env.XMPP_DOMAIN ?? 'localhost';
-    return XMPPAuctionHouse.connect(serviceUrl, domain, sniperId, XMPP_SNIPER_PASSWORD);
-  }
-  const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
-  return RedisAuctionHouse.connect(redisUrl, sniperId);
+async function connectAuctionHouse(sniperId: string): Promise<XMPPAuctionHouse> {
+  const serviceUrl = process.env.XMPP_SERVICE_URL ?? 'ws://localhost:5280/xmpp-websocket';
+  const domain = process.env.XMPP_DOMAIN ?? 'localhost';
+  return XMPPAuctionHouse.connect(serviceUrl, domain, sniperId, XMPP_SNIPER_PASSWORD);
 }
 
 function disconnectWhenServerCloses(
-  auctionHouse: RedisAuctionHouse | XMPPAuctionHouse,
+  auctionHouse: XMPPAuctionHouse,
   registerServerCloseHandler: (handler: () => Promise<void>) => void
 ): void {
   registerServerCloseHandler(async () => {

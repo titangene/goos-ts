@@ -23,16 +23,8 @@ export default defineConfig({
       {
         resolve: { alias },
         test: {
-          name: 'integration-redis',
-          include: ['test/integration/redis/**/*.test.ts'],
-          environment: 'node'
-        }
-      },
-      {
-        resolve: { alias },
-        test: {
-          name: 'integration-xmpp',
-          include: ['test/integration/xmpp/**/*.test.ts'],
+          name: 'integration',
+          include: ['test/integration/*.test.ts'],
           environment: 'node'
         }
       },

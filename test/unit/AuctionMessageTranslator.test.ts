@@ -5,7 +5,7 @@ import type { AuctionEventListener } from '@server/auctionsniper/AuctionEventLis
 import { AuctionMessageTranslator } from '@server/auctionsniper/xmpp/AuctionMessageTranslator.ts';
 import type { XMPPChat } from '@server/auctionsniper/xmpp/XMPPChat.ts';
 import type { XMPPFailureReporter } from '@server/auctionsniper/xmpp/XMPPFailureReporter.ts';
-import { messageWithBody } from '@test/unit/xmpp/message.ts';
+import { messageWithBody } from '@test/unit/message.ts';
 
 // 1:1 對照 goos-code 的 test/unit/test/auctionsniper/xmpp/AuctionMessageTranslatorTest.java
 // （5 個測項、SNIPER_ID、輸入的 SOL 字串皆沿用該檔案）。jMock 的
@@ -15,7 +15,6 @@ import { messageWithBody } from '@test/unit/xmpp/message.ts';
 // 對齊 Java 版每個 Expectations 區塊實際保證的內容，不只是複製有寫在
 // Expectations 裡的那幾行。
 const SNIPER_ID = 'sniper id';
-// 比照 test/unit/redis/AuctionMessageTranslator.test.ts 的 UNUSED_CHAT 慣例：
 // processMessage() 的 chat 參數不影響翻譯邏輯，測試不需要真的建一個。
 const UNUSED_CHAT = null as unknown as XMPPChat;
 

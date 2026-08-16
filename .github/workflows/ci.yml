@@ -11,19 +11,6 @@ jobs:
     name: Lint, Format, Test
     runs-on: ubuntu-latest
 
-    # ADR-0002：拍賣協定用 Redis Pub/Sub，不需要掛載 repo 裡的設定檔，直接用官方
-    # image 透過 services: 啟動即可。
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
@@ -44,6 +31,27 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
+      # ADR-0008：拍賣協定用 XMPP（Prosody），CI 需要一個真實的 Prosody
+      # server 給整合測試/e2e 用（見 docker/xmpp/）。GitHub Actions 的
+      # services: 只能拉預先建置好的 image，這裡的 image 需要自己 build，
+      # 所以改用 docker build/run 兩個步驟，不用 services: 區塊。
+      - name: Build and start Prosody
+        run: |
+          docker build -t prosody-ci docker/xmpp
+          docker run -d --name prosody -p 5280:5280 \
+            -e PROSODY_ENABLE_MODULES=websocket \
+            -e PROSODY_VIRTUAL_HOSTS=localhost \
+            prosody-ci
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:5280/; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Prosody did not become ready in time" >&2
+          docker logs prosody
+          exit 1
+
       - name: Unit tests
         run: npm run test:unit
 
@@ -52,6 +60,9 @@ jobs:
 
       - name: Integration tests (app)
         run: npm run test:integration:app
+
+      - name: Build
+        run: npm run build
 
       - name: E2E tests
         run: npm run test:e2e

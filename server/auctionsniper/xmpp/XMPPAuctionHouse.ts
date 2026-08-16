@@ -43,10 +43,10 @@ export class XMPPAuctionHouse implements AuctionHouse {
     username: string,
     password: string
   ): Promise<XMPPAuctionHouse> {
-    // 需要真正的 SASL 失敗判斷，跟 Redis 版（ADR-0003：不做密碼驗證，只比對
-    // username 白名單）不同：Prosody 是真實的第三方 XMPP server，密碼驗證
-    // 100% 委託給它（跟書中 Java 版 XMPPAuctionHouse.connect() 把帳密原封不動
-    // 交給 connection.login() 一致，見 ADR-0003 Context）。
+    // 密碼驗證 100% 委託給 Prosody 這個真實的第三方 XMPP server（跟書中
+    // Java 版 XMPPAuctionHouse.connect() 把帳密原封不動交給
+    // connection.login() 一致），這裡只負責把連線/驗證失敗包裝成
+    // XMPPAuctionException（見 ADR-0003 Context）。
     try {
       const connection = await XMPPConnection.connect(
         serviceUrl,

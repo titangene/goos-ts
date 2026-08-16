@@ -14,16 +14,12 @@
     "format:check": "prettier --check .",
     "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json && tsc --noEmit -p tools/tsconfig.json",
     "test:unit": "vitest run --project unit",
-    "test:integration": "vitest run --project integration-redis",
-    "test:integration:xmpp": "vitest run --project integration-xmpp",
+    "test:integration": "vitest run --project integration",
     "test:integration:app": "vitest run --project integration-app",
-    "test:e2e": "playwright test --project=redis-e2e",
-    "test:e2e:xmpp": "playwright test --project=xmpp-e2e",
-    "test": "npm run test:unit && npm run test:integration && npm run test:integration:app && npm run test:e2e",
+    "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:integration && npm run test:integration:app && npm run build && npm run test:e2e",
     "fake-auction": "cd tools && npx tsx fake-auction.ts",
     "fake-auction:remote": "cd tools && npx tsx --env-file=../.env.local fake-auction.ts --remote",
-    "fake-auction:xmpp": "cd tools && npx tsx fake-auction-xmpp.ts",
-    "fake-auction:xmpp:remote": "cd tools && npx tsx --env-file=../.env.local fake-auction-xmpp.ts --remote",
     "prepare": "husky"
   },
   "dependencies": {
@@ -31,7 +27,6 @@
     "@xmpp/client": "^0.14.0",
     "eslint": "^10.8.0",
     "nuxt": "^4.5.1",
-    "redis": "^6.2.0",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
