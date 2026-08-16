@@ -1,6 +1,6 @@
 -- Prosody 部署 spike 用的設定檔——複製自官方 prosodyim/prosody image 內建的
 -- prosody-13.0.cfg.lua（見 https://github.com/prosody/prosody-docker/blob/master/configs/prosody-13.0.cfg.lua），
--- 唯一的差異是加了 http_interfaces 這一行。
+-- 差異是加了 http_interfaces 跟 allow_unencrypted_plain_auth 這兩行。
 --
 -- Prosody 從某個版本起，明文 HTTP（預設 5280）改成預設只監聽 localhost
 -- （http_interfaces = { "127.0.0.1", "::1" }），只有 HTTPS（5281）預設對外。
@@ -10,6 +10,18 @@
 -- （Prosody 設定檔用「VirtualHost 之前 = global」這個規則），
 -- 不能透過官方 image 預設的 conf.d include（放在檔案最後面）加，
 -- 那樣只會套用到最後一個 VirtualHost，不會是真正的 global 設定。
+--
+-- 同樣的道理，Prosody 也不會在「未加密」連線上提供任何 SASL 認證機制
+-- （官方文件：allow_unencrypted_plain_auth 預設 false，PLAIN/LOGIN 這兩個
+-- 機制在未加密連線上預設被禁用，見 https://prosody.im/doc/modules/mod_saslauth）。
+-- 不管是本機 `ws://`（本來就沒有 TLS）還是 Back4app 部署（邊界做 TLS
+-- termination，Prosody 實際收到的仍是明文 WebSocket），從 Prosody 自己的
+-- 視角看都是「未加密連線」，所以一定要開這個選項，否則連線會卡在
+-- SASL 協商階段（"Server did not offer a supported authentication
+-- mechanism"），見 poc/docs/xmpp-prosody-back4app-spike.md bug 4。這是刻意
+-- 放寬安全限制的決定，理由跟 ADR-0003 一致：這是練習 TDD 用的 poc 專案，
+-- 不是要打造安全的正式系統。
+allow_unencrypted_plain_auth = true
 
 local _unpack = Lua.table.unpack;
 local function _split(s, sep)

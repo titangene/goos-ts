@@ -57,6 +57,7 @@ Chosen option: "Back4app Containers"，因為它是這次查證中唯一同時�
 3. **對外連線協定**：對外連線 MUST 使用 WebSocket transport（呼應 [ADR-0009](ADR-0009-xmpp-client-library-selection.md) Compliance #1 選定的 Strophe.js），MUST NOT 嘗試使用原生 XMPP TCP（5222）——Back4app 邊界只對外開放標準 443 port，Dashboard 設定的「Port」欄位是內部轉發用的 port、不是直接對外開放的 port，這點已在 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 1 實測確認。
 4. **Prosody 網路介面設定**：部署到 Back4app 的 Prosody 設定檔 MUST 明確設定 `http_interfaces = { "0.0.0.0", "::" }`，MUST NOT 依賴官方預設的 localhost-only 設定（`{ "127.0.0.1", "::1" }`）——原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 2。
 5. **虛擬主機網域**：`PROSODY_VIRTUAL_HOSTS` 環境變數 MUST 設成 Back4app 實際配發的網域（從 Dashboard 的 Domain 設定頁確認，而非手動輸入或從畫面截圖辨識），MUST NOT 使用推測或過期的網域字串——原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 3。
+6. **SASL 認證放寬**：部署到 Back4app 的 Prosody 設定檔 MUST 設定 `allow_unencrypted_plain_auth = true`，MUST NOT 依賴官方預設值（`false`）——Back4app 在邊界做 TLS termination，Prosody 實際收到的仍是未加密連線，官方預設值會導致 Prosody 完全不提供任何 SASL 機制、連線卡在認證協商階段，原因見 [`xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md) bug 4。
 
 ## Pros and Cons of the Options
 
@@ -113,5 +114,10 @@ Chosen option: "Back4app Containers"，因為它是這次查證中唯一同時�
 
 ## More Information
 
-- 完整部署過程與三個實測 bug 的細節記錄在 [`poc/docs/xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md)。
+- 完整部署過程與四個實測 bug 的細節記錄在 [`poc/docs/xmpp-prosody-back4app-spike.md`](../xmpp-prosody-back4app-spike.md)。
 - Render 是否適合部署 Docker 化的 Prosody，是一個**未解決、值得之後補測的候選**——如果之後 Back4app 的 Temporary URL 60 分鐘限制造成實際困擾，Render（跟現有 Nuxt/Redis 部署平台一致）會是優先補測的對象，補測時應直接嘗試部署、以實測結果為準，不要重新採信那則未經驗證的社群投訴。
+
+## Changelog
+
+- 0.2 (2026-08-16): 補上 Compliance #6（`allow_unencrypted_plain_auth`）——原本只驗證到 WebSocket handshake 成功就判定部署可行，之後接上 `server/auctionsniper/xmpp` 整合測試才發現 SASL 認證階段會失敗（bug 4），這個決定本身（選 Back4app）沒有變，但 Prosody 設定需要多這一條規則。
+- 0.1 (2026-08-16): Initial version

@@ -71,6 +71,17 @@ http_interfaces = { "0.0.0.0", "::" }
 
 原因：一開始從 Dashboard 截圖手動讀網域字串時看錯了（`goos-xmpp-prosody-w7d3bb2.b4a.run` vs 實際的 `goosxmppprosody-w7d3ibt2.b4a.run`，中間有無連字號、後綴都不一樣），導致 `PROSODY_VIRTUAL_HOSTS` 設成一個不存在的網域，Prosody 的 `VirtualHost`/`http_host` 跟 Back4app 路由層實際配的網域對不上。改成從 Dashboard 的 Domain 設定頁**直接讀 `href` 屬性**（而非用截圖讀文字）確認正確網域字串後，問題解決。
 
+### bug 4：Prosody 不在未加密連線上提供 SASL 機制，連線卡在 "Server did not offer a supported authentication mechanism"
+
+前三個 bug 只驗證到 WebSocket handshake 成功（見下方「驗證結果」），沒有實際跑過完整的登入流程。等 `server/auctionsniper/xmpp` 的整合測試接上本機 Prosody 後才發現：WebSocket 連線本身沒問題（"Websocket open"），但 SASL 協商階段直接失敗，Strophe.js 回報 `Server did not offer a supported authentication mechanism`。
+
+查證 [Prosody 官方 `mod_saslauth` 文件](https://prosody.im/doc/modules/mod_saslauth)，確認 `allow_unencrypted_plain_auth` 預設是 `false`：Prosody 不會在「未加密」連線上提供 PLAIN/LOGIN 這類機制，避免密碼用明文傳輸。這裡的「未加密」是從 Prosody 自己的視角判斷，不是看使用者最終走的是不是 HTTPS：
+
+- 本機測試直接用 `ws://`，Prosody 視角本來就沒有 TLS。
+- Back4app 部署也一樣中招——雖然使用者看到的公開網址是 `https://.../xmpp-websocket`，但 Back4app 在邊界（CloudFront）就把 TLS 卸載掉了，轉發給 container 內部 Prosody 的是明文 HTTP（呼應 bug 1），所以 Prosody 收到的仍然是「未加密」連線。這代表**上一輪只驗證 WebSocket handshake 成功，並不足以證明部署上去的 Prosody 真的能完成登入**，是這次補測才發現的缺口。
+
+修法：在 `prosody.cfg.lua` 的 global 區塊加一行 `allow_unencrypted_plain_auth = true`，明確放寬這個限制（跟 [ADR-0003](adr/ADR-0003-username-only-identity.md) 一樣，是刻意為了 poc 練習目的放寬安全限制，不是要打造正式系統）。
+
 ## 驗證結果
 
 修完三個 bug、重新部署後：
