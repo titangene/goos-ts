@@ -7,6 +7,7 @@
 # 三個環境變數註冊「單一」帳號的限制。
 FROM prosodyim/prosody:13.0
 
+COPY prosody.cfg.lua /etc/prosody/prosody.cfg.lua
 COPY register-and-start.sh /register-and-start.sh
 RUN chmod 755 /register-and-start.sh
 ENTRYPOINT ["/usr/bin/tini", "--", "/register-and-start.sh"]
