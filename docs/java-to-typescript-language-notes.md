@@ -2,7 +2,7 @@
 
 這份文件記錄 Java 語言/執行環境本身的機制（不是協定或架構層級的決策）在轉譯成 TypeScript 時，單看兩邊原始碼**不容易直覺看出「為什麼長得不一樣」**的地方。跟 [`differences-from-java.md`](differences-from-java.md) 的分工是：那份文件講「拍賣協定/domain 層為什麼要這樣改」，這份文件講「Java 這個語法/機制本身，TypeScript 沒有對應物或運作方式完全不同，所以程式碼結構才會不一樣」。
 
-例子優先取自 `server/auctionsniper/xmpp/*`/`test/e2e-xmpp/*`（xmpp.js 版），不是 `server/auctionsniper/redis/*`/`test/e2e/*`（Redis 版）：xmpp.js 版兩端協定跟 Java 版一樣是 XMPP，命名、結構刻意逐字對照 Smack（見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)），比 Redis 版更適合拿來對照「純語言機制」的差異，不會被協定本身的差異（Redis vs XMPP）混進來干擾。這次改版也順手刪掉了幾段原本存在、但改成對照 xmpp.js 版後發現差異已經消失的段落，每處都有寫刪除原因。
+例子取自 `server/auctionsniper/xmpp/*`/`test/e2e-xmpp/*`（xmpp.js 版）：xmpp.js 版兩端協定跟 Java 版一樣是 XMPP，命名、結構刻意逐字對照 Smack（見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)），適合拿來對照「純語言機制」的差異。這次改版也順手刪掉了幾段原本存在、但改成對照 xmpp.js 版後發現差異已經消失的段落，每處都有寫刪除原因。
 
 ## 1. Enum 的每個成員各自覆寫方法
 
@@ -330,7 +330,7 @@ public static void main(String... args) throws Exception {
 }
 ```
 
-`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；Java 命令列參數 `args[ARG_HOSTNAME]`/`args[ARG_USERNAME]`/`args[ARG_PASSWORD]` 對應的設定值改用環境變數（XMPP 路徑是 `XMPP_SERVICE_URL`/`XMPP_DOMAIN`，見 `server/utils/sniper-registry.ts` 的 `connectAuctionHouse()`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。`connectAuctionHouse()` 另外多一個 `AUCTION_TRANSPORT` 環境變數決定要連 Redis 還是 XMPP——這是 TS 版特有的切換點，Java 版沒有對應物（Java 只有 XMPP 一條路，見 [ADR-0008](adr/ADR-0008-xmpp-server-selection.md) Compliance #3：XMPP 路徑是跟 Redis 並行的實驗性路徑，不是取代）。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
+`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；Java 命令列參數 `args[ARG_HOSTNAME]`/`args[ARG_USERNAME]`/`args[ARG_PASSWORD]` 對應的設定值改用環境變數（`XMPP_SERVICE_URL`/`XMPP_DOMAIN`，見 `server/utils/sniper-registry.ts` 的 `connectAuctionHouse()`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
 
 ## 10. Getter 方法 vs 直接公開欄位
 
@@ -402,8 +402,6 @@ Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的�
   ```
 
   Java 每個測試方法都在背景執行緒重新跑一次 `Main.main(...)`，等於每個測試都拿到一份全新的 `SniperPortfolio`/`MainWindow` 物件圖（同一個 JVM 內，`new Main()` 就是全新物件）。Node.js 的模組層級狀態（`sniper-registry.ts` 的 `portfolio`/`tableModel`）是**綁在 process 上**的，同一個 process 內沒有「重新 `new` 一次就拿到全新模組狀態」這回事——因此 TS 版要達到跟 Java 版同樣的「每個測試互不污染」，只能整個 server process 重開，用 `child_process.spawn()` 取代 Java 的 `new Thread(...).start()`，`ApplicationRunner.stop()`（`process.kill()`）取代 `driver.dispose()`（兩者都會觸發各自語言版本的「連線關閉」監聽器：TS 版是 `server/plugins/init-sniper-launcher.ts` 掛的 `nitroApp.hooks.hook('close', ...)`，對應 Java 版 `Main.java` 的 `disconnectWhenUICloses()`）。
-
-  `test/e2e/ApplicationRunner.ts`（Redis 版）則完全不需要這個機制：整個測試期間共用同一個由 Playwright `webServer` 管理的長駐 server，靠 `uniqueItemId()` 讓每個測試的資料互不衝突即可，不需要對應 Java 這個「每個測試全新物件圖」的設計——這是因為 Redis 頻道名稱可以隨便取，XMPP 帳號則要照 [ADR-0003](adr/ADR-0003-username-only-identity.md) 白名單事先在 Prosody 註冊過，隨機字串沒有對應帳號，兩條路徑分別選了不同的隔離策略，見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)。
 
   **實測發現：這個「背景啟動」設計本身帶有的競速，Java 版跟 TS 版都有，不是 TS port 引入的新問題。**`Main.main()` 的 `XMPPAuctionHouse.connect(...)` 是背景執行緒裡的同步呼叫，`driver.hasColumnTitles()` 只確認 `MainWindow` 已顯示（`new Main()` 建構子裡用 `SwingUtilities.invokeAndWait` 同步做完），不保證 `connect()`／`main.addUserRequestListenerFor()` 已經跑完；TS 版同理，`waitForServerReady()` 只確認 HTTP server 已經在聽，不保證 `sniper-registry.ts` 的 `XMPPAuctionHouse.connect()` 已完成。這個競速在 TS 版建置 `test/e2e-xmpp/` 套件時**實測撞到過**：第一次呼叫 `openBiddingFor()` 偶爾會撞見 `/api/join` 回 500（`SniperLauncher is not initialized yet`），`ApplicationRunner.ts` 的 `openBiddingFor()` 因此用短暫重試（最多 5 次、每次 1 秒逾時）取代任意猜測的固定等待時間，把這個先天競速吸收掉，只在每個測試第一次呼叫時才可能真的重試，之後同一個測試內的呼叫連線早就緒了。
 
