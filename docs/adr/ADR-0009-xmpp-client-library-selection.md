@@ -40,12 +40,12 @@ Chosen option: "改用 xmpp.js（`@xmpp/client`）"，因為已實測驗證 `imp
 
 - 從根源解決 SSR crash，不需要 worker_thread/child_process 隔離帶來的額外架構複雜度與尚未解決的 Nitro 打包定位問題。
 - `@xmpp/client` 的 `start()` 在連線/驗證失敗時直接 reject Promise（實測驗證：錯誤密碼會丟出 `SASLError` 並讓 `start()` reject），不像 Strophe.js 的 `connect()` 是 callback 搭配 status enum，`XMPPConnection.connect()`/`XMPPAuctionHouse.connect()` 因此不需要再自己攤開一份「哪些狀態算失敗」的清單手動包 Promise，程式碼比 Strophe.js 版本更簡短。
-- xmpp.js 沒有內建「per-conversation Chat」封裝，需要自建 `XMPPConnection`/`XMPPChatManager`/`XMPPChat`/`MessageListener` 抽象（見 Compliance #3），直接對應 Smack 的 `XMPPConnection`/`ChatManager`/`Chat`/`MessageListener`，呼叫方式（`connection.getChatManager().createChat(...)`、`chat.sendMessage(...)`、`chat.removeMessageListener(...)` 等）跟 Java 版逐字對照——完整對照與少數無法避免的差異記錄在 [`docs/xmpp-ts-vs-java-differences.md`](../xmpp-ts-vs-java-differences.md)。
+- xmpp.js 沒有內建「per-conversation Chat」封裝，需要自建 `XMPPConnection`/`XMPPChatManager`/`XMPPChat`/`MessageListener` 抽象（見 Compliance #3），直接對應 Smack 的 `XMPPConnection`/`ChatManager`/`Chat`/`MessageListener`，呼叫方式（`connection.getChatManager().createChat(...)`、`chat.sendMessage(...)`、`chat.removeMessageListener(...)` 等）跟 Java 版逐字對照——完整對照與少數無法避免的差異記錄在 [`docs/differences-from-java.md`](../differences-from-java.md)。
 
 **Negative:**
 
 - `@xmpp/client` 的 TypeScript 型別不是原生的，是社群維護的 DefinitelyTyped 套件（`@types/xmpp__client`），這點在最初選 Strophe.js 時的 Pros and Cons 比較裡就已經是 xmpp.js 相對 Strophe.js 的已知缺點，這次因為更關鍵的 SSR 相容性問題而接受這個取捨。
-- `XMPPChatManager`「收到陌生 JID 訊息時自動建立 Chat」的行為是 TS 重建的，不是驗證過 Smack `ChatManager` 內部實作細節後照抄的——只保證跟 Java 版一致的外部可觀察行為，細節見 [`docs/xmpp-ts-vs-java-differences.md`](../xmpp-ts-vs-java-differences.md) 差異 2。
+- `XMPPChatManager`「收到陌生 JID 訊息時自動建立 Chat」的行為是 TS 重建的，不是驗證過 Smack `ChatManager` 內部實作細節後照抄的——只保證跟 Java 版一致的外部可觀察行為，細節見 [`docs/differences-from-java.md`](../differences-from-java.md) 第 4 節。
 
 ## Compliance
 
@@ -63,7 +63,7 @@ Chosen option: "改用 xmpp.js（`@xmpp/client`）"，因為已實測驗證 `imp
 - Good, because 從根源移除 globalThis 污染問題，不需要任何 process/thread 隔離。
 - Good, because `start()` 連線/驗證失敗時直接 reject Promise，不需要像 Strophe.js 版本手動攤開 status 判斷清單。
 - Good, because Node.js 端支援原生 TCP transport（`@xmpp/tcp`），跟書中 Smack 用的原生 `XMPPConnection` TCP 連線最接近；官方套件依賴清單完整（`@xmpp/sasl-plain`、`@xmpp/sasl-anonymous`、`@xmpp/sasl-scram-sha-1`、`@xmpp/websocket` 等），SASL 機制支援完整。
-- Neutral, because 沒有內建「per-conversation Chat」封裝，需要自建 `XMPPConnection`/`XMPPChatManager`/`XMPPChat` 補上 Strophe.js `addHandler(from)`／Smack `ChatManager` 原生提供的「依對話分派」能力，讓 XMPP 實作的分層結構逐字對照 Java 版的 Smack `XMPPConnection`/`ChatManager`/`Chat`，見 [`docs/xmpp-ts-vs-java-differences.md`](../xmpp-ts-vs-java-differences.md)。
+- Neutral, because 沒有內建「per-conversation Chat」封裝，需要自建 `XMPPConnection`/`XMPPChatManager`/`XMPPChat` 補上 Strophe.js `addHandler(from)`／Smack `ChatManager` 原生提供的「依對話分派」能力，讓 XMPP 實作的分層結構逐字對照 Java 版的 Smack `XMPPConnection`/`ChatManager`/`Chat`，見 [`docs/differences-from-java.md`](../differences-from-java.md)。
 - Bad, because TypeScript 型別不是原生的，是社群維護的 DefinitelyTyped 套件（`@types/xmpp__client`），直接查 npm registry 確認 `@xmpp/client` 本身的 `package.json` 沒有 `types` 欄位。
 
 ### 沿用 Strophe.js + worker_thread 隔離
@@ -89,7 +89,7 @@ Chosen option: "改用 xmpp.js（`@xmpp/client`）"，因為已實測驗證 `imp
 
 worker_thread 原型驗證期間的完整診斷過程（`globalThis` 污染的具體成員清單、`vue-router` crash 的確切位置、清除全域變數後 Strophe.js 自己壞掉的驗證）沒有另外整理成獨立文件，記錄在本 ADR 重新選型當時的對話討論中；關鍵的空污染驗證（`Globals added by importing @xmpp/client: []`）與 `start()` reject 行為（密碼錯誤丟 `SASLError`、連線失敗丟底層錯誤）已用 scratch 腳本直接對本機 Prosody 實測，非憑函式庫文件或訓練記憶推論。
 
-`server/auctionsniper/xmpp/*` 的物件模型（`XMPPConnection`/`XMPPChatManager`/`XMPPChat`）跟 Java 版 Smack 的 `XMPPConnection`/`ChatManager`/`Chat` 逐字對照的完整說明、以及少數無法避免的差異，記錄在 [`docs/xmpp-ts-vs-java-differences.md`](../xmpp-ts-vs-java-differences.md)。
+`server/auctionsniper/xmpp/*` 的物件模型（`XMPPConnection`/`XMPPChatManager`/`XMPPChat`）跟 Java 版 Smack 的 `XMPPConnection`/`ChatManager`/`Chat` 逐字對照的完整說明、以及少數無法避免的差異，記錄在 [`docs/differences-from-java.md`](../differences-from-java.md)。
 
 ## Changelog
 

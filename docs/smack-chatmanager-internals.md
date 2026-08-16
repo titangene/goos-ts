@@ -1,6 +1,6 @@
 # Smack `ChatManager` 內部機制筆記
 
-這份文件記錄 Java 版《GOOS》書中使用的 Smack 3.1.0（`~/project/clone/goos-code/lib/deploy/smack_3_1_0.jar`）的 `ChatManager`/`Chat`/`Message` 內部實作細節，供理解 Java 版 `XMPPAuction.java`/`FakeAuctionServer.java` 的行為，以及對照 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md) 說明 TS 版哪些地方需要對應實作、哪些不需要。
+這份文件記錄 Java 版《GOOS》書中使用的 Smack 3.1.0（`~/project/clone/goos-code/lib/deploy/smack_3_1_0.jar`）的 `ChatManager`/`Chat`/`Message` 內部實作細節，供理解 Java 版 `XMPPAuction.java`/`FakeAuctionServer.java` 的行為，以及對照 [`differences-from-java.md`](differences-from-java.md) 說明 TS 版哪些地方需要對應實作、哪些不需要。
 
 **查證方式**：用 IntelliJ 內建的 Fernflower 反編譯器（`java-decompiler.jar`）把 `smack_3_1_0.jar` 反編譯成可讀 Java 原始碼，直接讀取 `ChatManager`/`Chat`/`Message`/`Packet`/`MessageListener`/`ChatManagerListener`/`XMPPConnection`/`StringUtils` 這幾個 class，不是憑印象或訓練記憶推論。以下原始碼片段都是反編譯結果的逐字引用（變數名稱可能因反編譯而跟原始原始碼略有差異，但邏輯與方法簽章跟編譯進 jar 裡的完全一致）。
 
@@ -129,7 +129,7 @@ public boolean equals(Object obj) {
 
 ## 這個比對規則在 TS 版是否需要對應實作
 
-**結論：不需要**，原因記錄在 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md) 差異 2，這裡展開完整推理。
+**結論：不需要**，原因記錄在 [`differences-from-java.md`](differences-from-java.md) 第 4 節，這裡展開完整推理。
 
 TS 版 `XMPPChatManager.dispatch()` 只用 stanza 的 `from` 屬性（完整 JID，含 resource）當唯一的比對 key，沒有 thread ID 這一層。這在 Smack 裡會出問題（前一節已證明），但在 TS 版裡不會出問題，因為：
 
@@ -168,7 +168,7 @@ connection.getChatManager().addChatListener(new ChatManagerListener() {
 });
 ```
 
-TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPChat) => void`），見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)。
+TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPChat) => void`），見 [`differences-from-java.md`](differences-from-java.md)。
 
 ## `XMPPConnection` 相關方法簽章
 
@@ -183,4 +183,4 @@ public synchronized ChatManager getChatManager()
 public void disconnect()
 ```
 
-`XMPPConnection` 建構子/`connect()`/`login()` 是三個分開的呼叫，TS 版 `XMPPConnection.connect()` 把這三步合併成一個 async factory，原因見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md) 差異 1（xmpp.js 本身的 API 設計就是這樣，不是 TS port 隨意合併）。
+`XMPPConnection` 建構子/`connect()`/`login()` 是三個分開的呼叫，TS 版 `XMPPConnection.connect()` 把這三步合併成一個 async factory，原因見 [`differences-from-java.md`](differences-from-java.md) 第 3 節（xmpp.js 本身的 API 設計就是這樣，不是 TS port 隨意合併）。

@@ -2,7 +2,7 @@
 
 這份文件記錄 Java 語言/執行環境本身的機制（不是協定或架構層級的決策）在轉譯成 TypeScript 時，單看兩邊原始碼**不容易直覺看出「為什麼長得不一樣」**的地方。跟 [`differences-from-java.md`](differences-from-java.md) 的分工是：那份文件講「拍賣協定/domain 層為什麼要這樣改」，這份文件講「Java 這個語法/機制本身，TypeScript 沒有對應物或運作方式完全不同，所以程式碼結構才會不一樣」。
 
-例子取自 `server/auctionsniper/xmpp/*`/`test/e2e-xmpp/*`（xmpp.js 版）：xmpp.js 版兩端協定跟 Java 版一樣是 XMPP，命名、結構刻意逐字對照 Smack（見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)），適合拿來對照「純語言機制」的差異。這次改版也順手刪掉了幾段原本存在、但改成對照 xmpp.js 版後發現差異已經消失的段落，每處都有寫刪除原因。
+例子取自 `server/auctionsniper/xmpp/*`/`test/e2e/*`（xmpp.js 版）：xmpp.js 版兩端協定跟 Java 版一樣是 XMPP，命名、結構刻意逐字對照 Smack（見 [`differences-from-java.md`](differences-from-java.md)），適合拿來對照「純語言機制」的差異。
 
 ## 1. Enum 的每個成員各自覆寫方法
 
@@ -114,7 +114,7 @@ public class FakeAuctionServer {
 
 `SingleMessageListener` 宣告成外部類別 `FakeAuctionServer` 的內部類別（雖然這個例子沒有真的用到 `FakeAuctionServer.this` 存取外部欄位，但語言層級上就是隱含可以這樣做）。要建立實例得先有外部實例：`fakeAuctionServer.new SingleMessageListener()`。
 
-**TS（`test/e2e-xmpp/FakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
+**TS（`test/e2e/FakeAuctionServer.ts`）：** `SingleMessageListener` 是同檔案內完全獨立的頂層 class，跟 `FakeAuctionServer` 沒有任何隱含連結，`new SingleMessageListener()` 不需要先有 `FakeAuctionServer` 實例——TS 沒有「內部類別隱含持有外部實例」這個語言機制，需要存取外部狀態的話，只能透過建構子明確傳入參照或閉包捕獲（見下一節）。
 
 ### 2.3 `private static` 巢狀類別——封裝實作細節
 
@@ -168,7 +168,7 @@ private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventL
 }
 ```
 
-TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。方法名稱、`chat` 欄位都逐字沿用 Java 版，這是 xmpp.js 版跟 Java 版兩端協定一致才做得到的（見 [`xmpp-ts-vs-java-differences.md`](xmpp-ts-vs-java-differences.md)）。
+TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。方法名稱、`chat` 欄位都逐字沿用 Java 版，這是 xmpp.js 版跟 Java 版兩端協定一致才做得到的（見 [`differences-from-java.md`](differences-from-java.md)）。
 
 另一個同樣模式、而且更完整的例子——`FakeAuctionServer.java` 被動接收 chat 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { public void chatCreated(Chat chat, boolean createdLocally) { ... } })`，xmpp.js 版**沒有省略這段邏輯**（`XMPPChatManager` 補上了對等的 `addChatListener()`，見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)），只是同樣把匿名類別換成箭頭函式：
 
@@ -348,7 +348,7 @@ public class FakeAuctionServer {
 
 呼叫端要用 `auctionServer.getItemId()`（方法呼叫）。
 
-**TS（`test/e2e-xmpp/FakeAuctionServer.ts`）：**
+**TS（`test/e2e/FakeAuctionServer.ts`）：**
 
 ```ts
 export class FakeAuctionServer {
@@ -386,7 +386,7 @@ Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的�
   }
   ```
 
-  `test/e2e-xmpp/ApplicationRunner.ts` 的 `startSniper()` 其實**有**對應物，而且是這份文件少數「TS 版反而需要主動補一個 Java 有、直覺以為用不到的機制」的例子：
+  `test/e2e/ApplicationRunner.ts` 的 `startSniper()` 其實**有**對應物，而且是這份文件少數「TS 版反而需要主動補一個 Java 有、直覺以為用不到的機制」的例子：
 
   ```ts
   private async startSniper(): Promise<void> {
@@ -403,7 +403,7 @@ Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的�
 
   Java 每個測試方法都在背景執行緒重新跑一次 `Main.main(...)`，等於每個測試都拿到一份全新的 `SniperPortfolio`/`MainWindow` 物件圖（同一個 JVM 內，`new Main()` 就是全新物件）。Node.js 的模組層級狀態（`sniper-registry.ts` 的 `portfolio`/`tableModel`）是**綁在 process 上**的，同一個 process 內沒有「重新 `new` 一次就拿到全新模組狀態」這回事——因此 TS 版要達到跟 Java 版同樣的「每個測試互不污染」，只能整個 server process 重開，用 `child_process.spawn()` 取代 Java 的 `new Thread(...).start()`，`ApplicationRunner.stop()`（`process.kill()`）取代 `driver.dispose()`（兩者都會觸發各自語言版本的「連線關閉」監聽器：TS 版是 `server/plugins/init-sniper-launcher.ts` 掛的 `nitroApp.hooks.hook('close', ...)`，對應 Java 版 `Main.java` 的 `disconnectWhenUICloses()`）。
 
-  **實測發現：這個「背景啟動」設計本身帶有的競速，Java 版跟 TS 版都有，不是 TS port 引入的新問題。**`Main.main()` 的 `XMPPAuctionHouse.connect(...)` 是背景執行緒裡的同步呼叫，`driver.hasColumnTitles()` 只確認 `MainWindow` 已顯示（`new Main()` 建構子裡用 `SwingUtilities.invokeAndWait` 同步做完），不保證 `connect()`／`main.addUserRequestListenerFor()` 已經跑完；TS 版同理，`waitForServerReady()` 只確認 HTTP server 已經在聽，不保證 `sniper-registry.ts` 的 `XMPPAuctionHouse.connect()` 已完成。這個競速在 TS 版建置 `test/e2e-xmpp/` 套件時**實測撞到過**：第一次呼叫 `openBiddingFor()` 偶爾會撞見 `/api/join` 回 500（`SniperLauncher is not initialized yet`），`ApplicationRunner.ts` 的 `openBiddingFor()` 因此用短暫重試（最多 5 次、每次 1 秒逾時）取代任意猜測的固定等待時間，把這個先天競速吸收掉，只在每個測試第一次呼叫時才可能真的重試，之後同一個測試內的呼叫連線早就緒了。
+  **實測發現：這個「背景啟動」設計本身帶有的競速，Java 版跟 TS 版都有，不是 TS port 引入的新問題。**`Main.main()` 的 `XMPPAuctionHouse.connect(...)` 是背景執行緒裡的同步呼叫，`driver.hasColumnTitles()` 只確認 `MainWindow` 已顯示（`new Main()` 建構子裡用 `SwingUtilities.invokeAndWait` 同步做完），不保證 `connect()`／`main.addUserRequestListenerFor()` 已經跑完；TS 版同理，`waitForServerReady()` 只確認 HTTP server 已經在聽，不保證 `sniper-registry.ts` 的 `XMPPAuctionHouse.connect()` 已完成。這個競速在 TS 版建置 `test/e2e/` 套件時**實測撞到過**：第一次呼叫 `openBiddingFor()` 偶爾會撞見 `/api/join` 回 500（`SniperLauncher is not initialized yet`），`ApplicationRunner.ts` 的 `openBiddingFor()` 因此用短暫重試（最多 5 次、每次 1 秒逾時）取代任意猜測的固定等待時間，把這個先天競速吸收掉，只在每個測試第一次呼叫時才可能真的重試，之後同一個測試內的呼叫連線早就緒了。
 
 ## 12. `@Override` 註解
 
