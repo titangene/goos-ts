@@ -39,7 +39,10 @@ TS 版合併成一個 `static async connect()`：
 const connection = await XMPPConnection.connect(serviceUrl, domain, username, password, resource);
 ```
 
-**原因**：xmpp.js 本身的 API 設計就是這樣——`client({ service, domain, resource, username, password })` 建立 client 物件後，`.start()` 一次做完「連線+驗證」，沒有對應 Smack `connect()`/`login()` 分開兩步的中繼狀態可以介入。刻意拆成三步反而要自己在 `.start()` 中途插入不存在的中斷點，沒有實際好處。這也是 Node.js 平台本身的差異：Smack 提供同步 API，Node.js 的 I/O（含 xmpp.js 的連線/斷線）本來就是非同步的，`XMPPConnection.connect()`/`disconnect()`、`XMPPAuctionHouse.connect()`/`disconnect()` 因此都回傳 `Promise`，這點沒有辦法讓 TS 版變成同步。
+**原因**：
+
+- **xmpp.js 本身的 API 設計就是這樣**——`client({ service, domain, resource, username, password })` 建立 client 物件後，`.start()` 一次做完「連線+驗證」，沒有對應 Smack `connect()`/`login()` 分開兩步的中繼狀態可以介入。刻意拆成三步反而要自己在 `.start()` 中途插入不存在的中斷點，沒有實際好處。
+- **Node.js 平台本身是非同步的**：Smack 提供同步 API，Node.js 的 I/O（含 xmpp.js 的連線/斷線）本來就是非同步的，`XMPPConnection.connect()`/`disconnect()`、`XMPPAuctionHouse.connect()`/`disconnect()` 因此都回傳 `Promise`，這點沒有辦法讓 TS 版變成同步。
 
 **影響範圍**：`XMPPAuctionHouse.connect()`、`test/integration/XMPPAuctionHouse.test.ts`、`test/e2e/FakeAuctionServer.ts#startSellingItem()`、`tools/fake-auction.ts` 都用這個合併後的單一 async factory，呼叫端看不到中間狀態。
 
@@ -47,11 +50,17 @@ const connection = await XMPPConnection.connect(serviceUrl, domain, username, pa
 
 Smack `ChatManager` 的完整比對規則（thread ID 優先、bare JID 其次）記錄在 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#訊息路由比對規則thread-id-優先bare-jid-其次)。`XMPPChatManager.dispatch()` 只用 stanza 的 `from` 屬性（完整 JID，含 resource）當唯一比對 key，沒有 thread ID 這一層。
 
-**這是刻意簡化，不是遺漏，理由已查證確認**（見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#為什麼-thread-id-對-smack-來說不是可有可無的最佳化) 完整推導）：Smack 需要 thread ID 是因為它主動建立 `Chat` 時用完整 JID 當 key、被動 fallback 卻用裁過 resource 的 bare JID 查，兩者不一致，需要 thread ID 補救。TS 版的 `XMPPChatManager` 存跟查都統一用完整 JID，天生一致，不會出現這種自我矛盾；而且本專案的使用情境嚴格 1:1（一個 `XMPPAuction`/`FakeAuctionServer` 實例從頭到尾只跟一個固定對象對話），不需要 Smack 為了「同一組使用者同時開多個對話」這種泛用聊天情境而設計的 thread 分流機制。這個結論已經用 `test/integration/XMPPAuctionHouse.test.ts` 實測驗證（真實連線 Prosody，非 mock）：sniper 主動建立的 chat 能正確收到拍賣現場的回覆，行為跟 Java 版一致。
+**這是刻意簡化，不是遺漏，理由已查證確認**（見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#為什麼-thread-id-對-smack-來說不是可有可無的最佳化) 完整推導）：
+
+- **Smack 需要 thread ID 的原因**：它主動建立 `Chat` 時用完整 JID 當 key、被動 fallback 卻用裁過 resource 的 bare JID 查，兩者不一致，需要 thread ID 補救。
+- **TS 版不需要的原因**：`XMPPChatManager` 存跟查都統一用完整 JID，天生一致，不會出現這種自我矛盾。
+- **本專案的使用情境嚴格 1:1**：一個 `XMPPAuction`/`FakeAuctionServer` 實例從頭到尾只跟一個固定對象對話，不需要 Smack 為了「同一組使用者同時開多個對話」這種泛用聊天情境而設計的 thread 分流機制。
+- **已實測驗證**：`test/integration/XMPPAuctionHouse.test.ts`（真實連線 Prosody，非 mock）證實 sniper 主動建立的 chat 能正確收到拍賣現場的回覆，行為跟 Java 版一致。
 
 ## 4. `XMPPMessage` 只實作 `getBody()`
 
-Smack 的 `Message`（`extends Packet`）完整 API 還有 `getFrom()`/`getTo()`/`getSubject()`/`getType()`/`getThread()`/`getBody(language)` 等方法，書中程式碼（`AuctionMessageTranslator.java`/`FakeAuctionServer.java`）查過只用到 `getBody()`（完整查證過程見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#messagepacket-的完整欄位跟書中實際用到的部分)）。`server/auctionsniper/xmpp/XMPPMessage.ts` 因此只實作 `getBody()`，把 `stanza.getChildText('body')` 這個解析細節集中在單一檔案，`AuctionMessageTranslator.ts`、`FakeAuctionServer.ts`、`tools/fake-auction.ts` 都透過 `XMPPMessage.getBody()` 取得訊息內容，不各自重複解析 stanza。
+- **Smack**：`Message`（`extends Packet`）完整 API 還有 `getFrom()`/`getTo()`/`getSubject()`/`getType()`/`getThread()`/`getBody(language)` 等方法，書中程式碼（`AuctionMessageTranslator.java`/`FakeAuctionServer.java`）查過只用到 `getBody()`（完整查證過程見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#messagepacket-的完整欄位跟書中實際用到的部分)）。
+- **TS**：`server/auctionsniper/xmpp/XMPPMessage.ts` 因此只實作 `getBody()`，把 `stanza.getChildText('body')` 這個解析細節集中在單一檔案，`AuctionMessageTranslator.ts`、`FakeAuctionServer.ts`、`tools/fake-auction.ts` 都透過 `XMPPMessage.getBody()` 取得訊息內容，不各自重複解析 stanza。
 
 ## 5. `addChatListener()` 的 callback 省略 `createdLocally` 參數
 
@@ -68,7 +77,10 @@ TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPCha
 
 ## 6. 型別定義依賴社群維護的 DefinitelyTyped 套件
 
-Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始碼的一部分；xmpp.js 的 TypeScript 型別則是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。這是 [ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
+- **Java（含 Smack）**：本身是靜態型別語言，方法簽章本來就是原始碼的一部分。
+- **TS（xmpp.js）**：型別是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。
+
+這是 [ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
 
 ## 7. Domain/util 層的框架轉換差異
 
@@ -86,18 +98,25 @@ Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始�
 
 ### `Column`/`SnipersTableModel` 的多型改用 class + 具名靜態實例
 
-Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 `SNIPER_STATE` 常數的 `valueIn()` 呼叫 `SnipersTableModel.textFor(snapshot.state)`——`Column`/`SnipersTableModel` 同在 `auctionsniper.ui` package，互相依賴。
+`server/auctionsniper/ui/Column.ts` 改用另一種譯法重現 Java 版 `Column`/`SnipersTableModel` 互相依賴的關係：
 
-`server/auctionsniper/ui/Column.ts` 改用另一種譯法重現這個依賴：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`/`Column.at()` 對應 Java 的 `values()`/`at(offset)`；`SNIPER_STATE` 一樣呼叫 `SnipersTableModel.textFor(snapshot.state)`。兩個檔案互相 import（`Column.ts` import `SnipersTableModel.ts` 取得 `textFor`，`SnipersTableModel.ts` import `Column.ts` 取得 `values`/`at`），這在 ESM 是合法的循環依賴——雙方都只在方法/closure 內部才真正引用對方，模組頂層求值階段不會互相卡住。
+- **Java**：`ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 `SNIPER_STATE` 常數的 `valueIn()` 呼叫 `SnipersTableModel.textFor(snapshot.state)`——`Column`/`SnipersTableModel` 同在 `auctionsniper.ui` package，互相依賴。
+- **TS 實作方式**：一般 class，建構子收一個 `valueInFn` closure，四個「常數」變成 `static readonly` 具名實例（`Column.ITEM_IDENTIFIER` 等），`Column.values`/`Column.at()` 對應 Java 的 `values()`/`at(offset)`；`SNIPER_STATE` 一樣呼叫 `SnipersTableModel.textFor(snapshot.state)`。
+- **TS 循環依賴**：兩個檔案互相 import（`Column.ts` import `SnipersTableModel.ts` 取得 `textFor`，`SnipersTableModel.ts` import `Column.ts` 取得 `values`/`at`），這在 ESM 是合法的循環依賴——雙方都只在方法/closure 內部才真正引用對方，模組頂層求值階段不會互相卡住。
 
 跟 `SniperState` 的查表法不同，是因為 `Column` 除了行為外，`server/utils/sniper-registry.ts` 建構 WebSocket/HTTP payload 時還需要把它當一個可迭代集合走訪每個欄位，用具名靜態實例比查表更貼近「還是一個個獨立物件」的用法。
 
 `Column.ts` 的欄位（`name`、`valueInFn`）刻意只對到 Java `Column` enum 實際有的東西（`name` 欄位 + `valueIn()` 行為），不多帶一個 `key` 欄位——這是純粹給 `SnipersTable.vue` 用的欄位識別，同時當 `v-for` 的 Vue `:key` 與 `<td>` 的 `data-testid`（供 e2e 測試定位欄位），是 TS/Vue 特有需求（Java 版用 WindowLicker 直接對整列 label text 做 Hamcrest matcher，不需要額外的欄位識別），因此放在沒有 Java 對應物、本來就是 TS 專屬的 `server/utils/sniper-registry.ts`（見下一節）裡維護，不汙染 `Column` 這個直接對照 Java enum 的檔案。
 
-`SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異只在於：
+`SnipersTableModel.ts` 本身則跟 Java 版結構一致：`STATUS_TEXT` 陣列（索引對應 `SniperState` 的數字值，即 Java 的 `ordinal()`）、`static textFor(state)`、`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都對應 Java `AbstractTableModel` 的同名方法。差異在於通知機制的有無：
 
-- TS 沒有 `AbstractTableModel` 可以繼承，`addListener()`/`SnipersTableListener` 是額外補上的通知機制（Java 版是 `AbstractTableModel` 內建的 `addTableModelListener()`），且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取。
-- Java 版 `fireTableRowsInserted(row, row)`/`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了；TS 版的 `notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`/`server/api/snipers.get.ts` 都是重新整包查詢建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
+- **Java**：`AbstractTableModel` 內建 `addTableModelListener()`。
+- **TS**：沒有 `AbstractTableModel` 可以繼承，`addListener()`/`SnipersTableListener` 是額外補上的通知機制，且 `onSnapshotsChanged()` 刻意設計成**不帶參數**，模擬 Swing `TableModelListener.tableChanged(TableModelEvent e)` 的精神——只通知「有變動」，監聽者要自己呼叫 `getRowCount()`/`getColumnCount()`/`getValueAt()` 重新讀取。
+
+以及變更通知的精細度：
+
+- **Java**：`fireTableRowsInserted(row, row)`/`fireTableRowsUpdated(row, row)` 能精確指出「哪一列」變了。
+- **TS**：`notifyChange()` 只是單一訊號，不帶行號範圍，因為下游的 `server/routes/ws.ts`/`server/api/snipers.get.ts` 都是重新整包查詢建構整份 payload 推給瀏覽器，`SnipersTable.vue` 用 Vue 的響應式陣列重新渲染整張表，沒有 Swing 那種「精確更新單一 row」的效能考量。
 
 ### `server/utils/sniper-registry.ts` 對應 Java 的哪裡
 
@@ -167,8 +186,12 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
     });
   });
   ```
-  兩者的差異只在於 Java 的 `ui`（`MainWindow`）本身就是 `disconnectWhenUICloses()` 能直接拿到的欄位，TS 版沒有「視窗」可以掛 `WindowListener`，改成用 callback 參數把「關閉時要做什麼」交給真正握有 `nitroApp`（Nitro 伺服器生命週期）的呼叫端決定——`main()` 本身仍然不依賴任何 Nitro 型別，維持成一支框架無關的 orchestration 函式。
-- **沒有對應物的部分**：`getTableData()` 把 `SnipersTableModel` 的 `getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 走訪一遍，組成一份 `{ columns, rows }` 的純資料物件，供 `server/api/snipers.get.ts`（HTTP）、`server/routes/ws.ts`（WebSocket）序列化成 JSON 送給瀏覽器。Java 版完全沒有這一步——`MainWindow`（Swing `JFrame`）跟 `SnipersTableModel` 活在**同一個 JVM process** 裡，`JTable` 直接呼叫 `model.getValueAt(row, col)` 就能拿到資料渲染，中間沒有任何序列化或網路邊界。goos-ts 的 UI 是瀏覽器裡的 Vue app，跟跑 `SnipersTableModel` 的 Node process 是**兩個不同 process、隔著網路**，所以需要一個地方把「表格模型」轉成「可以序列化過網路的純資料」，`getTableData()` 就是在做這件事——這整個轉譯步驟是 client-server 架構的必然需求，Java 桌面應用完全不需要。
+  兩者的差異在於：
+  - **Java**：`ui`（`MainWindow`）本身就是 `disconnectWhenUICloses()` 能直接拿到的欄位。
+  - **TS**：沒有「視窗」可以掛 `WindowListener`，改成用 callback 參數把「關閉時要做什麼」交給真正握有 `nitroApp`（Nitro 伺服器生命週期）的呼叫端決定——`main()` 本身仍然不依賴任何 Nitro 型別，維持成一支框架無關的 orchestration 函式。
+- **沒有對應物的部分**：`getTableData()` 把 `SnipersTableModel` 的 `getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 走訪一遍，組成一份 `{ columns, rows }` 的純資料物件，供 `server/api/snipers.get.ts`（HTTP）、`server/routes/ws.ts`（WebSocket）序列化成 JSON 送給瀏覽器。為什麼需要這一步：
+  - **Java 版不需要**：`MainWindow`（Swing `JFrame`）跟 `SnipersTableModel` 活在**同一個 JVM process** 裡，`JTable` 直接呼叫 `model.getValueAt(row, col)` 就能拿到資料渲染，中間沒有任何序列化或網路邊界。
+  - **TS 版需要**：goos-ts 的 UI 是瀏覽器裡的 Vue app，跟跑 `SnipersTableModel` 的 Node process 是**兩個不同 process、隔著網路**，所以需要一個地方把「表格模型」轉成「可以序列化過網路的純資料」，`getTableData()` 就是在做這件事——這整個轉譯步驟是 client-server 架構的必然需求，Java 桌面應用完全不需要。
 
 ### `Announcer` 用 JS `Proxy` 取代 `java.lang.reflect.Proxy`
 
@@ -180,7 +203,8 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 
 ### `SwingThreadSniperListener` 沒有 TS 對應檔案
 
-Java 的 `SwingThreadSniperListener` 把通知轉派到 Swing 的 Event Dispatch Thread 再處理，`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此包一層 `sniper.addSniperListener(new SwingThreadSniperListener(this))` 再註冊；`SnipersTableModel.ts` 的 `sniperAdded()` 直接 `sniper.addSniperListener(this)`，這整個包裝檔案在 TS 版被刪除，不是漏翻譯，機制原因見 [`java-to-typescript-language-notes.md` 第 11 節](java-to-typescript-language-notes.md#11-執行緒thread兩種不同用途)。
+- **Java**：`SwingThreadSniperListener` 把通知轉派到 Swing 的 Event Dispatch Thread 再處理，`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此包一層 `sniper.addSniperListener(new SwingThreadSniperListener(this))` 再註冊。
+- **TS**：`SnipersTableModel.ts` 的 `sniperAdded()` 直接 `sniper.addSniperListener(this)`，這整個包裝檔案在 TS 版被刪除，不是漏翻譯，機制原因見 [`java-to-typescript-language-notes.md` 第 11 節](java-to-typescript-language-notes.md#11-執行緒thread兩種不同用途)。
 
 ## 8. 測試檔案跟 Java 版刻意不一致的地方
 

@@ -170,7 +170,10 @@ private chatDisconnectorFor(translator: AuctionMessageTranslator): AuctionEventL
 
 TS 版用物件字面量（object literal）取代匿名類別——因為 TypeScript 是結構型別，一個物件只要「長得像」`AuctionEventListener`（有同樣簽章的三個方法）就會被當成 `AuctionEventListener` 使用，不需要用 `class X implements AuctionEventListener` 這種名義型別（nominal typing）語法明確宣告「這是一個 AuctionEventListener」。方法名稱、`chat` 欄位都逐字沿用 Java 版，這是 xmpp.js 版跟 Java 版兩端協定一致才做得到的（見 [`differences-from-java.md`](differences-from-java.md)）。
 
-另一個同樣模式、而且更完整的例子——`FakeAuctionServer.java` 被動接收 chat 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { public void chatCreated(Chat chat, boolean createdLocally) { ... } })`，xmpp.js 版**沒有省略這段邏輯**（`XMPPChatManager` 補上了對等的 `addChatListener()`，見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)），只是同樣把匿名類別換成箭頭函式：
+另一個同樣模式、而且更完整的例子：
+
+- **Java**：`FakeAuctionServer.java` 被動接收 chat 的 `connection.getChatManager().addChatListener(new ChatManagerListener() { public void chatCreated(Chat chat, boolean createdLocally) { ... } })`。
+- **TS**：xmpp.js 版**沒有省略這段邏輯**（`XMPPChatManager` 補上了對等的 `addChatListener()`，見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)），只是同樣把匿名類別換成箭頭函式：
 
 ```ts
 connection.getChatManager().addChatListener(chat => {
@@ -223,7 +226,10 @@ static async connect(
 
 函式內部的 try/catch 包裝邏輯逐行對應，但 `Promise<XMPPAuctionHouse>` 這個回傳型別完全沒有「這個函式可能 reject 成 `XMPPAuctionException`」的資訊——呼叫端得自己讀程式碼或文件才知道要接。這是 TypeScript/JavaScript 本身的限制，不是這個專案的取捨。
 
-同樣道理，`AuctionEvent.get(fieldName)` 在 Java 宣告 `throws MissingValueException`（`AuctionMessageTranslator.AuctionEvent`），TS 版的 `get(fieldName)` 就是普通的 `throw new MissingValueException(fieldName)`，簽章上不會出現 `: never` 或任何「這個方法會拋例外」的型別標記。
+同樣道理：
+
+- **Java**：`AuctionEvent.get(fieldName)` 宣告 `throws MissingValueException`（`AuctionMessageTranslator.AuctionEvent`）。
+- **TS**：`get(fieldName)` 就是普通的 `throw new MissingValueException(fieldName)`，簽章上不會出現 `: never` 或任何「這個方法會拋例外」的型別標記。
 
 ## 5. `final`/effectively final——匿名類別捕獲區域變數的限制
 
@@ -330,7 +336,10 @@ public static void main(String... args) throws Exception {
 }
 ```
 
-`goos-ts` 沒有等價於 `main()` 的單一進入點——Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`；Java 命令列參數 `args[ARG_HOSTNAME]`/`args[ARG_USERNAME]`/`args[ARG_PASSWORD]` 對應的設定值改用環境變數（`XMPP_SERVICE_URL`/`XMPP_DOMAIN`，見 `server/utils/sniper-registry.ts` 的 `connectAuctionHouse()`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源。
+`goos-ts` 沒有等價於 `main()` 的單一進入點，這是 Node.js/Nuxt 應用程式的啟動模型本身跟 JVM 命令列應用程式不同造成的，README 的「程式進入點」比較表已有記錄，這裡補充說明差異的根源：
+
+- **沒有單一進入點**：Nuxt/Nitro 的伺服器啟動模型是「插件（plugin）在伺服器啟動時被自動執行」，對應的是 `server/plugins/init-sniper-launcher.ts`。
+- **設定值來源改變**：Java 命令列參數 `args[ARG_HOSTNAME]`/`args[ARG_USERNAME]`/`args[ARG_PASSWORD]` 對應的設定值改用環境變數（`XMPP_SERVICE_URL`/`XMPP_DOMAIN`，見 `server/utils/sniper-registry.ts` 的 `connectAuctionHouse()`）搭配 Nuxt `runtimeConfig`（`nuxt.config.ts` 的 `sniperId`），不是啟動時傳入的參數陣列。
 
 ## 10. Getter 方法 vs 直接公開欄位
 
@@ -362,7 +371,9 @@ export class FakeAuctionServer {
 
 Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的對應情況不一樣：
 
-- **`SwingThreadSniperListener`**：把通知轉派到 Swing 的 Event Dispatch Thread。Java 的 `SwingThreadSniperListener` 是一個 `SniperListener` 的包裝器：`sniperStateChanged()` 收到通知時，用 `SwingUtilities.invokeLater()` 把實際處理轉派到 Swing 的 Event Dispatch Thread（EDT）再執行，因為 Swing 元件只能在 EDT 上安全存取，而通知來源（XMPP 網路執行緒）不是 EDT。`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此是 `sniper.addSniperListener(new SwingThreadSniperListener(this))`，包一層再註冊。Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才能安全更新 UI」這個問題，`SnipersTableModel.ts` 的 `sniperAdded()` 因此直接 `sniper.addSniperListener(this)`，不需要、也没有對應 `SwingThreadSniperListener` 的包裝類別——這整個檔案在 TS 版被刪除，不是漏翻譯。
+- **`SwingThreadSniperListener`**：把通知轉派到 Swing 的 Event Dispatch Thread。
+  - **Java**：`SwingThreadSniperListener` 是一個 `SniperListener` 的包裝器：`sniperStateChanged()` 收到通知時，用 `SwingUtilities.invokeLater()` 把實際處理轉派到 Swing 的 Event Dispatch Thread（EDT）再執行，因為 Swing 元件只能在 EDT 上安全存取，而通知來源（XMPP 網路執行緒）不是 EDT。`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此是 `sniper.addSniperListener(new SwingThreadSniperListener(this))`，包一層再註冊。
+  - **TS**：Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才能安全更新 UI」這個問題，`SnipersTableModel.ts` 的 `sniperAdded()` 因此直接 `sniper.addSniperListener(this)`，不需要、也没有對應 `SwingThreadSniperListener` 的包裝類別——這整個檔案在 TS 版被刪除，不是漏翻譯。
 - **`test/end-to-end/ApplicationRunner.java` 的 `startSniper()`**：在**背景執行緒**啟動整個應用程式（`Main.main(...)`），讓測試主執行緒可以繼續往下執行、用 WindowLicker 的 `AWTEventQueueProber` 輪詢等待 UI 準備好：
 
   ```java
@@ -401,9 +412,15 @@ Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的�
   }
   ```
 
-  Java 每個測試方法都在背景執行緒重新跑一次 `Main.main(...)`，等於每個測試都拿到一份全新的 `SniperPortfolio`/`MainWindow` 物件圖（同一個 JVM 內，`new Main()` 就是全新物件）。Node.js 的模組層級狀態（`sniper-registry.ts` 的 `portfolio`/`tableModel`）是**綁在 process 上**的，同一個 process 內沒有「重新 `new` 一次就拿到全新模組狀態」這回事——因此 TS 版要達到跟 Java 版同樣的「每個測試互不污染」，只能整個 server process 重開，用 `child_process.spawn()` 取代 Java 的 `new Thread(...).start()`，`ApplicationRunner.stop()`（`process.kill()`）取代 `driver.dispose()`（兩者都會觸發各自語言版本的「連線關閉」監聽器：TS 版是 `server/plugins/init-sniper-launcher.ts` 掛的 `nitroApp.hooks.hook('close', ...)`，對應 Java 版 `Main.java` 的 `disconnectWhenUICloses()`）。
+  - **Java**：每個測試方法都在背景執行緒重新跑一次 `Main.main(...)`，等於每個測試都拿到一份全新的 `SniperPortfolio`/`MainWindow` 物件圖（同一個 JVM 內，`new Main()` 就是全新物件）。
+  - **TS**：模組層級狀態（`sniper-registry.ts` 的 `portfolio`/`tableModel`）是**綁在 process 上**的，同一個 process 內沒有「重新 `new` 一次就拿到全新模組狀態」這回事——因此 TS 版要達到跟 Java 版同樣的「每個測試互不污染」，只能整個 server process 重開，用 `child_process.spawn()` 取代 Java 的 `new Thread(...).start()`，`ApplicationRunner.stop()`（`process.kill()`）取代 `driver.dispose()`（兩者都會觸發各自語言版本的「連線關閉」監聽器：TS 版是 `server/plugins/init-sniper-launcher.ts` 掛的 `nitroApp.hooks.hook('close', ...)`，對應 Java 版 `Main.java` 的 `disconnectWhenUICloses()`）。
 
-  **實測發現：這個「背景啟動」設計本身帶有的競速，Java 版跟 TS 版都有，不是 TS port 引入的新問題。**`Main.main()` 的 `XMPPAuctionHouse.connect(...)` 是背景執行緒裡的同步呼叫，`driver.hasColumnTitles()` 只確認 `MainWindow` 已顯示（`new Main()` 建構子裡用 `SwingUtilities.invokeAndWait` 同步做完），不保證 `connect()`／`main.addUserRequestListenerFor()` 已經跑完；TS 版同理，`waitForServerReady()` 只確認 HTTP server 已經在聽，不保證 `sniper-registry.ts` 的 `XMPPAuctionHouse.connect()` 已完成。這個競速在 TS 版建置 `test/e2e/` 套件時**實測撞到過**：第一次呼叫 `openBiddingFor()` 偶爾會撞見 `/api/join` 回 500（`SniperLauncher is not initialized yet`），`ApplicationRunner.ts` 的 `openBiddingFor()` 因此用短暫重試（最多 5 次、每次 1 秒逾時）取代任意猜測的固定等待時間，把這個先天競速吸收掉，只在每個測試第一次呼叫時才可能真的重試，之後同一個測試內的呼叫連線早就緒了。
+  **實測發現：這個「背景啟動」設計本身帶有的競速，Java 版跟 TS 版都有，不是 TS port 引入的新問題。**
+
+  - **Java 版的競速**：`Main.main()` 的 `XMPPAuctionHouse.connect(...)` 是背景執行緒裡的同步呼叫，`driver.hasColumnTitles()` 只確認 `MainWindow` 已顯示（`new Main()` 建構子裡用 `SwingUtilities.invokeAndWait` 同步做完），不保證 `connect()`／`main.addUserRequestListenerFor()` 已經跑完。
+  - **TS 版同理**：`waitForServerReady()` 只確認 HTTP server 已經在聽，不保證 `sniper-registry.ts` 的 `XMPPAuctionHouse.connect()` 已完成。
+  - **實測撞到過**：TS 版建置 `test/e2e/` 套件時，第一次呼叫 `openBiddingFor()` 偶爾會撞見 `/api/join` 回 500（`SniperLauncher is not initialized yet`）。
+  - **因應方式**：`ApplicationRunner.ts` 的 `openBiddingFor()` 因此用短暫重試（最多 5 次、每次 1 秒逾時）取代任意猜測的固定等待時間，把這個先天競速吸收掉，只在每個測試第一次呼叫時才可能真的重試，之後同一個測試內的呼叫連線早就緒了。
 
 ## 12. `@Override` 註解
 
@@ -411,18 +428,15 @@ Java 的 `@Override` 是編譯期檢查用的 annotation：標了它、但方法
 
 ## 13. Marker Interface（標記介面）
 
-Java 有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener` 本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing/AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
-
-TypeScript 是結構型別（structural typing），本來就不需要顯式標記「這是一個 listener 介面」才能被當成 listener 使用，所以 TS 版的對應介面（`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener`）都不 `extends` 任何東西。`Announcer<T>` 的泛型上界也對應改成 `T extends object`（TS 沒有 `EventListener` 這個概念可以當上界），而不是 `T extends EventListener`。
+- **Java**：有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener` 本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing/AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
+- **TS**：是結構型別（structural typing），本來就不需要顯式標記「這是一個 listener 介面」才能被當成 listener 使用，所以 TS 版的對應介面（`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener`）都不 `extends` 任何東西。`Announcer<T>` 的泛型上界也對應改成 `T extends object`（TS 沒有 `EventListener` 這個概念可以當上界），而不是 `T extends EventListener`。
 
 ## 14. `java.lang.reflect.Proxy` 動態代理
 
-Java 的 `Announcer` 靠 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler` 動態建立一個實作目標介面的代理物件，呼叫代理物件的任何方法都會廣播給所有已註冊的 listener，還得手動處理 `InvocationTargetException` 把底層例外重新拋出。
-
-TS 版的 `Announcer` 用語言原生的 `Proxy`（`get` trap 攔截任意屬性存取、回傳一個會遍歷 `listeners` 呼叫同名方法的函式）取代——兩者概念一致，但不需要 Java 反射那套例外包裝，呼叫端的例外會原生往上拋，行為等價但機制更直接。
+- **Java**：`Announcer` 靠 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler` 動態建立一個實作目標介面的代理物件，呼叫代理物件的任何方法都會廣播給所有已註冊的 listener，還得手動處理 `InvocationTargetException` 把底層例外重新拋出。
+- **TS**：`Announcer` 用語言原生的 `Proxy`（`get` trap 攔截任意屬性存取、回傳一個會遍歷 `listeners` 呼叫同名方法的函式）取代——兩者概念一致，但不需要 Java 反射那套例外包裝，呼叫端的例外會原生往上拋，行為等價但機制更直接。
 
 ## 15. Apache Commons 反射式 `equals()`/`hashCode()`/`toString()`
 
-Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。
-
-TS 版沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`/`hashCode()` 在 TS 測試或執行流程中也沒有被用到。
+- **Java**：`SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。
+- **TS**：沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`/`hashCode()` 在 TS 測試或執行流程中也沒有被用到。
