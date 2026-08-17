@@ -61,7 +61,7 @@ export function whenAuctionClosed(state: SniperState): SniperState {
 }
 ```
 
-呼叫端因此也從 `state.whenAuctionClosed()`（方法呼叫）變成 `whenAuctionClosed(state)`（獨立函式）——**這是宣告方式差異直接影響呼叫端寫法**的例子。`Column.java`/`Column.ts`（`ui/Column`）是同一個機制的另一個實例，但因為 `Column` 除了行為還要被當集合走訪（`Column.values`），TS 版改用 class + 具名靜態實例，不是查表，細節見 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)。
+呼叫端因此也從 `state.whenAuctionClosed()`（方法呼叫）變成 `whenAuctionClosed(state)`（獨立函式）——**這是宣告方式差異直接影響呼叫端寫法**的例子。`Column.java`/`Column.ts`（`ui/Column`）是同一個機制的另一個實例，但因為 `Column` 除了行為還要被當集合走訪（`Column.values`），TS 版改用 class + 具名靜態實例，不是查表，細節見 [`differences-from-java.md` 第 7 節](differences-from-java.md#7-domainutil-層的框架轉換差異)。
 
 ## 2. 巢狀類別/介面（Nested Types）
 
@@ -285,7 +285,7 @@ public class SnipersTableModel extends AbstractTableModel implements SniperListe
 }
 ```
 
-TypeScript 沒有一個等價於 `AbstractTableModel` 的框架基底類別可以繼承（`SnipersTableModel.ts` 也不需要真的被某個 UI 框架的元件接受），`SnipersTableModel.ts` 因此是一個完全獨立的 class，`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都是自己刻的方法（對應 Java 覆寫 `AbstractTableModel` 的部分），但監聽者註冊機制（`addListener()`/`SnipersTableListener`）也要自己刻——Java 版這部分是繼承 `AbstractTableModel` 免費拿到的，TS 版沒有可以繼承的對象，只能自己補。細節見 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)。
+TypeScript 沒有一個等價於 `AbstractTableModel` 的框架基底類別可以繼承（`SnipersTableModel.ts` 也不需要真的被某個 UI 框架的元件接受），`SnipersTableModel.ts` 因此是一個完全獨立的 class，`getColumnCount()`/`getRowCount()`/`getColumnName()`/`getValueAt()` 都是自己刻的方法（對應 Java 覆寫 `AbstractTableModel` 的部分），但監聽者註冊機制（`addListener()`/`SnipersTableListener`）也要自己刻——Java 版這部分是繼承 `AbstractTableModel` 免費拿到的，TS 版沒有可以繼承的對象，只能自己補。細節見 [`differences-from-java.md` 第 7 節](differences-from-java.md#7-domainutil-層的框架轉換差異)。
 
 ## 8. 建構子多載（Constructor Overloading）
 
@@ -362,7 +362,7 @@ export class FakeAuctionServer {
 
 Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的對應情況不一樣：
 
-- **`SwingThreadSniperListener`**：把通知轉派到 Swing 的 Event Dispatch Thread，見 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)。
+- **`SwingThreadSniperListener`**：把通知轉派到 Swing 的 Event Dispatch Thread。Java 的 `SwingThreadSniperListener` 是一個 `SniperListener` 的包裝器：`sniperStateChanged()` 收到通知時，用 `SwingUtilities.invokeLater()` 把實際處理轉派到 Swing 的 Event Dispatch Thread（EDT）再執行，因為 Swing 元件只能在 EDT 上安全存取，而通知來源（XMPP 網路執行緒）不是 EDT。`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此是 `sniper.addSniperListener(new SwingThreadSniperListener(this))`，包一層再註冊。Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才能安全更新 UI」這個問題，`SnipersTableModel.ts` 的 `sniperAdded()` 因此直接 `sniper.addSniperListener(this)`，不需要、也没有對應 `SwingThreadSniperListener` 的包裝類別——這整個檔案在 TS 版被刪除，不是漏翻譯。
 - **`test/end-to-end/ApplicationRunner.java` 的 `startSniper()`**：在**背景執行緒**啟動整個應用程式（`Main.main(...)`），讓測試主執行緒可以繼續往下執行、用 WindowLicker 的 `AWTEventQueueProber` 輪詢等待 UI 準備好：
 
   ```java
@@ -409,11 +409,20 @@ Java 的 `Thread` 在這個專案裡有兩種完全不同的用途，TS 版的�
 
 Java 的 `@Override` 是編譯期檢查用的 annotation：標了它、但方法簽章其實沒有真的覆寫任何父類別/介面方法的話，編譯器會報錯，純粹是防呆用途，不影響執行期行為。TypeScript 有一個語意類似的 `override` 關鍵字（TS 4.3+），但只用在 class 繼承另一個 class 的情境；這個專案的 TS 版幾乎都是「implements 介面」而非「extends 類別」，介面實作在 TypeScript 是純結構比對，不需要、也沒有語法可以標註「這個方法是在實作某個介面」，因此 Java 原始碼裡大量的 `@Override` 在 TS 版對應的方法上完全不會出現任何標記——不是漏寫，是 TS 的結構型別本來就不需要。
 
-## 13. 其他已在 `differences-from-java.md` 記錄的語言/機制差異
+## 13. Marker Interface（標記介面）
 
-以下幾個語言機制轉換已經在 [`differences-from-java.md` 第 9 節](differences-from-java.md#9-domainutil-層的框架轉換差異)詳細說明，這裡只列出條目、不重複內容：
+Java 有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener` 本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing/AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
 
-- **Marker interface（`extends java.util.EventListener`）**沒有 TS 對應物——TS 結構型別不需要顯式標記「這是一個 listener」。
-- **`java.lang.reflect.Proxy` 動態代理**改用 JS 原生 `Proxy`（`Announcer`）。
-- **Apache Commons 反射式 `equals()`/`hashCode()`/`toString()`**（`EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder`）整組省略，改用 Vitest `toEqual()` 做深度結構比較。
-- **執行緒轉派**（`SwingThreadSniperListener`/`SwingUtilities.invokeLater()`）在 TS 版整個刪除——Node.js 單執行緒事件迴圈沒有「必須轉派到特定執行緒才能安全更新 UI」這個問題。
+TypeScript 是結構型別（structural typing），本來就不需要顯式標記「這是一個 listener 介面」才能被當成 listener 使用，所以 TS 版的對應介面（`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener`）都不 `extends` 任何東西。`Announcer<T>` 的泛型上界也對應改成 `T extends object`（TS 沒有 `EventListener` 這個概念可以當上界），而不是 `T extends EventListener`。
+
+## 14. `java.lang.reflect.Proxy` 動態代理
+
+Java 的 `Announcer` 靠 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler` 動態建立一個實作目標介面的代理物件，呼叫代理物件的任何方法都會廣播給所有已註冊的 listener，還得手動處理 `InvocationTargetException` 把底層例外重新拋出。
+
+TS 版的 `Announcer` 用語言原生的 `Proxy`（`get` trap 攔截任意屬性存取、回傳一個會遍歷 `listeners` 呼叫同名方法的函式）取代——兩者概念一致，但不需要 Java 反射那套例外包裝，呼叫端的例外會原生往上拋，行為等價但機制更直接。
+
+## 15. Apache Commons 反射式 `equals()`/`hashCode()`/`toString()`
+
+Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。
+
+TS 版沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`/`hashCode()` 在 TS 測試或執行流程中也沒有被用到。

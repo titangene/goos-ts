@@ -129,7 +129,7 @@ public boolean equals(Object obj) {
 
 ## 這個比對規則在 TS 版是否需要對應實作
 
-**結論：不需要**，原因記錄在 [`differences-from-java.md`](differences-from-java.md) 第 4 節，這裡展開完整推理。
+**結論：不需要**，原因記錄在 [`differences-from-java.md`](differences-from-java.md) 第 3 節，這裡展開完整推理。
 
 TS 版 `XMPPChatManager.dispatch()` 只用 stanza 的 `from` 屬性（完整 JID，含 resource）當唯一的比對 key，沒有 thread ID 這一層。這在 Smack 裡會出問題（前一節已證明），但在 TS 版裡不會出問題，因為：
 
@@ -183,4 +183,4 @@ public synchronized ChatManager getChatManager()
 public void disconnect()
 ```
 
-`XMPPConnection` 建構子/`connect()`/`login()` 是三個分開的呼叫，TS 版 `XMPPConnection.connect()` 把這三步合併成一個 async factory，原因見 [`differences-from-java.md`](differences-from-java.md) 第 3 節（xmpp.js 本身的 API 設計就是這樣，不是 TS port 隨意合併）。
+`XMPPConnection` 建構子/`connect()`/`login()` 是三個分開的呼叫，TS 版 `XMPPConnection.connect()` 把這三步合併成一個 async factory，原因見 [`differences-from-java.md`](differences-from-java.md) 第 2 節（xmpp.js 本身的 API 設計就是這樣，不是 TS port 隨意合併）。

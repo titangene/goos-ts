@@ -6,11 +6,7 @@
 
 跟 [`java-to-typescript-language-notes.md`](java-to-typescript-language-notes.md) 的分工：這份文件講「拍賣協定/domain 層為什麼要這樣改」，那份文件講「Java 語言本身的機制（enum 多型、巢狀類別、checked exception…）TypeScript 沒有對應物，所以程式碼結構才會不一樣」。
 
-## 1. 身分識別改用 username-only 白名單，不做使用者自訂密碼驗證（見 ADR-0002）
-
-拍賣協定的連線層不提供使用者自行設定/管理密碼的介面：合法帳號是 Prosody 上事先靜態註冊好的固定帳號（`sniper`/`sniper`、`auction-item-<id>`/`auction`），密碼是跟帳號綁死的已知常數。詳見 [ADR-0002: 拍賣協定的 XMPP server 選型與身分識別——Prosody](adr/ADR-0002-xmpp-server-selection.md)。
-
-## 2. 跟 Smack 一致的部分
+## 1. 跟 Smack 一致的部分
 
 以下呼叫方式跟 Java 版幾乎逐字對照：
 
@@ -27,7 +23,7 @@
 
 `XMPPAuction.ts`（`chat` 欄位、`chatDisconnectorFor()`）、`FakeAuctionServer.ts`（`connection.getChatManager().addChatListener(...)` 被動接收）都直接用這套物件模型，命名、呼叫順序、方法職責分工都跟 Java 版一致。
 
-## 3. `XMPPConnection.connect()` 把 Java 的三個步驟合併成一個 async factory
+## 2. `XMPPConnection.connect()` 把 Java 的三個步驟合併成一個 async factory
 
 Java 版分三步：
 
@@ -47,17 +43,17 @@ const connection = await XMPPConnection.connect(serviceUrl, domain, username, pa
 
 **影響範圍**：`XMPPAuctionHouse.connect()`、`test/integration/XMPPAuctionHouse.test.ts`、`test/e2e/FakeAuctionServer.ts#startSellingItem()`、`tools/fake-auction.ts` 都用這個合併後的單一 async factory，呼叫端看不到中間狀態。
 
-## 4. `XMPPChatManager` 的訊息比對規則比 Smack `ChatManager` 簡單，但外部行為一致
+## 3. `XMPPChatManager` 的訊息比對規則比 Smack `ChatManager` 簡單，但外部行為一致
 
 Smack `ChatManager` 的完整比對規則（thread ID 優先、bare JID 其次）記錄在 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#訊息路由比對規則thread-id-優先bare-jid-其次)。`XMPPChatManager.dispatch()` 只用 stanza 的 `from` 屬性（完整 JID，含 resource）當唯一比對 key，沒有 thread ID 這一層。
 
 **這是刻意簡化，不是遺漏，理由已查證確認**（見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#為什麼-thread-id-對-smack-來說不是可有可無的最佳化) 完整推導）：Smack 需要 thread ID 是因為它主動建立 `Chat` 時用完整 JID 當 key、被動 fallback 卻用裁過 resource 的 bare JID 查，兩者不一致，需要 thread ID 補救。TS 版的 `XMPPChatManager` 存跟查都統一用完整 JID，天生一致，不會出現這種自我矛盾；而且本專案的使用情境嚴格 1:1（一個 `XMPPAuction`/`FakeAuctionServer` 實例從頭到尾只跟一個固定對象對話），不需要 Smack 為了「同一組使用者同時開多個對話」這種泛用聊天情境而設計的 thread 分流機制。這個結論已經用 `test/integration/XMPPAuctionHouse.test.ts` 實測驗證（真實連線 Prosody，非 mock）：sniper 主動建立的 chat 能正確收到拍賣現場的回覆，行為跟 Java 版一致。
 
-## 5. `XMPPMessage` 只實作 `getBody()`
+## 4. `XMPPMessage` 只實作 `getBody()`
 
 Smack 的 `Message`（`extends Packet`）完整 API 還有 `getFrom()`/`getTo()`/`getSubject()`/`getType()`/`getThread()`/`getBody(language)` 等方法，書中程式碼（`AuctionMessageTranslator.java`/`FakeAuctionServer.java`）查過只用到 `getBody()`（完整查證過程見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#messagepacket-的完整欄位跟書中實際用到的部分)）。`server/auctionsniper/xmpp/XMPPMessage.ts` 因此只實作 `getBody()`，把 `stanza.getChildText('body')` 這個解析細節集中在單一檔案，`AuctionMessageTranslator.ts`、`FakeAuctionServer.ts`、`tools/fake-auction.ts` 都透過 `XMPPMessage.getBody()` 取得訊息內容，不各自重複解析 stanza。
 
-## 6. `addChatListener()` 的 callback 省略 `createdLocally` 參數
+## 5. `addChatListener()` 的 callback 省略 `createdLocally` 參數
 
 Java 版 `ChatManagerListener#chatCreated(Chat chat, boolean createdLocally)` 有兩個參數，但書中唯一的實作（`FakeAuctionServer.java`）沒有讀取 `createdLocally`：
 
@@ -70,21 +66,21 @@ public void chatCreated(Chat chat, boolean createdLocally) {
 
 TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPChat) => void`），`XMPPChatManager.createChat()`/`dispatch()` 內部也不再區分「主動建立」跟「被動建立」，只呼叫同一個不帶參數的通知函式。完整查證依據見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md#messagelistenerchatmanagerlistener-介面)。
 
-## 7. 型別定義依賴社群維護的 DefinitelyTyped 套件
+## 6. 型別定義依賴社群維護的 DefinitelyTyped 套件
 
 Java（含 Smack）本身是靜態型別語言，方法簽章本來就是原始碼的一部分；xmpp.js 的 TypeScript 型別則是社群維護的 `@types/xmpp__client`（含一串 `@types/xmpp__*` 相依套件），不是 `@xmpp/client` 自己發佈的（已用 `npm view`/查看 `package.json` 直接確認無 `types` 欄位）。這是 [ADR-0003](adr/ADR-0003-xmpp-client-library-selection.md) 已知並接受的取捨，這裡列出只是為了完整記錄「跟 Java 版用起來哪裡不一樣」。
 
-## 8. Domain/util 層的框架轉換差異
+## 7. Domain/util 層的框架轉換差異
 
 以下是 `server/auctionsniper/*.ts`（不含 `xmpp/` 子目錄，即 `AuctionSniper`、`SniperSnapshot`、`SniperState`、`SnipersTableModel`、`util/Announcer` 等對應書中 `src/auctionsniper/*.java` 核心邏輯）跟 Java 版逐檔比對後，確認屬於**必要**的框架/語言轉換差異，不是漏改：
 
 ### `equals()`/`hashCode()`/`toString()` 省略
 
-Java 的 `SniperSnapshot`、`UserRequestListener.Item` 都用 Apache Commons `EqualsBuilder`/`HashCodeBuilder`/`ToStringBuilder` 做反射式實作，測試裡用 `assertEquals`/`samePropertyValuesAs` 做值比較。TS 版沒有實作這三個方法——Vitest 的 `expect(...).toEqual(...)` 本來就會對物件做深度結構比較，不需要 class 自己提供 `equals()`；`toString()`/`hashCode()` 在 TS 測試或執行流程中也沒有被用到。
+`SniperSnapshot`、`UserRequestListener.Item` 這兩個 domain 類別對應到 Java 版都省略了 `equals()`/`hashCode()`/`toString()`，機制原因（Apache Commons 反射式實作 vs. Vitest `toEqual()` 深度結構比較）見 [`java-to-typescript-language-notes.md` 第 15 節](java-to-typescript-language-notes.md#15-apache-commons-反射式-equalshashcodetostring)。
 
 ### `SniperState.whenAuctionClosed()` 的多型改用查表
 
-Java `SniperState` 是 enum，每個常數（`JOINING`、`BIDDING`、`WINNING`、`LOSING`）各自 `@Override` `whenAuctionClosed()`，其餘常數繼承拋 `Defect` 的預設實作。TypeScript 的 `enum` 是純值型別，不支援每個成員各自覆寫方法，`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)`，查不到就拋 `Defect`——效果對等，只是把「多型分派」換成「資料表查詢」。
+`SniperState.ts` 改用 `CLOSE_TRANSITIONS` 查表 + 獨立函式 `whenAuctionClosed(state)` 取代 Java enum 每個常數各自 `@Override` 的多型分派，機制原因見 [`java-to-typescript-language-notes.md` 第 1 節](java-to-typescript-language-notes.md#1-enum-的每個成員各自覆寫方法)。
 
 `SniperState` 的 enum 成員刻意**不帶字串值**（`JOINING`、`BIDDING`…直接用 TS 自動遞增的數字，等同 Java 的 `ordinal()`），跟 Java 一樣不持有任何顯示文字——顯示文字統一由 `SnipersTableModel.STATUS_TEXT`/`textFor()` 負責（見下面 `Column`/`SnipersTableModel` 那節），不是這裡的責任。
 
@@ -176,24 +172,17 @@ Java `ui/Column` 也是 enum、每個常數各自 `@Override` `valueIn()`，且 
 
 ### `Announcer` 用 JS `Proxy` 取代 `java.lang.reflect.Proxy`
 
-兩者概念一致——回傳一個實作了目標介面的動態代理物件，呼叫代理物件的任何方法都會廣播給所有已註冊的 listener。
-
-- Java 版靠 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler`，還得手動處理 `InvocationTargetException` 把底層例外重新拋出。
-- TS 版用語言原生的 `Proxy`（`get` trap 攔截任意屬性存取、回傳一個會遍歷 `listeners` 呼叫同名方法的函式），不需要 Java 反射那套例外包裝，呼叫端的例外會原生往上拋，行為等價但機制更直接。
+`util/Announcer.ts` 用語言原生的 `Proxy` 取代 Java 版 `java.lang.reflect.Proxy.newProxyInstance()` + `InvocationHandler`，機制原因見 [`java-to-typescript-language-notes.md` 第 14 節](java-to-typescript-language-notes.md#14-javalangreflectproxy-動態代理)。
 
 ### Java 的 `extends EventListener` 標記介面沒有對應物
 
-Java 有好幾個介面宣告 `extends java.util.EventListener`（`AuctionEventListener`、`SniperListener`、`UserRequestListener`、`SniperPortfolio.PortfolioListener`）——`java.util.EventListener`本身沒有任何方法，純粹是一個**標記介面**（marker interface），Swing/AWT 事件系統慣例上要求所有 listener 介面都繼承它，方便框架用 `instanceof EventListener` 之類的方式做通用處理，但這些介面自己完全沒有因為繼承它而多出任何行為。
-
-TypeScript 是結構型別（structural typing），本來就不需要顯式標記「這是一個 listener 介面」才能被當成 listener 使用，所以 TS 版的對應介面（`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener`）都不 `extends` 任何東西。`Announcer<T>` 的泛型上界也對應改成 `T extends object`（TS 沒有 `EventListener` 這個概念可以當上界），而不是 `T extends EventListener`。
+`AuctionEventListener.ts`、`SniperListener.ts`、`UserRequestListener.ts`、`SniperPortfolio.ts` 的 `PortfolioListener` 都不 `extends` 任何東西，對應 Java 版各自宣告 `extends java.util.EventListener` 的標記介面（marker interface），機制原因見 [`java-to-typescript-language-notes.md` 第 13 節](java-to-typescript-language-notes.md#13-marker-interface標記介面)。
 
 ### `SwingThreadSniperListener` 沒有 TS 對應檔案
 
-Java 的 `SwingThreadSniperListener` 是一個 `SniperListener` 的包裝器：`sniperStateChanged()` 收到通知時，用 `SwingUtilities.invokeLater()` 把實際處理**轉派到 Swing 的 Event Dispatch Thread（EDT）**再執行，因為 Swing 元件只能在 EDT 上安全存取，而通知來源（XMPP 網路執行緒）不是 EDT。`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此是 `sniper.addSniperListener(new SwingThreadSniperListener(this))`，包一層再註冊。
+Java 的 `SwingThreadSniperListener` 把通知轉派到 Swing 的 Event Dispatch Thread 再處理，`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此包一層 `sniper.addSniperListener(new SwingThreadSniperListener(this))` 再註冊；`SnipersTableModel.ts` 的 `sniperAdded()` 直接 `sniper.addSniperListener(this)`，這整個包裝檔案在 TS 版被刪除，不是漏翻譯，機制原因見 [`java-to-typescript-language-notes.md` 第 11 節](java-to-typescript-language-notes.md#11-執行緒thread兩種不同用途)。
 
-Node.js 是單執行緒事件迴圈，沒有「必須轉派到特定執行緒才能安全更新 UI」這個問題，`SnipersTableModel.ts` 的 `sniperAdded()` 因此直接 `sniper.addSniperListener(this)`，不需要、也没有對應 `SwingThreadSniperListener` 的包裝類別——這整個檔案在 TS 版被刪除，不是漏翻譯。
-
-## 9. 測試檔案跟 Java 版刻意不一致的地方
+## 8. 測試檔案跟 Java 版刻意不一致的地方
 
 `test/unit/**`（不含 `ui/` 子目錄以外的分類）已逐檔對照 `goos-code` 的 `test/unit/test/auctionsniper/**`，測項數量、測項涵蓋的情境、測項宣告順序都已對齊到跟 Java 版一致（例如 `AuctionSniper.test.ts` 對照 `AuctionSniperTest.java`、`SnipersTableModel.test.ts` 對照 `SnipersTableModelTest.java`）。以下是 review 後確認**必要**保留、不會也不需要對齊的差異：
 

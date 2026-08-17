@@ -40,7 +40,7 @@ worker_thread/child_process 隔離作為讓 Strophe.js 能安全共存於同一�
 **Negative:**
 
 - `@xmpp/client` 的 TypeScript 型別不是原生的，是社群維護的 DefinitelyTyped 套件（`@types/xmpp__client`），這點在跟 Strophe.js 的 Pros and Cons 比較裡是 xmpp.js 相對的已知缺點，因為更關鍵的 SSR 相容性問題而接受這個取捨。
-- `XMPPChatManager`「收到陌生 JID 訊息時自動建立 Chat」的行為是 TS 重建的，不是驗證過 Smack `ChatManager` 內部實作細節後照抄的——只保證跟 Java 版一致的外部可觀察行為，細節見 [`docs/differences-from-java.md`](../differences-from-java.md) 第 4 節。
+- `XMPPChatManager`「收到陌生 JID 訊息時自動建立 Chat」的行為是 TS 重建的，不是驗證過 Smack `ChatManager` 內部實作細節後照抄的——只保證跟 Java 版一致的外部可觀察行為，細節見 [`docs/differences-from-java.md`](../differences-from-java.md) 第 3 節。
 
 ## Compliance
 
