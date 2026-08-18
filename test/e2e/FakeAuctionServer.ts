@@ -21,7 +21,7 @@ import type { XMPPMessage } from '@server/auctionsniper/xmpp/XMPPMessage.ts';
 // （不依賴 vitest 的執行環境，是獨立可用的斷言函式）。
 export class FakeAuctionServer {
   static readonly ITEM_ID_AS_LOGIN = 'auction-%s';
-  static readonly AUCTION_RESOURCE = 'Auction';
+  private static readonly AUCTION_RESOURCE = 'Auction';
   static readonly SERVICE_URL =
     process.env.XMPP_SERVICE_URL ?? 'ws://localhost:5280/xmpp-websocket';
   static readonly DOMAIN = process.env.XMPP_DOMAIN ?? 'localhost';

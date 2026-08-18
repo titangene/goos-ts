@@ -109,7 +109,7 @@ public class XMPPAuctionHouse implements AuctionHouse {
 
 **TS 版**：`auctionId()` 是一般 instance method（沒有 `static`），直接讀 `this.connection.getServiceName()`，不需要額外的 `connection` 參數。TS 版沒有 Java `Main.main()` 那種語言強制的 static 起點，`XMPPAuctionHouse.ts` 的建構子本來就把 `connection` 存成 `private readonly` field，直接用 instance method 讀自己的欄位是 TS/JS 慣例下最直接的寫法，不是漏改。兩者組出來的 auction JID 字串格式完全一致，差異只在方法本身怎麼取得 `connection`。
 
-### `AUCTION_RESOURCE`：Java 版 `public`，TS 版 module-private
+### `AUCTION_RESOURCE`：Java 版 `public`，TS 版統一改為外部不可存取
 
 ```java
 // src/auctionsniper/xmpp/XMPPAuctionHouse.java:19-20
@@ -117,7 +117,7 @@ public static final String AUCTION_ID_FORMAT = ITEM_ID_AS_LOGIN + "@%s/" + XMPPA
 public static final String AUCTION_RESOURCE = "Auction";
 ```
 
-`AUCTION_RESOURCE` 在 `XMPPAuctionHouse` 裡宣告為 `public static final`，但從原始碼裡找到，只有兩個檔案用到這個名字：
+`AUCTION_RESOURCE` 在 `XMPPAuctionHouse` 裡宣告為 `public static final`，但從原始碼裡找到，只有一個檔案重新宣告了同名常數：
 
 ```java
 // test/end-to-end/test/endtoend/auctionsniper/FakeAuctionServer.java:1, 20, 23-24
@@ -131,9 +131,38 @@ public static final String AUCTION_RESOURCE = "Auction";
 
 `FakeAuctionServer.java` 屬於不同 package（`test.endtoend.auctionsniper`），它只 `import auctionsniper.xmpp.XMPPAuction`，**沒有**引用 `XMPPAuctionHouse` 的任何常數，而是自己重新宣告一份值相同的 `AUCTION_RESOURCE`。另外查過 `src/auctionsniper/Main.java`（最終版），已不含 `AUCTION_RESOURCE`——這個常數原本待過 `Main`，後來搬進 `XMPPAuctionHouse` 後，`Main.java` 就不再持有它。
 
-**結論**：Java 版 `XMPPAuctionHouse.AUCTION_RESOURCE` 設為 `public` 的理由，書中查無可逐字核實的說明。
+同一測試套件的 `ApplicationRunner.java` 組出 sniper 自己的 JID 時，也沒有引用任何一個 `AUCTION_RESOURCE`：
 
-**TS 版**：`XMPPAuctionHouse.ts` 的 `AUCTION_RESOURCE` 宣告為 module-level `const`，未 `export`，可見度收緊到只有該檔案自己能用，其他檔案完全無法 import 取用。但 TS 版同樣沒有做到「單一 source of truth 被多處共用」——`test/e2e/FakeAuctionServer.ts`（`static readonly`，未加 `private`）與 `tools/fake-auction.ts`（獨立 module-level `const`）都各自重複宣告一份相同值 `"Auction"`，彼此互不引用。這個「重複宣告、互不共用」的模式跟 Java 版（`XMPPAuctionHouse.java` 與 `FakeAuctionServer.java` 各自獨立宣告）一致；差異只在於 `XMPPAuctionHouse` 這個類別自己的欄位，TS 版收成 module-private，Java 版維持 `public`。
+```java
+// test/end-to-end/test/endtoend/auctionsniper/ApplicationRunner.java:5, 18
+import static test.endtoend.auctionsniper.FakeAuctionServer.XMPP_HOSTNAME;
+...
+public static final String SNIPER_XMPP_ID = SNIPER_ID + "@" + XMPP_HOSTNAME + "/Auction";
+```
+
+`XMPP_HOSTNAME` 是跨檔案 static import，但 resource 部分是寫死字串 `"Auction"`，不是引用常數。
+
+**結論**：Java 版 `XMPPAuctionHouse.AUCTION_RESOURCE` 設為 `public` 的理由，書中查無可逐字核實的說明；而且整個 `goos-code` 原始碼裡，找不到任何一處是靠這個 `public` 修飾詞才能運作的跨類別引用——三個用到相同值的地方（`XMPPAuctionHouse`、`FakeAuctionServer`、`ApplicationRunner`）互不 import，各自獨立持有或寫死同一個字面值。
+
+**TS 版**：三處宣告已統一改為外部無法存取，行為跟 Java 版一致「各自獨立、互不共用」，但可見度比 Java 版更窄——Java 版三處常數維持 `public`，TS 版則統一是外部不可見：
+
+```ts
+// server/auctionsniper/xmpp/XMPPAuctionHouse.ts:16（module-level const，未 export）
+const AUCTION_RESOURCE = 'Auction';
+
+// test/e2e/FakeAuctionServer.ts:24（class field，已加 private）
+private static readonly AUCTION_RESOURCE = 'Auction';
+
+// tools/fake-auction.ts:32（module-level const，未 export）
+const AUCTION_RESOURCE = 'Auction';
+```
+
+`test/e2e/ApplicationRunner.ts` 的 `SNIPER_XMPP_ID` 跟 Java 版 `ApplicationRunner.java` 一樣寫死字串 `'Auction'`（`DOMAIN` 部分仍跨檔案引用 `FakeAuctionServer.DOMAIN`，對應 Java 版 static import `FakeAuctionServer.XMPP_HOSTNAME`）：
+
+```ts
+// test/e2e/ApplicationRunner.ts:15
+export const SNIPER_XMPP_ID = `${SNIPER_ID}@${FakeAuctionServer.DOMAIN}/Auction`;
+```
 
 ## 2. `XMPPConnection.connect()` 把 Java 的三個步驟合併成一個 async factory
 

@@ -12,7 +12,7 @@ export const SNIPER_ID = 'sniper';
 export const SNIPER_PASSWORD = 'sniper';
 // 對應 Java 版 ApplicationRunner.SNIPER_XMPP_ID = SNIPER_ID + "@" +
 // XMPP_HOSTNAME + "/Auction"。
-export const SNIPER_XMPP_ID = `${SNIPER_ID}@${FakeAuctionServer.DOMAIN}/${FakeAuctionServer.AUCTION_RESOURCE}`;
+export const SNIPER_XMPP_ID = `${SNIPER_ID}@${FakeAuctionServer.DOMAIN}/Auction`;
 
 const NO_STOP_PRICE_LIMIT = 1_000_000_000;
 const PORT = 3101;
