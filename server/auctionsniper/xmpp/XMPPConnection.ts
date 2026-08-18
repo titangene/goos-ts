@@ -2,6 +2,7 @@ import { client as createXmppClient, xml } from '@xmpp/client';
 import type { Client } from '@xmpp/client';
 
 import { XMPPChatManager } from './XMPPChatManager.ts';
+import { XMPPError } from './XMPPError.ts';
 
 // 對應 Java 版 org.jivesoftware.smack.XMPPConnection：包住底層函式庫的
 // 連線細節，XMPPAuction.ts/XMPPAuctionHouse.ts 不需要知道底下是
@@ -44,11 +45,19 @@ export class XMPPConnection {
     return this.xmppClient.jid!.getDomain();
   }
 
-  send(to: string, messageBody: string): void {
-    // @xmpp/client 的 send() 回傳 Promise，但這裡是 fire-and-forget
-    // （不像 Smack chat.sendMessage() 會丟 checked XMPPException），
-    // 沒有對應的例外處理需要接。
-    void this.xmppClient.send(xml('message', { to, type: 'chat' }, xml('body', {}, messageBody)));
+  // 對應 Java 版 Chat.sendMessage() 的 throws XMPPException：@xmpp/client 的
+  // send() 底層寫入 socket 失敗時會 reject（例如連線正在關閉、或寫入時發生
+  // I/O 錯誤，已查證 @xmpp/connection 原始碼 write() 的兩個 reject 分支），
+  // 這裡包成 XMPPError 往外丟，讓呼叫端能用跟 Java 版一致的方式決定要不要
+  // 接住。
+  async send(to: string, messageBody: string): Promise<void> {
+    try {
+      await this.xmppClient.send(
+        xml('message', { to, type: 'chat' }, xml('body', {}, messageBody))
+      );
+    } catch (error) {
+      throw new XMPPError(`Could not send message to ${to}`, error);
+    }
   }
 
   async disconnect(): Promise<void> {

@@ -58,7 +58,7 @@ describe('XMPPAuctionHouse', () => {
     auction.join();
 
     await auctionServer.hasReceivedJoinRequestFrom(SNIPER_XMPP_ID);
-    auctionServer.announceClosed();
+    await auctionServer.announceClosed();
 
     // 對應 Java 版 assertTrue("should have been closed",
     // auctionWasClosed.await(4, SECONDS))：Java 用 CountDownLatch 是因為

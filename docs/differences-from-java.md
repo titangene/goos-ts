@@ -347,7 +347,138 @@ TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPCha
 - **Java**：`SwingThreadSniperListener` 把通知轉派到 Swing 的 Event Dispatch Thread 再處理，`ui/SnipersTableModel.java` 的 `sniperAdded()` 因此包一層 `sniper.addSniperListener(new SwingThreadSniperListener(this))` 再註冊。
 - **TS**：`SnipersTableModel.ts` 的 `sniperAdded()` 直接 `sniper.addSniperListener(this)`，這整個包裝檔案在 TS 版被刪除，不是漏翻譯，機制原因見 [`java-to-typescript-language-notes.md` 第 11 節](java-to-typescript-language-notes.md#11-執行緒thread兩種不同用途)。
 
-## 8. 測試檔案跟 Java 版刻意不一致的地方
+## 8. `sendMessage()` 送出失敗的處理：Java 同步 `throws XMPPException`，TS 用 `async`/`XMPPError` 對應
+
+Smack 的 `Chat.sendMessage(String)` 是同步阻塞呼叫，送出失敗直接丟出 checked `XMPPException`。xmpp.js 底層 socket 寫入是非同步的（`@xmpp/connection` 的 `write()`：連線正在關閉時同步 throw，或底層 `socket.write()` callback 帶 `err` 時 reject 回傳的 Promise），所以 TS 版整條呼叫鏈改用 `Promise`/`async`/`await` 承載「送出可能失敗」這件事，新增 `XMPPError`（`server/auctionsniper/xmpp/XMPPError.ts`）對應 `XMPPException`。每一層要不要接住這個錯誤，逐一對應 Java 版：
+
+### 連線層送出
+
+- **Java**：`Chat.sendMessage(String)` 同步呼叫，送出失敗 `throws XMPPException`（`org.jivesoftware.smack.Chat`，已查證 Smack 3.1.0 原始碼，見 [`smack-chatmanager-internals.md`](smack-chatmanager-internals.md)）：
+
+  ```java
+  public void sendMessage(String text) throws XMPPException {
+     Message message = new Message(this.participant, Message.Type.chat);
+     message.setThread(this.threadID);
+     message.setBody(text);
+     this.chatManager.sendMessage(this, message);
+  }
+  ```
+
+- **TS**：`XMPPChat.sendMessage()` 回傳 `Promise<void>`，`connection.send()` 拋出的 `XMPPError` 直接往外傳播，不額外攔截；`XMPPConnection.send()` 本身包住底層 `@xmpp/client` 的 rejection：
+
+  ```ts
+  // XMPPChat.ts
+  async sendMessage(messageBody: string): Promise<void> {
+    await this.connection.send(this.participant, messageBody);
+  }
+
+  // XMPPConnection.ts
+  async send(to: string, messageBody: string): Promise<void> {
+    try {
+      await this.xmppClient.send(xml('message', { to, type: 'chat' }, xml('body', {}, messageBody)));
+    } catch (error) {
+      throw new XMPPError(`Could not send message to ${to}`, error);
+    }
+  }
+  ```
+
+### production code（`XMPPAuction`）
+
+- **Java**：私有 `sendMessage(String)` 方法就地接住例外、只印 stack trace——GOOS 全書唯一處理 `XMPPException` 的位置，作者在第 13 章「The Sniper Makes a Bid」明確承認是暫時折衷（`Normally, we regard this as a very bad practice`），但這個 to-do item 從未在書中後續章節被改進實作：
+
+  ```java
+  private void sendMessage(final String message) {
+    try {
+      chat.sendMessage(message);
+    } catch (XMPPException e) {
+      e.printStackTrace();
+    }
+  }
+  ```
+
+- **TS**：私有 `sendMessage()` 對齊 Java 版這個最終定案，`bid()`/`join()`、`Auction` 介面簽名維持同步 `void`，不受影響：
+
+  ```ts
+  private sendMessage(message: string): void {
+    this.chat.sendMessage(message).catch((error: unknown) => {
+      console.error(error);
+    });
+  }
+  ```
+
+### 測試輔助碼（`FakeAuctionServer`）
+
+- **Java**：`sendInvalidMessageContaining()`/`reportPrice()`/`announceClosed()` 方法簽名各自宣告 `throws XMPPException`，讓例外直接往外傳給呼叫端；因此 `XMPPAuctionHouseTest`/`AuctionSniperEndToEndTest` 呼叫這些方法的測試方法也都宣告 `throws Exception`，對應 GOOS 第 21 章「Test Readability」的「Accentuate the Positive」小節：測試方法透過 reflection 呼叫，可以在簽名任意宣告例外，讓 test runtime（JUnit）接住：
+
+  ```java
+  public void sendInvalidMessageContaining(String brokenMessage) throws XMPPException {
+    currentChat.sendMessage(brokenMessage);
+  }
+
+  public void reportPrice(int price, int increment, String bidder) throws XMPPException {
+    currentChat.sendMessage(
+        String.format("SOLVersion: 1.1; Event: PRICE; "
+                      + "CurrentPrice: %d; Increment: %d; Bidder: %s;",
+                      price, increment, bidder));
+  }
+
+  public void announceClosed() throws XMPPException {
+    currentChat.sendMessage("SOLVersion: 1.1; Event: CLOSE;");
+  }
+  ```
+
+- **TS**：三個方法都改成 `async`，內部呼叫私有 `sendMessage()`（含 `currentChat` 為 `null` 時的檢查，見下一節），讓 `XMPPError` 往外傳播；呼叫端（`test/e2e/AuctionSniperEndToEnd.test.ts`、`test/integration/XMPPAuctionHouse.test.ts`）全部用 `await auction.xxx(...)`/`await auctionServer.xxx(...)`，出錯時測項本身會失敗，效果對應 Java 版讓 JUnit 接住往外傳的 `XMPPException`：
+
+  ```ts
+  async sendInvalidMessageContaining(brokenMessage: string): Promise<void> {
+    await this.sendMessage(brokenMessage);
+  }
+
+  async reportPrice(price: number, increment: number, bidder: string): Promise<void> {
+    await this.sendMessage(
+      `SOLVersion: 1.1; Event: PRICE; CurrentPrice: ${price}; Increment: ${increment}; Bidder: ${bidder};`
+    );
+  }
+
+  async announceClosed(): Promise<void> {
+    await this.sendMessage('SOLVersion: 1.1; Event: CLOSE;');
+  }
+
+  private async sendMessage(message: string): Promise<void> {
+    if (this.currentChat === null) {
+      throw new Error('No sniper has joined yet');
+    }
+    await this.currentChat.sendMessage(message);
+  }
+  ```
+
+呼叫端的測項也對應同一個模式：Java 測試方法簽名宣告 `throws Exception`，TS 測試改成 `async () => {...}` 搭配全程 `await`，以 `AuctionSniperEndToEndTest.java` 和 `AuctionSniperEndToEnd.test.ts` 兩者的相同測項作為對照為例：
+
+```java
+// test/end-to-end/test/endtoend/auctionsniper/AuctionSniperEndToEndTest.java
+@Test public void
+sniperReportsInvalidAuctionMessageAndStopsRespondingToEvents()
+    throws Exception
+{
+  ...
+  auction.reportPrice(500, 20, "other bidder");
+  ...
+}
+```
+
+```ts
+// test/e2e/AuctionSniperEndToEnd.test.ts
+test('sniper reports invalid auction message and stops responding to events', async () => {
+  ...
+  await auction.reportPrice(500, 20, 'other bidder');
+  ...
+});
+```
+
+- **Java**：測項方法本身不呼叫 `try/catch`，若 `auction.reportPrice(...)` 真的送出拋出 `XMPPException`，會直接讓 JUnit 接住並回報成 test error
+- **TS**：每一行 `await` 也是同樣效果，`auction.reportPrice(...)` 一旦 reject，Vitest/Playwright 的 test runner 會直接接住 `XMPPError` 並把整個測項標記為失敗
+
+## 9. 測試檔案跟 Java 版刻意不一致的地方
 
 `test/unit/**`（不含 `ui/` 子目錄以外的分類）已逐檔對照 `goos-code` 的 `test/unit/test/auctionsniper/**`，測項數量、測項涵蓋的情境、測項宣告順序都已對齊到跟 Java 版一致（例如 `AuctionSniper.test.ts` 對照 `AuctionSniperTest.java`、`SnipersTableModel.test.ts` 對照 `SnipersTableModelTest.java`）。以下是 review 後確認**必要**保留、不會也不需要對齊的差異：
 
@@ -356,6 +487,7 @@ TS 版的 `ChatCreatedListener` 型別因此省略這個參數（`(chat: XMPPCha
 - **Matcher 語法**：Java 用 Hamcrest（`equalTo`、`samePropertyValuesAs`、自訂 `FeatureMatcher`），TS 用 Vitest 內建的 `expect(...).toEqual(...)`/`expect.objectContaining(...)`。`samePropertyValuesAs`（比對物件所有屬性值，不要求同一個 class）對應 `toEqual`；Java 自訂的 `FeatureMatcher`（例如 `AuctionSniperTest.aSniperThatIs(state)`）在 TS 版用 `expect.objectContaining({ state })` 這種內建局部比對取代，不需要另外寫一個 matcher class。
 - **例外斷言**：Java 用 `@Test(expected = Defect.class)` annotation 屬性宣告預期例外；TS 用 `expect(() => ...).toThrow(Defect)`。兩者都明確指定例外的 class/類型，斷言強度對等。
 - **helper 函式的宣告位置**：Java 的私有 helper 方法（`AuctionMessageTranslatorTest.expectFailureWithMessage()`、`SnipersTableModelTest.assertRowMatchesSnapshot()`/`cellValue()`、`AuctionSniperEndToEndTest.waitForAnotherAuctionEvent()` 等）都宣告在**所有 `@Test` 方法之後**。對應的 TS 測試檔案已全部核對並改成同樣的順序（`describe()`/`test.describe()` 裡的 `it`/`test` 全部排在前面，helper function 放在最後），不是宣告在檔案開頭——JS/TS 的 function 宣告本來就會 hoisting，所以放在檔案結尾不影響 helper 在測試中被呼叫。
+- **`FakeAuctionServer` 送出訊息前多一層 null 檢查**：Java 版 `currentChat` 為 `null` 時呼叫 `sendMessage()` 會直接產生 `NullPointerException`，沒有額外檢查。TS 版私有 `sendMessage(message: string): Promise<void>` 方法（見上一節）在呼叫 `this.currentChat.sendMessage(message)` 前先用 `if (!this.currentChat) throw new Error('No sniper has joined yet')` 判斷，這個明確的 null 判斷同時解決兩件事：`currentChat` 欄位型別是 `XMPPChat | null`，沒有這層判斷，TypeScript 編譯器會擋下「`this.currentChat` 可能是 `null`」這個型別錯誤，判斷並 `throw` 之後編譯器才能透過型別窄化（narrowing）確定接下來那行 `this.currentChat.sendMessage(message)` 一定不是 `null`；同時執行期也給出比原生 `NullPointerException`/`TypeError` 更明確的錯誤訊息，讓測試在忘記先呼叫 `startSellingItem()`/等 sniper 加入時能立刻看出原因。`sendInvalidMessageContaining()`/`reportPrice()`/`announceClosed()` 都透過這個私有方法送出訊息，跟 Java 版一樣是唯一的送出入口。這是刻意比 Java 版多做的一層防呆，不影響其餘呼叫方式跟 Java 版的對應關係。
 
 ## 未涵蓋的檔案
 

@@ -21,8 +21,10 @@ export class XMPPChat {
     return this.participant;
   }
 
-  sendMessage(messageBody: string): void {
-    this.connection.send(this.participant, messageBody);
+  // 對應 Java 版 Chat.sendMessage()：throws XMPPException 讓呼叫端決定要不要
+  // 接住，這裡讓 connection.send() 的 XMPPError 直接往外傳播，不額外攔截。
+  async sendMessage(messageBody: string): Promise<void> {
+    await this.connection.send(this.participant, messageBody);
   }
 
   addMessageListener(listener: MessageListener): void {

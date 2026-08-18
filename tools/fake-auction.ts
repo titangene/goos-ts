@@ -126,7 +126,7 @@ async function main(): Promise<void> {
 
   promptAgain();
 
-  rl.on('line', line => {
+  rl.on('line', async line => {
     const trimmed = line.trim();
     if (!trimmed) {
       promptAgain();
@@ -145,9 +145,14 @@ async function main(): Promise<void> {
     }
 
     const rawMessage = `${SOL_VERSION_PREFIX}${trimmed}`;
-    sniperChat.sendMessage(rawMessage);
-    console.log(`> sent: ${rawMessage}`);
-    promptAgain();
+    try {
+      await sniperChat.sendMessage(rawMessage);
+      console.log(`> sent: ${rawMessage}`);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      promptAgain();
+    }
   });
 
   rl.on('close', () => {

@@ -71,10 +71,12 @@ export class XMPPAuction implements Auction {
     };
   }
 
+  // 對應 Java 版 try/catch + e.printStackTrace()——已查證 GOOS 全書只有這一處
+  // 處理 XMPPException，作者明確承認這是暫時性折衷但從未在書中後續章節改進，
+  // 這裡對齊原始碼的最終定案，就地接住、印出後不往外傳播。
   private sendMessage(message: string): void {
-    // xmpp.js 的 send() 是 fire-and-forget（Promise，但不像 Smack 的
-    // chat.sendMessage() 會丟 checked XMPPException 讓 Java 版包一層
-    // try/catch + e.printStackTrace()），這裡沒有對應的例外可以接。
-    this.chat.sendMessage(message);
+    this.chat.sendMessage(message).catch((error: unknown) => {
+      console.error(error);
+    });
   }
 }

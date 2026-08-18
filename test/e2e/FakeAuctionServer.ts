@@ -55,12 +55,12 @@ export class FakeAuctionServer {
     });
   }
 
-  sendInvalidMessageContaining(brokenMessage: string): void {
-    this.sendMessage(brokenMessage);
+  async sendInvalidMessageContaining(brokenMessage: string): Promise<void> {
+    await this.sendMessage(brokenMessage);
   }
 
-  reportPrice(price: number, increment: number, bidder: string): void {
-    this.sendMessage(
+  async reportPrice(price: number, increment: number, bidder: string): Promise<void> {
+    await this.sendMessage(
       `SOLVersion: 1.1; Event: PRICE; CurrentPrice: ${price}; Increment: ${increment}; Bidder: ${bidder};`
     );
   }
@@ -81,19 +81,22 @@ export class FakeAuctionServer {
     expect(this.currentChat?.getParticipant()).toBe(sniperId);
   }
 
-  announceClosed(): void {
-    this.sendMessage('SOLVersion: 1.1; Event: CLOSE;');
+  async announceClosed(): Promise<void> {
+    await this.sendMessage('SOLVersion: 1.1; Event: CLOSE;');
   }
 
   async stop(): Promise<void> {
     await this.connection?.disconnect();
   }
 
-  private sendMessage(message: string): void {
-    if (!this.currentChat) {
+  // Java 版 currentChat 是 null 時直接送出訊息會拿到 NullPointerException，
+  // 這裡刻意比 Java 版多做一層檢查、給出更明確的錯誤訊息，見
+  // docs/differences-from-java.md 的說明。
+  private async sendMessage(message: string): Promise<void> {
+    if (this.currentChat === null) {
       throw new Error('No sniper has joined yet');
     }
-    this.currentChat.sendMessage(message);
+    await this.currentChat.sendMessage(message);
   }
 }
 
