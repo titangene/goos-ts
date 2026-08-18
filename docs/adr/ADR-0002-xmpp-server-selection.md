@@ -10,7 +10,7 @@
 
 書中選 XMPP 的實際機制已經逐檔核對過 [sf105/goos-code](https://github.com/sf105/goos-code) 原始碼：`XMPPConnection` 原生 TCP 連線、`connection.login(username, password, resource)` 的 SASL/legacy 密碼登入、`ChatManager`/`MessageListener` 的 1:1 Chat 語意、純文字 SOL 訊息格式（見下方「訊息格式」）。已直接查證 `XMPPAuctionHouse.java`/`AuctionMessageTranslator.java`，確認應用層本身完全沒有額外的身分驗證邏輯：`connect(hostname, username, password)` 把帳密原封不動交給 XMPP server 的 `connection.login()` 驗證，驗證 100% 委託給外部系統。書中也明確表示安全性/驗證強度不在其設計目標內：「XMPP is neither reliable nor secure, and so is unsuitable for transactions. Ensuring any of those qualities is outside our scope.」
 
-書中第 11 章原文「our test script starts up the Openfire server, creates accounts for the Sniper and the auction」交代了測試前要自動建立帳號，但完全沒有交代建帳號的技術手段（已用 NotebookLM 查證書中前後文，也查過 goos-code 公開 repo 的 `tools/`、`build.xml`，都沒有對應程式碼）——這代表选型時「帳號建立機制」是可以自由決定的，只要保持自動化、不引入原書沒有的手動操作即可。
+書中第 11 章原文「our test script starts up the Openfire server, creates accounts for the Sniper and the auction」交代了測試前要自動建立帳號，但完全沒有交代建帳號的技術手段（已查證書中前後文，也查過 goos-code 公開 repo 的 `tools/`、`build.xml`，都沒有對應程式碼）——這代表选型時「帳號建立機制」是可以自由決定的，只要保持自動化、不引入原書沒有的手動操作即可。
 
 ## Considered Options
 
