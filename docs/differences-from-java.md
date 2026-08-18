@@ -28,23 +28,23 @@
 
 ### `auctionId()`：Java 版 `static` + 顯式傳參，TS 版 instance method 讀 `this.connection`
 
-**已驗證事實**（直接讀取本機 `goos-code` 原始碼 `src/auctionsniper/xmpp/XMPPAuctionHouse.java`，2026-08-18）：
-
 ```java
-private final XMPPConnection connection;                       // 第 22 行
+public class XMPPAuctionHouse implements AuctionHouse {
+  private final XMPPConnection connection;
 
-public Auction auctionFor(Item item) {                         // 第 30-32 行
-  return new XMPPAuction(connection, auctionId(item.identifier, connection), failureReporter);
-}
+  public Auction auctionFor(Item item) {
+    return new XMPPAuction(connection, auctionId(item.identifier, connection), failureReporter);
+  }
 
-private static String auctionId(String itemId, XMPPConnection connection) {  // 第 49-51 行
-  return String.format(AUCTION_ID_FORMAT, itemId, connection.getServiceName());
+  private static String auctionId(String itemId, XMPPConnection connection) {
+    return String.format(AUCTION_ID_FORMAT, itemId, connection.getServiceName());
+  }
 }
 ```
 
-`auctionId()` 宣告為 `private static`，`connection` 是 `XMPPAuctionHouse` 的 instance field，但 static method 語法上沒有 `this`、無法直接存取，所以 `auctionFor()` 只能把自己的 `connection` field 當一般引數傳進去。
+`auctionId()` 宣告為 `private static`，static method 語法上沒有 `this`，無法直接讀取 `XMPPAuctionHouse` 的 instance field `connection`；`auctionFor()` 因此改把自己持有的 `connection` field 當成一般引數，傳給 `auctionId()`。
 
-**書中程式碼演進佐證**（直接讀取本機 GOOS 電子書 PDF 原文核對，`pdftotext -layout` 轉出純文字後逐字比對，2026-08-18；書中對 `auctionId()` 有三次現身，行號為轉出後純文字檔的行號，僅供本次查證重現用，不代表印刷頁碼）：
+**書中程式碼演進佐證**（查證書中內容；`auctionId()` 在書中共現身三次）：
 
 - **第 11 章「Passing the First Test」**：`auctionId()` 最初定義在 `Main` 類別裡，由 `public static void main(String... args)` 直接呼叫：
 
@@ -105,13 +105,11 @@ private static String auctionId(String itemId, XMPPConnection connection) {  // 
 
   這段沒有直接點名 `auctionId()`，但可以合理說明：即使 `auctionId()` 後來兩次搬進已經有 instance context 的類別，作者也不覺得有必要把它改寫成 instance method——它本來就是一個只依賴輸入參數、不碰物件狀態的 pure function，維持 `static` 反而更精準地表達這件事。
 
-**結論**：Java 版 `auctionId()` 是 `static` 的原因分兩層——**起源上**，它誕生於 `Main.main()` 這個 static entry point 呼叫的位置，語言語法上別無選擇；**後續兩次重構搬移時**，作者採取的是「保留原簽章、漸進式搬移」的手法，沒有因為新家有 `this.connection` 可用就順手改寫成 instance method，這與書中「物件內部偏好無副作用的函數式寫法」的設計啟發一致。
+**結論**：Java 版 `auctionId()` 是 `static` 的原因分兩層——**起源上**，它誕生於 `Main.main()` 這個 static entry point 呼叫的位置，語言語法上別無選擇；**後續兩次重構搬移時**，作者採取的是「保留原簽章、漸進式搬移」的手法，沒有因為搬入的類別已有 `this.connection` 可用就順手改寫成 instance method，這與書中「物件內部偏好無副作用的函數式寫法」的設計啟發一致。
 
 **TS 版**：`auctionId()` 是一般 instance method（沒有 `static`），直接讀 `this.connection.getServiceName()`，不需要額外的 `connection` 參數。TS 版沒有 Java `Main.main()` 那種語言強制的 static 起點，`XMPPAuctionHouse.ts` 的建構子本來就把 `connection` 存成 `private readonly` field，直接用 instance method 讀自己的欄位是 TS/JS 慣例下最直接的寫法，不是漏改。兩者組出來的 auction JID 字串格式完全一致，差異只在方法本身怎麼取得 `connection`。
 
 ### `AUCTION_RESOURCE`：Java 版 `public`，TS 版 module-private
-
-**已驗證事實**（參考 `goos-code` 原始碼，2026-08-18）：
 
 ```java
 // src/auctionsniper/xmpp/XMPPAuctionHouse.java:19-20
