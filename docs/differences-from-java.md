@@ -14,6 +14,7 @@
 | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | `connection.getChatManager().createChat(auctionJID, translator)`                | `connection.getChatManager().createChat(auctionJID, translator)`                  |
 | `connection.getUser()`                                                          | `connection.getUser()`                                                            |
+| `connection.getServiceName()`                                                   | `connection.getServiceName()`                                                     |
 | `chat.sendMessage(message)`                                                     | `chat.sendMessage(message)`                                                       |
 | `chat.removeMessageListener(translator)`                                        | `chat.removeMessageListener(translator)`                                          |
 | `chat.getParticipant()`                                                         | `chat.getParticipant()`                                                           |
@@ -22,6 +23,8 @@
 | JOIN/BID 訊息完全沒有 Bidder 欄位（身分在連線層級，見 `chat.getParticipant()`） | 同左——真正的 XMPP chat 天生帶有寄件人身分，訊息內容不需要額外帶身分欄位           |
 
 `XMPPAuction.ts`（`chat` 欄位、`chatDisconnectorFor()`）、`FakeAuctionServer.ts`（`connection.getChatManager().addChatListener(...)` 被動接收）都直接用這套物件模型，命名、呼叫順序、方法職責分工都跟 Java 版一致。
+
+`XMPPAuctionHouse.ts` 的 `auctionId()` 也跟 Java 版 `auctionId(String itemId, XMPPConnection connection)` 一致：組 auction JID 用的 hostname 透過 `connection.getServiceName()` 取得，`XMPPAuctionHouse` 本身不直接持有 `domain`——那是只有 `XMPPConnection` 才該知道的連線層參數。`XMPPConnection.connect()` 的 `domain` 參數命名維持不變，沒有比照 Java 版改成 `hostname`，因為那是 xmpp.js `client({ domain, ... })` 本身的命名慣例（見第 2 節）。
 
 ## 2. `XMPPConnection.connect()` 把 Java 的三個步驟合併成一個 async factory
 

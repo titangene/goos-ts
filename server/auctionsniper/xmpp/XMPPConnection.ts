@@ -37,6 +37,13 @@ export class XMPPConnection {
     return this.chatManager;
   }
 
+  // 對應 Java 版 connection.getServiceName()：回傳連線的 XMPP 服務網域，
+  // 讓呼叫端（XMPPAuctionHouse）能組出 auction JID，不需要自己另外持有
+  // domain 這個只有連線層才該知道的參數。
+  getServiceName(): string {
+    return this.xmppClient.jid!.getDomain();
+  }
+
   send(to: string, messageBody: string): void {
     // @xmpp/client 的 send() 回傳 Promise，但這裡是 fire-and-forget
     // （不像 Smack chat.sendMessage() 會丟 checked XMPPException），

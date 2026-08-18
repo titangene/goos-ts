@@ -20,12 +20,10 @@ export class XMPPAuctionHouse implements AuctionHouse {
   static readonly LOG_FILE_NAME = 'auction-sniper.log';
 
   private readonly connection: XMPPConnection;
-  private readonly domain: string;
   private readonly failureReporter: LoggingXMPPFailureReporter;
 
-  private constructor(connection: XMPPConnection, domain: string) {
+  private constructor(connection: XMPPConnection) {
     this.connection = connection;
-    this.domain = domain;
     this.failureReporter = new LoggingXMPPFailureReporter(this.makeLogger());
   }
 
@@ -55,14 +53,17 @@ export class XMPPAuctionHouse implements AuctionHouse {
         password,
         AUCTION_RESOURCE
       );
-      return new XMPPAuctionHouse(connection, domain);
+      return new XMPPAuctionHouse(connection);
     } catch (cause) {
       throw new XMPPAuctionException(`Could not connect to auction: ${serviceUrl}`, cause);
     }
   }
 
+  // 對應 Java 版 auctionId(String itemId, XMPPConnection connection)：hostname
+  // 透過 connection.getServiceName() 取得，不讓 XMPPAuctionHouse 自己直接
+  // 持有 domain 這個本該只有 XMPPConnection 才需要知道的連線層參數。
   private auctionId(itemId: string): string {
-    return `auction-${itemId}@${this.domain}/${AUCTION_RESOURCE}`;
+    return `auction-${itemId}@${this.connection.getServiceName()}/${AUCTION_RESOURCE}`;
   }
 
   private makeLogger(): Logger {
