@@ -33,7 +33,6 @@ export class XMPPConnection {
     return this.xmppClient.jid!.toString();
   }
 
-  // 對應 Java 版 connection.getChatManager()。
   getChatManager(): XMPPChatManager {
     return this.chatManager;
   }
