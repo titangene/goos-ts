@@ -24,7 +24,43 @@
 
 `XMPPAuction.ts`（`chat` 欄位、`chatDisconnectorFor()`）、`FakeAuctionServer.ts`（`connection.getChatManager().addChatListener(...)` 被動接收）都直接用這套物件模型，命名、呼叫順序、方法職責分工都跟 Java 版一致。
 
-`XMPPAuctionHouse.ts` 的 `auctionId()` 也跟 Java 版 `auctionId(String itemId, XMPPConnection connection)` 一致：組 auction JID 用的 hostname 透過 `connection.getServiceName()` 取得，`XMPPAuctionHouse` 本身不直接持有 `domain`——那是只有 `XMPPConnection` 才該知道的連線層參數。`XMPPConnection.connect()` 的 `domain` 參數命名維持不變，沒有比照 Java 版改成 `hostname`，因為那是 xmpp.js `client({ domain, ... })` 本身的命名慣例（見第 2 節）。
+`XMPPAuctionHouse.ts` 的 `auctionId()` 取得 hostname 的方式跟 Java 版一致：都透過 `connection.getServiceName()`，`XMPPAuctionHouse` 本身不直接持有 `domain`——那是只有 `XMPPConnection` 才該知道的連線層參數。`XMPPConnection.connect()` 的 `domain` 參數命名維持不變，沒有比照 Java 版改成 `hostname`，因為那是 xmpp.js `client({ domain, ... })` 本身的命名慣例（見第 2 節）。`auctionId()` 方法本身的簽章（`static` 與否、要不要多帶一個 `connection` 參數）兩版並不相同，差異理由見下方小節。
+
+### `auctionId()`：Java 版 `static` + 顯式傳參，TS 版 instance method 讀 `this.connection`
+
+**已驗證事實**（直接讀取本機 `goos-code` 原始碼 `src/auctionsniper/xmpp/XMPPAuctionHouse.java`，2026-08-18）：
+
+```java
+private final XMPPConnection connection;                       // 第 22 行
+
+public Auction auctionFor(Item item) {                         // 第 30-32 行
+  return new XMPPAuction(connection, auctionId(item.identifier, connection), failureReporter);
+}
+
+private static String auctionId(String itemId, XMPPConnection connection) {  // 第 49-51 行
+  return String.format(AUCTION_ID_FORMAT, itemId, connection.getServiceName());
+}
+```
+
+`auctionId()` 宣告為 `private static`，`connection` 是 `XMPPAuctionHouse` 的 instance field，但 static method 語法上沒有 `this`、無法直接存取，所以 `auctionFor()` 只能把自己的 `connection` field 當一般引數傳進去。
+
+**書中程式碼演進佐證**（透過 `/ask-notebooklm` 查詢 Architecture notebook `10dd8607-203e-4758-a88b-fa2089c31535`，以下兩段逐字引用皆已核對落在回應 `references` 的 `answer_start_char`–`answer_end_char` 範圍內，`cited_text` 完全相符）：
+
+- 較早版本（`auctionId()` 尚未搬到 `XMPPAuctionHouse`）的 `XMPPAuction` 建構子：
+
+  > `public XMPPAuction(XMPPConnection connection, String itemId) { chat = connection.getChatManager().createChat( auctionId(itemId, connection), new AuctionMessageTranslator(connection.getUser(), auctionEventListeners.announce())); }`
+
+  這個版本裡 `connection` 從頭到尾只是建構子的區域參數，這個類別當時沒有把它存成 instance field；`auctionId()` 若設計成 instance method，也讀不到任何 `this.connection`，只能讀區域參數——`static` 在這個階段是唯一合理的選擇。
+
+- 後續把邏輯搬到 `XMPPAuctionHouse` 這個重構步驟的說明：
+
+  > `For consistency, we retrofit XMPPAuctionHouse to the integration test for XMPPAuction, instead of creating XMPPAuctions directly as it does now, and rename the test to XMPPAuctionHouseTest.`
+
+  `XMPPAuctionHouse`（連同它自己會存 `connection` field）是後續才抽出來的類別；`auctionId()` 搬過去時簽章原封不動保留，此時雖然 `XMPPAuctionHouse` 已經有 `this.connection` 可用，`static` 寫法沒有跟著調整。
+
+**TS 版**：`auctionId()` 是一般 instance method（沒有 `static`），直接讀 `this.connection.getServiceName()`，不需要額外的 `connection` 參數。`XMPPAuctionHouse.ts` 的建構子本來就把 `connection` 存成 `private readonly` field，TS/JS 也沒有 Java 那種「`static` 語法上不能碰 `this`」的限制，直接用 instance method 讀自己的欄位是最直接的寫法，不是漏改。兩者組出來的 auction JID 字串格式完全一致，差異只在方法本身怎麼取得 `connection`。
+
+**待查證項目**：Java 版把 `auctionId()` 定義成 `static`，除了「這個類別最初還沒有 `connection` field」這個結構性理由之外，是否還有作者刻意強調的設計原則（例如書中第 6 章談到的「物件內部偏好函數式風格」）？已用 `/ask-notebooklm` 針對這個問題查詢三次，NotebookLM 給出的解釋方向都指向這個章節，但三次查詢回傳的逐字引用都沒有精確覆蓋到這個具體斷言所在的原文，因此無法列為已驗證結論。若需要確認，須人工翻閱書本原文核對。
 
 ## 2. `XMPPConnection.connect()` 把 Java 的三個步驟合併成一個 async factory
 
