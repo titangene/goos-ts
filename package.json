@@ -1,0 +1,29 @@
+{
+  "name": "goos-ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/eslint": "^1.16.0",
+    "nuxt": "^4.5.1",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@nuxt/test-utils": "^4.1.0",
+    "@types/node": "^26.2.0",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.9"
+  },
+  "volta": {
+    "node": "26.2.0",
+    "npm": "11.15.0"
+  }
+}
