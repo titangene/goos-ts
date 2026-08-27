@@ -8,10 +8,15 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.16.0",
+    "eslint": "^10.8.0",
     "nuxt": "^4.5.1",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
@@ -19,6 +24,8 @@
   "devDependencies": {
     "@nuxt/test-utils": "^4.1.0",
     "@types/node": "^26.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.3.9"
   },
