@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@nuxt/eslint": "^1.16.0",
+    "@xmpp/client": "^0.14.0",
     "eslint": "^10.8.0",
     "nuxt": "^4.5.1",
     "vue": "^3.5.40",
@@ -26,6 +27,7 @@
     "@nuxt/test-utils": "^4.1.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
+    "@types/xmpp__client": "^0.14.1",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
