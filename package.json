@@ -12,8 +12,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "nuxt typecheck",
-    "test:e2e": "playwright test"
+    "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json",
+    "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {
     "@nuxt/eslint": "^1.16.0",

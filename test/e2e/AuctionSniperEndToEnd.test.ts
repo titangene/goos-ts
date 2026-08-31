@@ -1,12 +1,15 @@
 import { test } from '@playwright/test';
 
+import { ApplicationRunner } from './ApplicationRunner.ts';
+import { FakeAuctionServer } from './FakeAuctionServer.ts';
+
 test.describe('auction sniper', () => {
   let auction: FakeAuctionServer;
   let application: ApplicationRunner;
 
-  test.beforeEach(() => {
+  test.beforeEach(({ page }) => {
     auction = new FakeAuctionServer('item-54321');
-    application = new ApplicationRunner();
+    application = new ApplicationRunner(page);
   });
 
   test.afterEach(async () => {
