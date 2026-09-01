@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@nuxt/eslint": "^1.16.0",
+    "@vueuse/nuxt": "^14.4.0",
     "@xmpp/client": "^0.14.0",
     "eslint": "^10.8.0",
     "nuxt": "^4.5.1",
