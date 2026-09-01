@@ -2,14 +2,12 @@
 
 ## `AuctionSniperDriver` 不需要視窗標題
 
-尚未實作的決策：
-- `APPLICATION_TITLE` 常數只用來透過 `useHead({ title: APPLICATION_TITLE })` 設定瀏覽器分頁標題，屬於一般網頁良好實踐，跟 driver 和測試斷言無關（見 [`docs/ui.md`：頁面標題](./ui.md#頁面標題)）
-
 對應 commit history（從新到舊）：
 
 - goos-ts [`28fec26d`](https://github.com/titangene/goos-ts/commit/28fec26d4fd3c31432c3925df489d28031d59677)（對應 goos-java [`1b295ee1`](https://github.com/titangene/goos-java/commit/1b295ee1288cb00a31dd9abda417ca4bda1ce88a)）`red` ［11.2.1 p96］
   - 決定 `AuctionSniperDriver` 不需要 `MAIN_WINDOW_NAME`、page title
     - Playwright 的 `page` 是直接參考，不像 Swing 需要在多視窗中搜尋比對，不需要用 page title 定位或斷言視窗
+    - 頁面標題屬於一般網頁良好實踐，跟 driver 和測試斷言無關，實作記錄見 [`docs/ui.md`：頁面標題](./ui.md#頁面標題)（對應 goos-ts `aa63d30`，而非 `28fec26d`）
   - 決定不加 `expect(page).toHaveTitle(...)`，不為了重現 goos-java 在 `1b295ee1` 的兩個失敗訊息而加
     - 這兩個失敗其實是同一個原因：找不到 `Auction Sniper Main` 這個 JFrame，只是分別在測試主體與 `@After` 各自觸發一次例外，JUnit 的 `@After` 在測試失敗後仍然會執行，`ApplicationRunner.stop()` 也會再嘗試尋找同一個視窗，因此又失敗一次
     - Playwright 目前給的單一失敗（`toHaveText` 在 `getByTestId('sniper-status')` 逾時）已經足夠清楚指出這個 baby step 該做的下一件事，不需要為了湊數量另外加斷言
