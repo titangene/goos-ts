@@ -4,6 +4,10 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`149d80a`](https://github.com/titangene/goos-ts/commit/149d80aa86c77de83e3942198003a0e7d66d1979)（對應 goos-java [`fba009d1`](https://github.com/titangene/goos-java/commit/fba009d197e0039b7a8a1845b56606cdde124568)）`red` ［11.2.4 p100］
+  - 決定 production 端用 `public.xmppServiceUrl` 取代 `hostname`
+    - 使用 `@xmpp/client`（xmpp.js）的 `service` 參數取代 Java 版 Smack 的 `hostname`，`client({ service, username, password })` 的 `service` 直接對應
+    - 沿用 `nuxt.config.ts` 既有的 `runtimeConfig` schema：`xmppUsername`、`xmppPassword`（private，只有 server-side 讀得到）、`public.xmppServiceUrl`（public，client 也讀得到），不需要另外新增 `xmppHostname` 欄位
 - goos-ts [`28fec26d`](https://github.com/titangene/goos-ts/commit/28fec26d4fd3c31432c3925df489d28031d59677)（對應 goos-java [`1b295ee1`](https://github.com/titangene/goos-java/commit/1b295ee1288cb00a31dd9abda417ca4bda1ce88a)）`red` ［11.2.1 p96］
   - 決定 `FakeAuctionServer.ts` 的 XMPP 連線設定不透過 Nuxt runtimeConfig
     - `FakeAuctionServer.ts`（測試輔助用的假拍賣伺服器，不是 Nuxt production code 的一部分）直接用一般 TS 常數或 `process.env` 讀值即可
@@ -12,6 +16,9 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`149d80a`](https://github.com/titangene/goos-ts/commit/149d80aa86c77de83e3942198003a0e7d66d1979)（對應 goos-java [`fba009d1`](https://github.com/titangene/goos-java/commit/fba009d197e0039b7a8a1845b56606cdde124568)）`red` ［11.2.4 p100］
+  - 新增 `XMPPChatManager.createChat(peerJid, listener)`，補上 `ChatManager.createChat(userJID, listener)` 主動建立 `Chat` 的路徑（先前只有被動 fallback）
+  - 新增 `XMPPConnection.getServiceName()`，對應 Smack `XMPPConnection.getServiceName()`，用 `@xmpp/client` 的 `xmppClient.jid.domain` 實作
 - goos-ts [`28fec26d`](https://github.com/titangene/goos-ts/commit/28fec26d4fd3c31432c3925df489d28031d59677)（goos-java 尚無對應 commit，屬於架構方向決策）`red` ［11.2.1 p96］
   - 決定將 `@xmpp/client` 封裝成跟 Smack 相同介面的 wrapper，放在 `server/auctionSniper/xmpp/smack/`（詳見 [`docs/directory-structure.md`：目錄結構](./directory-structure.md#目錄結構)）
     - 目的：讓 goos-ts 接近 goos-code 的架構

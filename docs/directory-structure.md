@@ -5,7 +5,7 @@
 ```
 server/
   auctionSniper/
-    main.ts
+    Main.ts
     xmpp/
       smack/
         ...（Smack 相容介面 wrapper，見 docs/xmpp.md：Smack 相容介面封裝）
