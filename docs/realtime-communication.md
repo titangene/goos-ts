@@ -40,3 +40,19 @@
   - 決定此階段不實作缺少 itemId 的防呆
     - `peer.close(code, "Missing itemId")` 這類防呆屬於超前於目前 baby step 的工程，且未來會被刪除，不符合 XP 簡單設計
     - 已實作為 `server/routes/auction-sniper.ts` 用 `searchParams.get('itemId')!` non-null assertion，不做額外檢查
+
+## 收到訊息後更新畫面狀態
+
+對應 commit history（從新到舊）：
+
+- goos-ts [`db0e572`](https://github.com/titangene/goos-ts/commit/db0e572de3c4a01767ce349e9ba6f8e6c2eba335)（對應 goos-java [`ae47c63`](https://github.com/titangene/goos-java/commit/ae47c63521df8bf38e42c9d3c05b6183800f9e41)）`green` ［11.2.4 p102］
+  - 決定收到任何一則 WS 訊息就把狀態設成 "Lost"，不解析訊息內容
+    - `processMessage` 完全忽略訊息內容，收到任何一則訊息就呼叫 `peer.send(STATUS_LOST)`，呼應 goos-java 該步驟「忽略回應實際內容，因為目前只有一種可能回應」的簡化設計（book note 原文：ignoring the response's actual contents since there's only one possible reply right now）
+  - 決定 server 到 client 的推送格式用純字串 `"Lost"`，不包 JSON
+    - client 端不解析內容、原樣顯示，呼應「不解析訊息內容」的決策，也對齊 goos-java `MainWindow` 只管顯示、不管邏輯的分工，`"Lost"` 字面值只在 server 端 `Main.ts` 定義一次，Vue 端不重複寫死
+    - 已查證 `node_modules/crossws` 原始碼（`dist/_chunks/adapter.mjs` 的 `toBufferLike()`）：字串會直接原樣送出，不需要額外序列化
+    - 已查證 `node_modules/@vueuse/core` 原始碼（`dist/index.js` 的 `useWebSocket()`）：回傳的 `data` 是 `shallowRef`，每次收到訊息就同步更新為 `e.data`，client 端可以直接在 template 宣告式綁定 `{{ sniperStatus ?? 'Joining' }}`，不用手動包 `onMessage`
+  - 決定 `joinAuction()` 多帶入 `peer: Peer` 參數（型別 `import type { Peer } from 'crossws'`），在 `processMessage` listener 裡透過閉包呼叫 `peer.send(...)`
+    - 這是 Java 版 `ui.showStatus()` 方法呼叫在 goos-ts 裡唯一對應得到的機制：server 與畫面分屬兩個 process，只能透過已開啟的 WebSocket 傳遞
+  - 決定不引入 `notToBeGCd` 等價機制
+    - 已讀 `server/auctionSniper/xmpp/smack/XMPPChatManager.ts` 原始碼：`createChat()` 本來就把建立的 `XMPPChat` 存進 `this.chat` 欄位持有強參照，Node.js 也沒有 Smack `ChatManager` 那種 WeakReference 機制，不需要對應欄位
