@@ -1,0 +1,37 @@
+name: CD
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.service.name }} to Render
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: Nuxt server
+            id_secret: RENDER_SERVICE_ID_MAIN
+          - name: XMPP Prosody
+            id_secret: RENDER_XMPP_SERVICE_ID_MAIN
+
+    steps:
+      - name: Install Render CLI
+        run: |
+          url=$(curl -fsSL https://api.github.com/repos/render-oss/cli/releases/latest \
+            | jq -r '.assets[] | select(.name | test("linux_amd64\\.zip$")) | .browser_download_url')
+          curl -fsSL -o render-cli.zip "$url"
+          unzip -o render-cli.zip -d render-cli
+          install -m 755 render-cli/cli_v* /usr/local/bin/render
+          render --version
+
+      - name: Deploy
+        run: render deploys create "$RENDER_SERVICE_ID" --commit "$COMMIT_SHA" --wait --confirm --output text
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets[matrix.service.id_secret] }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}

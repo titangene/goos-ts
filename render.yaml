@@ -1,0 +1,48 @@
+# Render Blueprint：main 分支的兩個 Web Service。
+# 欄位依據 https://render.com/docs/blueprint-spec 查證（2026-09-02）。
+#
+# 部署交給 .github/workflows/cd.yml（等 CI 綠燈才部署），所以兩個服務都要
+# 把 autoDeployTrigger 設為 off，避免 Render 自己也搶著部署，細節見
+# docs/deploy.md「關閉 Auto-Deploy，交給 cd.yml 全權負責」。
+#
+# 標了 sync: false 的環境變數，第一次用這個 Blueprint 建立服務時 Render 會
+# 提示手動輸入值，之後 Blueprint sync 也不會覆蓋 Dashboard 上已填的值：
+# - NUXT_PUBLIC_XMPP_SERVICE_URL 跟 PROSODY_VIRTUAL_HOSTS 都要等 XMPP 服務
+#   建立後才知道 Render 分配的網域，建立當下先留空，拿到網域後回填。
+# - NUXT_XMPP_PASSWORD 是帳密，不寫進版控。
+
+services:
+  - type: web
+    name: goos-ts-main
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: node .output/server/index.mjs
+    autoDeployTrigger: off
+    envVars:
+      - key: NUXT_PUBLIC_XMPP_SERVICE_URL
+        sync: false
+      - key: NUXT_XMPP_USERNAME
+        value: sniper
+      - key: NUXT_XMPP_PASSWORD
+        value: sniper
+
+  - type: web
+    name: goos-ts-xmpp-prosody-main
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: docker/xmpp/Dockerfile
+    dockerContext: docker/xmpp
+    healthCheckPath: /
+    autoDeployTrigger: off
+    envVars:
+      - key: PROSODY_ENABLE_MODULES
+        value: websocket
+      - key: PORT
+        value: '5280'
+      - key: PROSODY_VIRTUAL_HOSTS
+        sync: false

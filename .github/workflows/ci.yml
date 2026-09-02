@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: Lint, Format, Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build and start Prosody
+        run: |
+          docker build -t prosody-ci docker/xmpp
+          docker run -d --name prosody -p 5280:5280 \
+            -e PROSODY_ENABLE_MODULES=websocket \
+            -e PROSODY_VIRTUAL_HOSTS=localhost \
+            prosody-ci
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:5280/; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Prosody did not become ready in time" >&2
+          docker logs prosody
+          exit 1
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+  deploy:
+    name: Deploy to Render
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/cd.yml
+    with:
+      commit_sha: ${{ github.sha }}
+    secrets: inherit
