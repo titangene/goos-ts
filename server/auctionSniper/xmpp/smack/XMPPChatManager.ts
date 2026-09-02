@@ -2,6 +2,7 @@ import type { Client } from '@xmpp/client';
 
 import { XMPPChat } from './XMPPChat.ts';
 import type { XMPPChatManagerListener } from './XMPPChatManagerListener.ts';
+import type { XMPPMessageListener } from './XMPPMessageListener.ts';
 
 export class XMPPChatManager {
   private chat: XMPPChat | undefined;
@@ -21,5 +22,11 @@ export class XMPPChatManager {
 
   addChatListener(listener: XMPPChatManagerListener): void {
     this.listener = listener;
+  }
+
+  createChat(peerJid: string, listener: XMPPMessageListener): XMPPChat {
+    this.chat = new XMPPChat(this.xmppClient, peerJid);
+    this.chat.addMessageListener(listener);
+    return this.chat;
   }
 }

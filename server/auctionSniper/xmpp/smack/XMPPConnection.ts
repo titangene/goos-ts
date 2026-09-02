@@ -31,6 +31,10 @@ export class XMPPConnection {
     return this.chatManager;
   }
 
+  getServiceName(): string {
+    return this.xmppClient.jid!.domain;
+  }
+
   async disconnect(): Promise<void> {
     await this.xmppClient.stop();
   }
