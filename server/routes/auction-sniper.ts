@@ -5,6 +5,12 @@ export default defineWebSocketHandler({
     const config = useRuntimeConfig();
     const itemId = new URL(peer.request.url).searchParams.get('itemId')!;
 
-    await Main.main(config.public.xmppServiceUrl, config.xmppUsername, config.xmppPassword, itemId);
+    await Main.main(
+      config.public.xmppServiceUrl,
+      config.xmppUsername,
+      config.xmppPassword,
+      itemId,
+      peer
+    );
   }
 });

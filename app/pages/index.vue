@@ -5,9 +5,11 @@ const route = useRoute();
 const requestUrl = useRequestURL();
 const wsProtocol = requestUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
-useWebSocket(`${wsProtocol}//${requestUrl.host}/auction-sniper?itemId=${route.query.itemId}`);
+const { data: sniperStatus } = useWebSocket(
+  `${wsProtocol}//${requestUrl.host}/auction-sniper?itemId=${route.query.itemId}`
+);
 </script>
 
 <template>
-  <div data-testid="sniper-status">Joining</div>
+  <div data-testid="sniper-status">{{ sniperStatus ?? 'Joining' }}</div>
 </template>
