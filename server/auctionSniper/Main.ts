@@ -1,7 +1,7 @@
 import type { Peer } from 'crossws';
 
-import { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 import { XMPPConnection } from '#server/auctionSniper/xmpp/smack/XMPPConnection.ts';
+import { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 
 const AUCTION_RESOURCE = 'Auction';
 const STATUS_LOST = 'Lost';

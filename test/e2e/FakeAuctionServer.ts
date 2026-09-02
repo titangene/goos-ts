@@ -1,9 +1,9 @@
 import { expect } from '@playwright/test';
 
+import type { XMPPChat } from '#server/auctionSniper/xmpp/smack/XMPPChat.ts';
 import { XMPPConnection } from '#server/auctionSniper/xmpp/smack/XMPPConnection.ts';
 import { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 import type { XMPPMessageListener } from '#server/auctionSniper/xmpp/smack/XMPPMessageListener.ts';
-import type { XMPPChat } from '#server/auctionSniper/xmpp/smack/XMPPChat.ts';
 
 export class FakeAuctionServer {
   private readonly messageListener = new SingleMessageListener();
