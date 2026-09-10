@@ -40,4 +40,6 @@ Test case: sniperJoinsAuctionUntilAuctionCloses
 refactor(ui): extract AuctionEventListener [p42]
 ```
 
-如果使用者貼了書中內文當補充說明，body 除了 `Test case:` 那行以外，一定要加一行精簡摘要，不可省略、不可照抄書中原文，且**只能用英文，不能出現中文字**（避免混用中英文的怪 commit）。
+整個 commit message（subject 與 body，包含 `<紅燈描述>`/`<綠燈描述>`/`<重構描述>`）一律只能用英文，不能出現中文字（避免混用中英文的怪 commit）。
+
+如果使用者貼了書中內文當補充說明，body 除了 `Test case:` 那行以外，一定要加一行精簡摘要，不可省略、不可照抄書中原文。
