@@ -12,8 +12,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json",
+    "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json && tsc --noEmit -p tools/tsconfig.json",
     "test:e2e": "npm run build && playwright test",
+    "fake-auction": "tsx tools/fake-auction.ts",
     "prepare": "husky"
   },
   "dependencies": {

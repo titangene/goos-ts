@@ -47,5 +47,16 @@ export default withNuxt(
         }
       ]
     }
+  },
+  {
+    // tools/ 不是 Nuxt app 的一部分，是用 `tsx` 直接執行的。
+    // `#server` 是 Nitro/Nuxt bundler 內建的虛擬別名，只有經過
+    // Nuxt/Nitro 或 Playwright 自己的 transform pipeline
+    // 才會認得；Node 原生 ESM resolver 不認得 `#server`，
+    // 所以 tools/ 底下改用 `../server/*` 相對路徑匯入
+    files: ['tools/**/*.ts'],
+    rules: {
+      'no-restricted-imports': 'off'
+    }
   }
 );

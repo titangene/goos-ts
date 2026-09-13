@@ -41,3 +41,11 @@ NUXT_XMPP_PASSWORD=sniper
 ```bash
 npm run dev
 ```
+
+## 手動模擬拍賣
+
+用 `tools/fake-auction.ts` 互動式模擬拍賣，見 [`docs/fake-auction.md`](docs/fake-auction.md)。
+
+```bash
+npm run fake-auction -- item-54321
+```
