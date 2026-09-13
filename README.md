@@ -21,7 +21,20 @@ docker run -d -p 5280:5280 \
 
 ```bash
 npm install
+cp .env.example .env.dev.local
 ```
+
+`.env.dev.local` 填本機 Prosody 的連線設定（跟上面「環境需求」建立的帳號對應）：
+
+```
+NUXT_PUBLIC_XMPP_SERVICE_URL=ws://localhost:5280/xmpp-websocket
+NUXT_XMPP_USERNAME=sniper
+NUXT_XMPP_PASSWORD=sniper
+```
+
+- `.env.dev.local` 已被 `.gitignore` 排除，不會進版控
+- `npm run dev` 會讀此檔案
+- 三個值都沒有內建預設值，沒建立此檔案 sniper 會連線失敗
 
 ## 開發
 
