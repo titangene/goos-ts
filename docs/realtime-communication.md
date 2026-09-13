@@ -41,6 +41,38 @@
     - `peer.close(code, "Missing itemId")` 這類防呆屬於超前於目前 baby step 的工程，且未來會被刪除，不符合 XP 簡單設計
     - 已實作為 `server/routes/auction-sniper.ts` 用 `searchParams.get('itemId')!` non-null assertion，不做額外檢查
 
+## 缺少 itemId 時的實際行為（診斷紀錄，非新決策）
+
+現象：瀏覽器開啟不帶 `itemId` query 的 URL（例如 `http://localhost:3000/`）時，畫面會先短暫顯示 `Joining`，接著很快自動變成 `Lost`；帶 `itemId=item-54321` 這類已註冊帳號時，則會停留在 `Joining`。
+
+以下是 Ch11 範圍內 `db0e572` commit（見下方「收到訊息後更新畫面狀態」）之後，目前程式碼會出現的行為：
+
+- **URL 沒帶 `itemId` query 時，WebSocket URL 變成 `itemId=undefined`**：`app/pages/index.vue` 的模版字串內直接用 `route.query.itemId` 來產生 WebSocket URL，找不到參數時這個值為 `undefined`，模版字串處理後就變成 `itemId=undefined` query。此字串一路傳到 server 端，WebSocket route `server/routes/auction-sniper.ts` 讀到的 `itemId` 也是字串 `"undefined"`
+- **帳號有無註冊過，Prosody 的反應完全不同**：`Main.ts` 用此 `itemId` 產生目標帳號的字串，例如：`auction-undefined@localhost/Auction`
+  - **沒註冊過的帳號**（例如 `auction-undefined`）：Sniper 送出 `JOIN` 訊息後，Prosody 幾乎立刻回一封「查無此帳號」的通知：
+    ```xml
+    <message
+      from="auction-undefined@localhost/Auction"
+      to="sniper@localhost/Auction"
+      type="error"
+      xmlns="jabber:client"
+    >
+      <error type="cancel">
+        <service-unavailable xmlns="urn:ietf:params:xml:ns:xmpp-stanzas"/>
+      </error>
+    </message>
+    ```
+    這是 XMPP 協定層級「帳號不存在」的錯誤回應，不是任何拍賣角色送出的訊息；只有 Prosody 有這個錯誤回應，Openfire 對同樣情境不會送出這種錯誤回應。
+  - **有註冊過、但目前離線的帳號**（例如 `auction-item-54321`）：Sniper 送出同樣的 `JOIN` 訊息後，Prosody 靜靜地收下，不會送回任何通知——這就是為什麼帶著已註冊的 itemId 時，畫面會一直停在 `Joining`
+
+- **目前實作不區分「正常訊息」和「錯誤通知」，收到什麼都當成收到訊息處理**：
+  - `XMPPChatManager` 監聽訊息時只檢查「這是不是一則訊息、有沒有寄件人」，不檢查是不是錯誤通知（`docs/xmpp.md`「Smack 相容介面封裝」已說明這是刻意的簡化）
+  - `XMPPChat.deliver()` 也不管訊息實際內容是什麼，一律呼叫已註冊的 listener
+  - `Main.ts` 註冊的 listener 是「收到任何訊息就顯示 Lost」（見下方「收到訊息後更新畫面狀態」）
+  - 以上三個環節加在一起，目前實作會無法區分「Prosody 的錯誤通知」和「真正從對方送來的訊息」
+
+此現象是上一節「此階段不實作缺少 itemId 的防呆」跟下一節「收到任何訊息都顯示 Lost」這兩個既有決策加在一起才會發生的，這不是新發現的 bug，此階段也不需要修。等之後章節補上 itemId 或訊息內容的檢查後，此現象就不會再出現了。
+
 ## 收到訊息後更新畫面狀態
 
 對應 commit history（從新到舊）：
