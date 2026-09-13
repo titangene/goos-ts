@@ -110,4 +110,4 @@ curl -sv -N --http1.1 \
 ## 已知限制
 
 - **Free plan 閒置休眠**：Render 免費方案閒置一段時間後會 spin down，重新喚醒需要一點時間，練習 CI/CD、偶爾驗證的用途可以接受。
-- main 分支已有 [`tools/fake-auction.ts`](../tools/fake-auction.ts)（見 [`docs/fake-auction.md`](fake-auction.md)），但只支援連本機 Prosody，還沒有 poc 分支已有的 `--remote` 選項、`test/integration` 測試層，因此暫時沒有對應的「已部署環境模擬」或「SASL 登入自動化驗證」章節；等 main 分支的 TDD 進度補上對應功能後再補充。
+- main 分支已有 [`npm run fake-auction:remote`](../tools/fake-auction.ts)（見 [`docs/fake-auction.md`：步驟](fake-auction.md#步驟) 第 2 步），可以手動連已部署的 Prosody；但還沒有 poc 分支已有的 `test/integration` 測試層，因此暫時沒有對應的「SASL 登入自動化驗證」章節，等 main 分支的 TDD 進度補上對應功能後再補充。

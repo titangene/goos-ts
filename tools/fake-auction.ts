@@ -4,7 +4,6 @@ import type { XMPPChat } from '../server/auctionSniper/xmpp/smack/XMPPChat.ts';
 import { XMPPConnection } from '../server/auctionSniper/xmpp/smack/XMPPConnection.ts';
 import { XMPPMessage } from '../server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 
-const XMPP_SERVICE_URL = 'ws://localhost:5280/xmpp-websocket';
 const AUCTION_RESOURCE = 'Auction';
 const AUCTION_PASSWORD = 'auction';
 
@@ -15,16 +14,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const serviceUrl = process.env.NUXT_PUBLIC_XMPP_SERVICE_URL;
+  if (!serviceUrl) {
+    console.error(
+      'NUXT_PUBLIC_XMPP_SERVICE_URL is not set (create .env.dev.local, see README, or .env.production.local, see docs/deploy.md)'
+    );
+    process.exit(1);
+  }
+
   let connection: XMPPConnection;
   try {
     connection = await XMPPConnection.connect(
-      XMPP_SERVICE_URL,
+      serviceUrl,
       `auction-${itemId}`,
       AUCTION_PASSWORD,
       AUCTION_RESOURCE
     );
   } catch (error) {
-    console.error(`Could not connect to ${XMPP_SERVICE_URL}:`, error);
+    console.error(`Could not connect to ${serviceUrl}:`, error);
     process.exit(1);
   }
 
@@ -43,7 +50,7 @@ async function main(): Promise<void> {
     }
   });
 
-  console.log(`Selling item ${itemId} as auction-${itemId} on ${XMPP_SERVICE_URL}.`);
+  console.log(`Selling item ${itemId} as auction-${itemId} on ${serviceUrl}.`);
   console.log('Waiting for a sniper to join...');
   console.log('');
   console.log('Commands:');

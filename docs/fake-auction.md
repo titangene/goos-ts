@@ -1,6 +1,6 @@
 # 手動模擬 Sniper 加入拍賣、拍賣結束
 
-`tools/fake-auction.ts` 是一個互動式的假拍賣工具，用 xmpp.js 連本機 Prosody，扮演賣家跟 `server/auctionSniper/xmpp/smack/*` 手動互動。
+`tools/fake-auction.ts` 是一個互動式的假拍賣工具，用 xmpp.js 連 Prosody（`npm run fake-auction` 連本機，`npm run fake-auction:remote` 連已部署的服務），扮演賣家跟 `server/auctionSniper/xmpp/smack/*` 手動互動。
 
 ## 目前的實作範圍
 
@@ -19,6 +19,8 @@ main 分支目前只做到 Ch11（11.2.4）：sniper 送出的 JOIN 訊息、fak
 
 **2. 開一個新的終端機分頁，啟動假拍賣工具（扮演 `item-54321` 的賣家）：**
 
+要連本機的 Prosody 執行：
+
 ```bash
 npm run fake-auction -- item-54321
 ```
@@ -26,6 +28,9 @@ npm run fake-auction -- item-54321
 會印出：
 
 ```
+> fake-auction
+> tsx --env-file=.env.dev.local tools/fake-auction.ts item-54321
+
 Selling item item-54321 as auction-item-54321 on ws://localhost:5280/xmpp-websocket.
 Waiting for a sniper to join...
 
@@ -33,6 +38,17 @@ Commands:
   "close" (end the auction, sniper shows "Lost")
   "quit" (disconnect and exit)
 ```
+
+要連已部署到 Render 的 Prosody（見 [`docs/deploy.md`](deploy.md)）而不是本機，改用：
+
+```bash
+npm run fake-auction:remote -- item-54321
+```
+
+`tools/fake-auction.ts` 一律讀取 `process.env.NUXT_PUBLIC_XMPP_SERVICE_URL`（跟 Nuxt server production 用的是同一個環境變數，見 [`docs/deploy.md`：Nuxt server 如何讀取這些環境變數](deploy.md#nuxt-server-如何讀取這些環境變數)），兩個 npm script 各自讀不同的 env 檔：
+
+- `fake-auction`：`--env-file=.env.dev.local`
+- `fake-auction:remote`：`--env-file=.env.production.local`
 
 **3. 另開一個終端機分頁啟動 Nuxt server：**
 
@@ -64,7 +80,7 @@ quit
 $ npm run fake-auction -- item-54321
 
 > fake-auction
-> tsx tools/fake-auction.ts item-54321
+> tsx --env-file=.env.dev.local tools/fake-auction.ts item-54321
 
 Selling item item-54321 as auction-item-54321 on ws://localhost:5280/xmpp-websocket.
 Waiting for a sniper to join...
