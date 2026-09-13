@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --dotenv .env.dev.local",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -12,8 +12,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json",
+    "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json && tsc --noEmit -p tools/tsconfig.json",
     "test:e2e": "npm run build && playwright test",
+    "fake-auction": "tsx tools/fake-auction.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -36,6 +37,7 @@
     "eslint-plugin-vue": "^10.10.0",
     "husky": "^9.1.7",
     "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vue-tsc": "^3.3.9"
   },
