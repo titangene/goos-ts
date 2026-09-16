@@ -22,6 +22,19 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`bbe240d`](https://github.com/titangene/goos-ts/commit/bbe240dcdaa84fcecbf693081083997e1edb84c5)（對應 goos-java [`ce2cb2f`](https://github.com/titangene/goos-java/commit/ce2cb2fd28225569708f953509bfe27d3a0afe43)）`red` ［12.2.2 p107］
+  - 決定 `XMPPMessage` 補上 `body` 欄位與 `getBody()`，取代原本的空殼 class
+    - 對應 Smack `Message.getBody()`；已核對 `Message.java`：沒設定過 body 就回傳 `null`，`toXML()` 不會產生 `<body/>` 元素
+  - 決定 `XMPPChat` 新增 `getParticipant()`，回傳建構時存的 JID
+    - 對應 Smack `Chat.getParticipant()`；已核對 `Chat.java`：直接回傳建構子存的 `participant` 欄位，沒有其他邏輯
+  - 決定 `XMPPChat.sendMessage()` 參數改成 `text?: string`，取代原本忽略內容的 `XMPPMessage` 參數
+    - 對應 Smack `Chat.sendMessage(String)` 這個 convenience overload；已核對 `Chat.java`：內部等同 `new Message(); message.setBody(text); chat.sendMessage(message)`
+    - `text` 為 `undefined` 時不附加 `<body>` 元素，模擬 Smack `sendMessage(new Message())`（沒呼叫 `setBody()`）的行為，讓 `announceClosed()`／`Main.ts` 的 join 訊息維持原本「沒有 body」的語意
+    - 已核對 `node_modules/ltx/src/createElement.d.ts`：`children` 型別是 `Node[]`（`Node = Element | string`），不包含 `undefined`，即使 runtime 的 `append()` 會忽略 `undefined` child，型別宣告仍不允許直接傳入，因此改用 `Element.append()` 依條件附加 `<body>`，而不是把三元運算式的結果當成 `xml()` 的參數傳入
+  - 決定 `XMPPChat.deliver()` 改成接收 `body: string | undefined` 參數，`XMPPChatManager` 從實際的 stanza 取出 body 傳入
+    - 已核對 `node_modules/ltx/src/Element.js`：`Element.getChildText(name)` 取不到對應子節點時回傳 `null`，呼叫端轉成 `undefined` 跟專案內其他 wrapper 檔案的慣例一致
+  - 連動修正：`server/auctionSniper/Main.ts`、`tools/fake-auction.ts` 呼叫 `sendMessage()` 的地方改成不帶參數，移除沒用到的 `XMPPMessage` import
+    - 已核對 `Main.ts` 的 `processMessage: () => {...}` 是零參數箭頭函式，不會用到 `chat`／`message` 參數，`XMPPMessage`／`XMPPChat` 簽名變動不影響它的行為
 - goos-ts [`149d80a`](https://github.com/titangene/goos-ts/commit/149d80aa86c77de83e3942198003a0e7d66d1979)（對應 goos-java [`fba009d1`](https://github.com/titangene/goos-java/commit/fba009d197e0039b7a8a1845b56606cdde124568)）`red` ［11.2.4 p100］
   - 新增 `XMPPChatManager.createChat(peerJid, listener)`，補上 `ChatManager.createChat(userJID, listener)` 主動建立 `Chat` 的路徑（先前只有被動 fallback）
   - 新增 `XMPPConnection.getServiceName()`，對應 Smack `XMPPConnection.getServiceName()`，用 `@xmpp/client` 的 `xmppClient.jid.domain` 實作

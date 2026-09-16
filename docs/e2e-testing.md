@@ -51,6 +51,20 @@
   - 決定不需要在 `nuxt build` 時給 `--dotenv`，只需在啟動 server 時給 env
     - Nuxt 的 `runtimeConfig` 設計上是在 server 啟動當下讀取 `process.env`（`NUXT_*` 覆寫慣例），而不是在 `nuxt build` 執行的當下就把值固定下來，這是官方文件記載的「build once, configure per environment」設計目標
 
+## FakeAuctionServer 訊息比對機制（receivesAMessage）
+
+對應 commit history（從新到舊）：
+
+- goos-ts [`bbe240d`](https://github.com/titangene/goos-ts/commit/bbe240dcdaa84fcecbf693081083997e1edb84c5)（對應 goos-java [`ce2cb2f`](https://github.com/titangene/goos-java/commit/ce2cb2fd28225569708f953509bfe27d3a0afe43)）`red` ［12.2.2 p107］
+  - 決定 `receivesAMessage()` 改成接收斷言 callback `(body: string | undefined) => void`，取代 Java 版 Hamcrest `Matcher<? super String>`
+    - 目前只有兩種用法：
+      - `hasReceivedJoinRequestFromSniper` 不比對內容，使用自行宣告的 `anything()` 空函式
+      - `hasReceivedBid` 比對字串相等，使用 `expect().toBe()`
+    - 不引入通用 matcher 型別，比對邏輯交給呼叫端自己寫，`receivesAMessage()` 本身只負責等訊息、把 body 交給 callback
+  - 決定用自行宣告的 `anything(): void {}` 空函式表達 Hamcrest `is(anything())` 的「不檢查」語意，不用 Playwright 的 `expect.anything()`
+    - 已核對 `node_modules/playwright/types/test.d.ts` 官方註解：`expect.anything()` 排除 `null`／`undefined`，但 Hamcrest `anything()` 連 `null` 都算通過，兩者不對等
+    - 目前 join 訊息的 body 實際上就是 `undefined`（`Main.ts` 送出的 join 訊息沒有 body），若用 `expect.anything()` 會讓 `hasReceivedJoinRequestFromSniper` 誤判失敗，改用什麼都不斷言的空函式才是行為上正確的等價物
+
 ## npm run test:e2e 內建 npm run build
 
 對應 commit history（從新到舊）：
