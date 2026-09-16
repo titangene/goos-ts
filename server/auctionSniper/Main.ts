@@ -5,6 +5,10 @@ import { XMPPConnection } from '#server/auctionSniper/xmpp/smack/XMPPConnection.
 const AUCTION_RESOURCE = 'Auction';
 const STATUS_LOST = 'Lost';
 
+export const JOIN_COMMAND = 'SOLVersion: 1.1; Command: JOIN;';
+export const bidCommand = (price: number): string =>
+  `SOLVersion: 1.1; Command: BID; Price: ${price};`;
+
 export class Main {
   static async main(
     serviceUrl: string,

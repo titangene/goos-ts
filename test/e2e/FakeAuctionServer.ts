@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 
+import { bidCommand, JOIN_COMMAND } from '#server/auctionSniper/Main.ts';
 import type { XMPPChat } from '#server/auctionSniper/xmpp/smack/XMPPChat.ts';
 import { XMPPConnection } from '#server/auctionSniper/xmpp/smack/XMPPConnection.ts';
 import type { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
@@ -47,15 +48,20 @@ export class FakeAuctionServer {
     );
   }
 
-  async hasReceivedJoinRequestFromSniper(): Promise<void> {
-    await this.messageListener.receivesAMessage(anything);
+  async hasReceivedJoinRequestFrom(sniperId: string): Promise<void> {
+    await this.receivesAMessageMatching(sniperId, body => expect(body).toBe(JOIN_COMMAND));
   }
 
   async hasReceivedBid(bid: number, sniperId: string): Promise<void> {
+    await this.receivesAMessageMatching(sniperId, body => expect(body).toBe(bidCommand(bid)));
+  }
+
+  private async receivesAMessageMatching(
+    sniperId: string,
+    assertBody: (body: string | undefined) => void
+  ): Promise<void> {
+    await this.messageListener.receivesAMessage(assertBody);
     expect(this.currentChat!.getParticipant()).toBe(sniperId);
-    await this.messageListener.receivesAMessage(body =>
-      expect(body).toBe(`SOLVersion: 1.1; Command: BID; Price: ${bid};`)
-    );
   }
 
   async announceClosed(): Promise<void> {
@@ -66,8 +72,6 @@ export class FakeAuctionServer {
     await this.connection!.disconnect();
   }
 }
-
-function anything(): void {}
 
 class SingleMessageListener implements XMPPMessageListener {
   private readonly messages: XMPPMessage[] = [];

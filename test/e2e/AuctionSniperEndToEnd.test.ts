@@ -24,7 +24,7 @@ test.describe('auction sniper', () => {
     await auction.startSellingItem();
 
     await application.startBiddingIn(auction);
-    await auction.hasReceivedJoinRequestFromSniper();
+    await auction.hasReceivedJoinRequestFrom(SNIPER_XMPP_ID);
 
     await auction.announceClosed();
     await application.showsSniperHasLostAuction();
@@ -34,7 +34,7 @@ test.describe('auction sniper', () => {
     await auction.startSellingItem();
 
     await application.startBiddingIn(auction);
-    await auction.hasReceivedJoinRequestFromSniper();
+    await auction.hasReceivedJoinRequestFrom(SNIPER_XMPP_ID);
 
     await auction.reportPrice(1000, 98, 'other bidder');
     await application.hasShownSniperIsBidding();
