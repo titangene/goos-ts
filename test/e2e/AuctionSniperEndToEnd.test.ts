@@ -1,6 +1,6 @@
 import { test } from '@playwright/test';
 
-import { ApplicationRunner } from './ApplicationRunner.ts';
+import { ApplicationRunner, SNIPER_XMPP_ID } from './ApplicationRunner.ts';
 import { FakeAuctionServer } from './FakeAuctionServer.ts';
 
 test.describe('auction sniper', () => {
@@ -25,6 +25,21 @@ test.describe('auction sniper', () => {
 
     await application.startBiddingIn(auction);
     await auction.hasReceivedJoinRequestFromSniper();
+
+    await auction.announceClosed();
+    await application.showsSniperHasLostAuction();
+  });
+
+  test('sniper makes a higher bid but loses', async () => {
+    await auction.startSellingItem();
+
+    await application.startBiddingIn(auction);
+    await auction.hasReceivedJoinRequestFromSniper();
+
+    await auction.reportPrice(1000, 98, 'other bidder');
+    await application.hasShownSniperIsBidding();
+
+    await auction.hasReceivedBid(1098, SNIPER_XMPP_ID);
 
     await auction.announceClosed();
     await application.showsSniperHasLostAuction();

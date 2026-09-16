@@ -10,6 +10,7 @@ const STATUS_LOST = 'Lost';
 
 const XMPP_USERNAME = 'sniper';
 const XMPP_PASSWORD = 'sniper';
+export const SNIPER_XMPP_ID = `${XMPP_USERNAME}@${FakeAuctionServer.XMPP_HOSTNAME}/Auction`;
 
 const PREVIEW_SERVER_PORT = '3000';
 

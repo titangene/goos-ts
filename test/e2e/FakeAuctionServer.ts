@@ -13,6 +13,10 @@ export class FakeAuctionServer {
   private static readonly AUCTION_PASSWORD = 'auction';
   static readonly AUCTION_RESOURCE = 'Auction';
 
+  static get XMPP_HOSTNAME(): string {
+    return new URL(FakeAuctionServer.XMPP_SERVICE_URL).hostname;
+  }
+
   private connection: XMPPConnection | null = null;
   private currentChat: XMPPChat | null = null;
 
