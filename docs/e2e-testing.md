@@ -55,6 +55,16 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`fdba9f5`](https://github.com/titangene/goos-ts/commit/fdba9f5cfa0513c0d7ac4e462fa8db7e915d4f34)（對應 goos-java [`869b44c`](https://github.com/titangene/goos-java/commit/869b44cf7af68b2e14e2a4e4f49a565d2fe95161)）`red` ［12.2.2 p108］
+  - 決定 `hasReceivedJoinRequestFromSniper()` 泛化成 `hasReceivedJoinRequestFrom(sniperId)`，改成比對訊息內容等於 `JOIN_COMMAND`，不再是「不管內容」
+    - `joinAuction()` 目前還沒送出 `JOIN_COMMAND` 內容，這個變更理論上會讓原本綠燈的 `sniperJoinsAuctionUntilAuctionCloses` 也一併變紅，跟 goos-java 這個 commit 同時列出兩個 Test case 的意圖一致；但整體測試仍卡在 `npm run typecheck` 的 `TS2339` 錯誤（`ApplicationRunner.hasShownSniperIsBidding` 還不存在），這一步還無法實際執行驗證
+  - 決定新增 private `receivesAMessageMatching(sniperId, assertBody)`，`hasReceivedJoinRequestFrom`／`hasReceivedBid` 共用，且先等訊息內容比對、再檢查 `getParticipant()`，順序特意反過來
+    - 理由：`currentChat` 是收到第一則訊息時才由被動路徑建立，如果先檢查 `getParticipant()`，`hasReceivedJoinRequestFrom` 呼叫當下 `currentChat` 可能還是 `null`，會丟出執行期錯誤而非清楚的斷言失敗；實作對應 goos-java commit
+  - 決定移除 [`bbe240d`](https://github.com/titangene/goos-ts/commit/bbe240dcdaa84fcecbf693081083997e1edb84c5) 新增的 `anything()` 空函式
+    - `hasReceivedJoinRequestFrom` 現在要求精確比對 `JOIN_COMMAND`，不再需要「不檢查」這個語意
+  - 決定 `Main.ts` 新增 `export const JOIN_COMMAND`、`export const bidCommand(price)`，取代 goos-java `Main.JOIN_COMMAND_FORMAT`／`Main.BID_COMMAND_FORMAT`（`String.format` 搭配 `%d` 佔位符）
+    - `JOIN_COMMAND` 沒有動態值，直接維持字串常數
+    - `BID_COMMAND_FORMAT` 有 `%d` 佔位符，改用函式 `bidCommand(price): string` 回傳組好的字串，共用「格式邏輯」而非「格式字串片段」
 - goos-ts [`bbe240d`](https://github.com/titangene/goos-ts/commit/bbe240dcdaa84fcecbf693081083997e1edb84c5)（對應 goos-java [`ce2cb2f`](https://github.com/titangene/goos-java/commit/ce2cb2fd28225569708f953509bfe27d3a0afe43)）`red` ［12.2.2 p107］
   - 決定 `receivesAMessage()` 改成接收斷言 callback `(body: string | undefined) => void`，取代 Java 版 Hamcrest `Matcher<? super String>`
     - 目前只有兩種用法：
