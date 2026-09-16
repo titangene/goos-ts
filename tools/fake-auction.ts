@@ -2,7 +2,6 @@ import { clearLine, createInterface, cursorTo } from 'node:readline';
 
 import type { XMPPChat } from '../server/auctionSniper/xmpp/smack/XMPPChat.ts';
 import { XMPPConnection } from '../server/auctionSniper/xmpp/smack/XMPPConnection.ts';
-import { XMPPMessage } from '../server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 
 const AUCTION_RESOURCE = 'Auction';
 const AUCTION_PASSWORD = 'auction';
@@ -72,7 +71,7 @@ async function main(): Promise<void> {
       if (!sniperChat) {
         console.log('(no sniper has joined yet)');
       } else {
-        await sniperChat.sendMessage(new XMPPMessage());
+        await sniperChat.sendMessage();
         console.log('> sent: auction closed');
         console.log('');
       }

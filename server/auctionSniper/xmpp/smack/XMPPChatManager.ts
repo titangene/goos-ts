@@ -16,7 +16,7 @@ export class XMPPChatManager {
         this.chat = new XMPPChat(this.xmppClient, stanza.attrs.from);
         this.listener?.chatCreated(this.chat);
       }
-      this.chat.deliver();
+      this.chat.deliver(stanza.getChildText('body') ?? undefined);
     });
   }
 

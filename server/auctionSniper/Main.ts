@@ -1,7 +1,6 @@
 import type { Peer } from 'crossws';
 
 import { XMPPConnection } from '#server/auctionSniper/xmpp/smack/XMPPConnection.ts';
-import { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 
 const AUCTION_RESOURCE = 'Auction';
 const STATUS_LOST = 'Lost';
@@ -30,7 +29,7 @@ export class Main {
         peer.send(STATUS_LOST);
       }
     });
-    await chat.sendMessage(new XMPPMessage());
+    await chat.sendMessage();
   }
 
   private static auctionId(itemId: string, connection: XMPPConnection): string {

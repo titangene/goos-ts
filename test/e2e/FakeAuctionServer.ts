@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 
 import type { XMPPChat } from '#server/auctionSniper/xmpp/smack/XMPPChat.ts';
 import { XMPPConnection } from '#server/auctionSniper/xmpp/smack/XMPPConnection.ts';
-import { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
+import type { XMPPMessage } from '#server/auctionSniper/xmpp/smack/XMPPMessage.ts';
 import type { XMPPMessageListener } from '#server/auctionSniper/xmpp/smack/XMPPMessageListener.ts';
 
 export class FakeAuctionServer {
@@ -41,18 +41,33 @@ export class FakeAuctionServer {
     return this.itemId;
   }
 
+  async reportPrice(price: number, increment: number, bidder: string): Promise<void> {
+    await this.currentChat!.sendMessage(
+      `SOLVersion: 1.1; Event: PRICE; CurrentPrice: ${price}; Increment: ${increment}; Bidder: ${bidder};`
+    );
+  }
+
   async hasReceivedJoinRequestFromSniper(): Promise<void> {
-    await this.messageListener.receivesAMessage();
+    await this.messageListener.receivesAMessage(anything);
+  }
+
+  async hasReceivedBid(bid: number, sniperId: string): Promise<void> {
+    expect(this.currentChat!.getParticipant()).toBe(sniperId);
+    await this.messageListener.receivesAMessage(body =>
+      expect(body).toBe(`SOLVersion: 1.1; Command: BID; Price: ${bid};`)
+    );
   }
 
   async announceClosed(): Promise<void> {
-    await this.currentChat!.sendMessage(new XMPPMessage());
+    await this.currentChat!.sendMessage();
   }
 
   async stop(): Promise<void> {
     await this.connection!.disconnect();
   }
 }
+
+function anything(): void {}
 
 class SingleMessageListener implements XMPPMessageListener {
   private readonly messages: XMPPMessage[] = [];
@@ -61,7 +76,9 @@ class SingleMessageListener implements XMPPMessageListener {
     this.messages.push(message);
   }
 
-  async receivesAMessage(): Promise<void> {
-    await expect.poll(() => this.messages.shift(), { timeout: 5000 }).toBeDefined();
+  async receivesAMessage(assertBody: (body: string | undefined) => void): Promise<void> {
+    let message: XMPPMessage | undefined;
+    await expect.poll(() => (message = this.messages.shift()), { timeout: 5000 }).toBeDefined();
+    assertBody(message!.getBody());
   }
 }
