@@ -4,6 +4,12 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`1b21fb5`](https://github.com/titangene/goos-ts/commit/1b21fb565ffa29d5edb6d02a4c6d08ddbd9e839b)（對應 goos-java [`ad9b7e5`](https://github.com/titangene/goos-java/commit/ad9b7e5d997a1ce5dc1631223c14fdd8845463eb)）`red` ［12.2.1 p106］
+  - 決定 `FakeAuctionServer` 新增 `static get XMPP_HOSTNAME()` getter，從既有 `XMPP_SERVICE_URL` 動態解析 domain，不另存一份字面常數
+    - goos-java 的 `FakeAuctionServer.java` 有獨立的 `XMPP_HOSTNAME = "localhost"` 常數，`ApplicationRunner.SNIPER_XMPP_ID = SNIPER_ID + "@" + XMPP_HOSTNAME + "/Auction"` 直接引用它
+    - goos-ts 在 `149d80a`（見下方）已決定用完整的 `XMPP_SERVICE_URL` 取代分離的 hostname，沒有現成常數可用；用 `new URL(XMPP_SERVICE_URL).hostname` 動態解析，維持「只有一個 XMPP 連線設定來源」，避免 `XMPP_SERVICE_URL` 跟另一個獨立 hostname 常數未來改值時互相不同步
+    - getter 命名沿用 `XMPP_HOSTNAME`，跟 goos-java 的常數名稱一致，即使底層實作方式不同（衍生值 vs. 獨立常數）
+  - 決定 `ApplicationRunner.ts` 新增 `export const SNIPER_XMPP_ID`，resource 沿用 goos-java 寫死的字面 `"Auction"`，不引用 `FakeAuctionServer.AUCTION_RESOURCE`
 - goos-ts [`149d80a`](https://github.com/titangene/goos-ts/commit/149d80aa86c77de83e3942198003a0e7d66d1979)（對應 goos-java [`fba009d1`](https://github.com/titangene/goos-java/commit/fba009d197e0039b7a8a1845b56606cdde124568)）`red` ［11.2.4 p100］
   - 決定 production 端用 `public.xmppServiceUrl` 取代 `hostname`
     - 使用 `@xmpp/client`（xmpp.js）的 `service` 參數取代 Java 版 Smack 的 `hostname`，`client({ service, username, password })` 的 `service` 直接對應
