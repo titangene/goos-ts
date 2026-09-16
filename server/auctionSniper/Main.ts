@@ -33,7 +33,7 @@ export class Main {
         peer.send(STATUS_LOST);
       }
     });
-    await chat.sendMessage();
+    await chat.sendMessage(JOIN_COMMAND);
   }
 
   private static auctionId(itemId: string, connection: XMPPConnection): string {

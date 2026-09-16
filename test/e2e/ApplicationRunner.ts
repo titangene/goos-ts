@@ -6,6 +6,7 @@ import { AuctionSniperDriver } from './AuctionSniperDriver.ts';
 import { FakeAuctionServer } from './FakeAuctionServer.ts';
 
 const STATUS_JOINING = 'Joining';
+const STATUS_BIDDING = 'Bidding';
 const STATUS_LOST = 'Lost';
 
 const XMPP_USERNAME = 'sniper';
@@ -39,6 +40,10 @@ export class ApplicationRunner {
 
     this.driver = new AuctionSniperDriver(this.page);
     await this.driver.showsSniperStatus(STATUS_JOINING);
+  }
+
+  async hasShownSniperIsBidding(): Promise<void> {
+    await this.driver!.showsSniperStatus(STATUS_BIDDING);
   }
 
   async showsSniperHasLostAuction(): Promise<void> {
