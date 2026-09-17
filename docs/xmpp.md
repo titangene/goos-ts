@@ -4,7 +4,11 @@
 
 對應 commit history（從新到舊）：
 
-- goos-ts [`8b5e444`](https://github.com/titangene/goos-ts/commit/8b5e444598265323563b9fe87a02089832738dfb)（對應 goos-java [`504d7ff`](https://github.com/titangene/goos-java/commit/504d7ff03461c8fbf2dbb75b22e1f30b67c2e6fa)）`red` ［12.3.2 p116］
+- goos-ts [`744277e`](https://github.com/titangene/goos-ts/commit/744277e2508c1ef313f2d75937f620688b18fcce)（對應 goos-java [`4098f83`](https://github.com/titangene/goos-java/commit/4098f83411c2c08d6655b8f372dce557cf047e9e)）`green` ［12.3.2 p116］
+  - 決定 `AuctionMessageTranslator` 建構子改用 `#server/...` path alias import `AuctionEventListener`，不用相對路徑 `../AuctionEventListener.ts`
+    - production code 之間互相 import 原本都用相對路徑（例如 `./smack/XMPPChat.ts`），這裡改用跟 `test/e2e/`／`test/unit/` 一致的 `#server/...` 別名，是本步驟實際採用的寫法
+  - 決定 `processMessage()` 不管參數內容，收到任何訊息就呼叫 `listener.auctionClosed()`，跟 goos-java 這步「先證明兩者有接上，還不解析內容」的刻意簡化一致
+- goos-ts [`671b553`](https://github.com/titangene/goos-ts/commit/671b553aa08a90a3347ff9e55e9a70c4e275e5ae)（對應 goos-java [`504d7ff`](https://github.com/titangene/goos-java/commit/504d7ff03461c8fbf2dbb75b22e1f30b67c2e6fa)）`red` ［12.3.2 p116］
   - 決定 `UNUSED_CHAT` 用 `null as unknown as XMPPChat`，不用 `null!` non-null assertion
     - 理由：明確表達「刻意的不安全轉型」，不是遺漏的 null 檢查
   - 相關議題：[`docs/unit-testing.md`：測試框架與 mock 工具選擇](./unit-testing.md#測試框架與-mock-工具選擇)
