@@ -26,6 +26,10 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`fbec61d`](https://github.com/titangene/goos-ts/commit/fbec61dbf909a35a0c40e5a98845766a733a17cd)（對應 goos-java [`f80ef84`](https://github.com/titangene/goos-java/commit/f80ef8420785b04f9ddc54b753d227b1d7cbbb3a)）`red` ［12.2.3 p110］
+  - 已驗證：`stop()` 用 `kill()` 整個結束 server process，沒有重現 goos-java 這步在 `f80ef84` 遇到的 XMPP resource conflict(409)
+    - goos-java 的 sniper XMPP 連線是在同一個 JVM 背景 Thread 建立，`ApplicationRunner.stop()` 只有 `driver.dispose()`（關 Swing 視窗），從未呼叫 `connection.disconnect()`，導致連續兩個測項用同一組帳號／resource 登入時互相衝突
+    - goos-ts 每個測項都是獨立 spawn 一個 Node server process，`kill()` 會終止整個 process，連線生命週期比 Java 版乾淨，兩個測項之間沒有殘留連線衝突（已實際跑 Playwright 確認）
 - goos-ts [`28fec26d`](https://github.com/titangene/goos-ts/commit/28fec26d4fd3c31432c3925df489d28031d59677)（對應 goos-java [`1b295ee1`](https://github.com/titangene/goos-java/commit/1b295ee1288cb00a31dd9abda417ca4bda1ce88a)）`red` ［11.2.1 p96］
   - 決定手動 `spawn`/`kill` 管理 server process，而非 Playwright 內建 `webServer`
     - 理由：更貼近 Java 版 `ApplicationRunner` 逐測試管理 app 生命週期的結構

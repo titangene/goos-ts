@@ -16,3 +16,10 @@
   - 決定 `STATUS_JOINING`（"Joining"）production 端與 test 端各自 inline，不建共用常數
     - production（Vue SFC）與 test（Playwright）是分開的 runtime，沒有 Java 靜態常數的共享機制
     - 沿用既有模式：頁面標題、`data-testid` 目前也都是兩處各自內嵌字面值，`test/e2e/ApplicationRunner.ts` 早在 11.2.1（[`28fec26d`](https://github.com/titangene/goos-ts/commit/28fec26d4fd3c31432c3925df489d28031d59677)）就已自行定義 `STATUS_JOINING`
+
+## Sniper 狀態文字（STATUS_BIDDING）
+
+對應 commit history（從新到舊）：
+
+- goos-ts [`fbec61d`](https://github.com/titangene/goos-ts/commit/fbec61dbf909a35a0c40e5a98845766a733a17cd)（對應 goos-java [`f80ef84`](https://github.com/titangene/goos-java/commit/f80ef8420785b04f9ddc54b753d227b1d7cbbb3a)）`red` ［12.2.3 p110］
+  - 沿用 [`STATUS_JOINING`](#sniper-狀態文字status_joining) 已確立的模式：module-private、production／test 各自 inline，不建共用常數
