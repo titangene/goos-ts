@@ -65,7 +65,7 @@ export class FakeAuctionServer {
   }
 
   async announceClosed(): Promise<void> {
-    await this.currentChat!.sendMessage();
+    await this.currentChat!.sendMessage('SOLVersion: 1.1; Event: CLOSE;');
   }
 
   async stop(): Promise<void> {
