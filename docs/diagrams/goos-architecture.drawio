@@ -1,53 +1,53 @@
 <mxfile host="Electron" pages="4">
   <diagram name="goos-ts production 架構" id="p1_ts_prod">
-    <mxGraphModel dx="849" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="410" background="#12141a" math="0" shadow="0">
+    <mxGraphModel dx="849" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="410" background="light-dark(#12141a,#12141a)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="p1_ts_prod_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#12141a;strokeColor=none;" value="" vertex="1">
+        <mxCell id="p1_ts_prod_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#12141A,#000000);strokeColor=none;" value="" vertex="1">
           <mxGeometry height="410" width="700" as="geometry" />
         </mxCell>
-        <mxCell id="p1_proc_browser" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6ea8e0;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#6ea8e0;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Browser Process（Chromium）" vertex="1">
+        <mxCell id="p1_proc_browser" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#9abfe4,#9abfe4);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Browser Process（Chromium）" vertex="1">
           <mxGeometry height="120" width="240" x="20" y="75" as="geometry" />
         </mxCell>
-        <mxCell id="p1_proc_server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6ea8e0;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#6ea8e0;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Nuxt/Nitro Server Process" vertex="1">
+        <mxCell id="p1_proc_server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#9abfe4,#9abfe4);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Nuxt/Nitro Server Process" vertex="1">
           <mxGeometry height="370" width="270" x="410" y="20" as="geometry" />
         </mxCell>
-        <mxCell id="p1_note_eventloop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#a7adba;dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="Node.js 單執行緒 event loop&lt;br&gt;(對比 goos-java：Swing 需要額外的 EDT thread)" vertex="1">
+        <mxCell id="p1_note_eventloop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#a7adba,#a7adba);dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="Node.js 單執行緒 event loop&lt;br&gt;(對比 goos-java：Swing 需要額外的 EDT thread)" vertex="1">
           <mxGeometry height="44" width="230" x="430" y="56" as="geometry" />
         </mxCell>
-        <mxCell id="p1_cls_indexvue" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Vue component»&lt;br&gt;index.vue" vertex="1">
+        <mxCell id="p1_cls_indexvue" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Vue component»&lt;br&gt;index.vue" vertex="1">
           <mxGeometry height="60" width="200" x="40" y="116" as="geometry" />
         </mxCell>
-        <mxCell id="p1_cls_route" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Nitro route handler»&lt;br&gt;auction-sniper" vertex="1">
+        <mxCell id="p1_cls_route" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Nitro route handler»&lt;br&gt;auction-sniper" vertex="1">
           <mxGeometry height="60" width="230" x="430" y="116" as="geometry" />
         </mxCell>
-        <mxCell id="p1_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main" vertex="1">
+        <mxCell id="p1_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main" vertex="1">
           <mxGeometry height="60" width="230" x="430" y="213" as="geometry" />
         </mxCell>
-        <mxCell id="p1_cls_xmppconn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(@xmpp/client 套件)" vertex="1">
+        <mxCell id="p1_cls_xmppconn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(@xmpp/client 套件)" vertex="1">
           <mxGeometry height="60" width="230" x="430" y="310" as="geometry" />
         </mxCell>
-        <mxCell id="p1_docker_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2560ff;dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=#2560ff;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Docker" vertex="1">
+        <mxCell id="p1_docker_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#2560ff,#2560ff);dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=light-dark(#2560ff,#2560ff);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Docker" vertex="1">
           <mxGeometry height="110" width="180" x="40" y="280" as="geometry" />
         </mxCell>
-        <mxCell id="p1_ext_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#a78bfa;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Prosody&lt;br&gt;XMPP Server" vertex="1">
+        <mxCell id="p1_ext_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#a78bfa,#a78bfa);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Prosody&lt;br&gt;XMPP Server" vertex="1">
           <mxGeometry height="60" width="140" x="60" y="310" as="geometry" />
         </mxCell>
-        <mxCell id="p1_e_ws" edge="1" parent="1" source="p1_cls_indexvue" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#6ea8e0;strokeWidth=1.4;fontColor=#6ea8e0;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p1_cls_route" value="WebSocket&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…/auction-sniper&lt;/font&gt;">
+        <mxCell id="p1_e_ws" edge="1" parent="1" source="p1_cls_indexvue" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.4;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p1_cls_route" value="WebSocket&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…/auction-sniper&lt;/font&gt;">
           <mxGeometry relative="1" x="-0.0071" y="18" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p1_e_route_main" edge="1" parent="1" source="p1_cls_route" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;" target="p1_cls_main" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;Main.main()&lt;/font&gt;">
+        <mxCell id="p1_e_route_main" edge="1" parent="1" source="p1_cls_route" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;" target="p1_cls_main" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;Main.main()&lt;/font&gt;">
           <mxGeometry relative="1" x="-0.3189" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p1_e_main_conn" edge="1" parent="1" source="p1_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;" target="p1_cls_xmppconn" value="">
+        <mxCell id="p1_e_main_conn" edge="1" parent="1" source="p1_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;" target="p1_cls_xmppconn" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p1_e_conn_prosody" edge="1" parent="1" source="p1_cls_xmppconn" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#6ea8e0;strokeWidth=1.4;fontColor=#6ea8e0;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p1_ext_prosody" value="XMPP over WebSocket (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…:5280/xmpp-websocket&lt;/font&gt;">
+        <mxCell id="p1_e_conn_prosody" edge="1" parent="1" source="p1_cls_xmppconn" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.4;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p1_ext_prosody" value="XMPP over WebSocket (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…:5280/xmpp-websocket&lt;/font&gt;">
           <mxGeometry relative="1" x="0.0058" y="-18" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -56,90 +56,92 @@
     </mxGraphModel>
   </diagram>
   <diagram name="goos-ts E2E 測試架構" id="p2_ts_e2e">
-    <mxGraphModel dx="1230" dy="830" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1110" pageHeight="500" background="#12141a" math="0" shadow="0">
+    <mxGraphModel dx="1230" dy="830" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1110" pageHeight="500" background="light-dark(#12141a,#12141a)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="p2_ts_e2e_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#12141a;strokeColor=none;" value="" vertex="1">
+        <mxCell id="p2_ts_e2e_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#12141A,#000000);strokeColor=none;" value="" vertex="1">
           <mxGeometry height="500" width="1110" as="geometry" />
         </mxCell>
-        <mxCell id="p2_proc_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6ea8e0;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#6ea8e0;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Playwright Test Process" vertex="1">
+        <mxCell id="p2_proc_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#9abfe4,#9abfe4);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Playwright Test Process" vertex="1">
           <mxGeometry height="392" width="380" x="20" y="20" as="geometry" />
         </mxCell>
-        <mxCell id="p2_proc_browser" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6ea8e0;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#6ea8e0;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Browser Process (Chromium)" vertex="1">
+        <mxCell id="p2_proc_browser" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#9abfe4,#9abfe4);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Browser Process (Chromium)" vertex="1">
           <mxGeometry height="124" width="192" x="590" y="120" as="geometry" />
         </mxCell>
-        <mxCell id="p2_proc_server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6ea8e0;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#6ea8e0;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Nuxt/Nitro Server Process" vertex="1">
+        <mxCell id="p2_proc_server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#9abfe4,#9abfe4);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Nuxt/Nitro Server Process" vertex="1">
           <mxGeometry height="410" width="260" x="830" y="20" as="geometry" />
         </mxCell>
-        <mxCell id="p2_note_eventloop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#a7adba;dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="Node.js 單執行緒 event loop&lt;br&gt;(對比 goos-java：Swing 需要額外的 EDT thread)" vertex="1">
+        <mxCell id="p2_note_eventloop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#a7adba,#a7adba);dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="Node.js 單執行緒 event loop&lt;br&gt;(對比 goos-java：Swing 需要額外的 EDT thread)" vertex="1">
           <mxGeometry height="44" width="230" x="842" y="56" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«test»&lt;br&gt;AuctionSniperEndToEnd" vertex="1">
+        <mxCell id="p2_cls_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«test»&lt;br&gt;AuctionSniperEndToEnd" vertex="1">
           <mxGeometry height="60" width="210" x="105" y="60" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_apprunner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;ApplicationRunner" vertex="1">
+        <mxCell id="p2_cls_apprunner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;ApplicationRunner" vertex="1">
           <mxGeometry height="60" width="125" x="259" y="150" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_driver" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;AuctionSniperDriver" vertex="1">
+        <mxCell id="p2_cls_driver" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;AuctionSniperDriver" vertex="1">
           <mxGeometry height="60" width="125" x="259" y="238" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_fakeauction" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#3d6690;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;FakeAuctionServer&lt;br&gt;(角色：auction-item-54321 拍賣方)" vertex="1">
+        <mxCell id="p2_cls_fakeauction" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#377abe,#377abe);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;FakeAuctionServer&lt;br&gt;(角色：auction-item-54321 拍賣方)" vertex="1">
           <mxGeometry height="60" width="200" x="40" y="150" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_xmppconn_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#3d6690;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(@xmpp/client 套件)" vertex="1">
+        <mxCell id="p2_cls_xmppconn_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#377abe,#377abe);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(@xmpp/client 套件)" vertex="1">
           <mxGeometry height="60" width="200" x="40" y="238" as="geometry" />
         </mxCell>
-        <mxCell id="p2_note_build" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#a7adba;dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=#a7adba;fontSize=9;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="先 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;npm run build&amp;nbsp;&lt;/font&gt;(&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;nuxt build&lt;/font&gt;) 產出 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;.output/&lt;/font&gt;，&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ApplicationRunner&lt;/font&gt; 才能&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;spawn(&#39;node&#39;, [&#39;.output/server/index.mjs&#39;])&lt;/font&gt;" vertex="1">
+        <mxCell id="p2_note_build" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#a7adba,#a7adba);dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=light-dark(#a7adba,#a7adba);fontSize=9;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="先 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;npm run build&amp;nbsp;&lt;/font&gt;(&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;nuxt build&lt;/font&gt;) 產出 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;.output/&lt;/font&gt;，&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ApplicationRunner&lt;/font&gt; 才能&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;spawn(&#39;node&#39;, [&#39;.output/server/index.mjs&#39;])&lt;/font&gt;" vertex="1">
           <mxGeometry height="54" width="250" x="20" y="430" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_indexvue" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Vue component»&lt;br&gt;index.vue" vertex="1">
+        <mxCell id="p2_cls_indexvue" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Vue component»&lt;br&gt;index.vue" vertex="1">
           <mxGeometry height="60" width="150" x="611" y="162" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_route" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Nitro route handler»&lt;br&gt;auction-sniper" vertex="1">
+        <mxCell id="p2_cls_route" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«Nitro route handler»&lt;br&gt;auction-sniper" vertex="1">
           <mxGeometry height="60" width="135" x="930" y="120" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main&lt;br&gt;(角色：sniper)" vertex="1">
+        <mxCell id="p2_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main&lt;br&gt;(角色：sniper)" vertex="1">
           <mxGeometry height="60" width="135" x="930" y="238" as="geometry" />
         </mxCell>
-        <mxCell id="p2_cls_xmppconn_server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#6ea8e0;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(@xmpp/client 套件)" vertex="1">
+        <mxCell id="p2_cls_xmppconn_server" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(@xmpp/client 套件)" vertex="1">
           <mxGeometry height="60" width="135" x="930" y="340" as="geometry" />
         </mxCell>
-        <mxCell id="p2_docker_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2560ff;dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=#2560ff;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Docker" vertex="1">
+        <mxCell id="p2_docker_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#2560ff,#2560ff);dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=light-dark(#2560ff,#2560ff);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Docker" vertex="1">
           <mxGeometry height="120" width="170" x="460" y="298" as="geometry" />
         </mxCell>
-        <mxCell id="p2_ext_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#a78bfa;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Prosody&lt;br&gt;XMPP Server" vertex="1">
+        <mxCell id="p2_ext_prosody" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#a78bfa,#a78bfa);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Prosody&lt;br&gt;XMPP Server" vertex="1">
           <mxGeometry height="60" width="125" x="482.5" y="340" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_test_apprunner" edge="1" parent="1" source="p2_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_apprunner" value="">
+        <mxCell id="p2_e_test_apprunner" edge="1" parent="1" source="p2_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_apprunner" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_apprunner_driver" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_driver" value="">
+        <mxCell id="p2_e_apprunner_driver" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_driver" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_fakeauction_conn" edge="1" parent="1" source="p2_cls_fakeauction" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#3d6690;strokeWidth=1.4;fontColor=#3d6690;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_xmppconn_test" value="">
+        <mxCell id="p2_e_fakeauction_conn" edge="1" parent="1" source="p2_cls_fakeauction" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#377abe,#377abe);strokeWidth=1.4;fontColor=light-dark(#377abe,#377abe);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_xmppconn_test" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_test_fakeauction" edge="1" parent="1" source="p2_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_fakeauction" value="">
+        <mxCell id="p2_e_test_fakeauction" edge="1" parent="1" source="p2_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p2_cls_fakeauction" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_apprunner_fakeauction" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="p2_cls_fakeauction" value="">
+        <mxCell id="p2_e_apprunner_fakeauction" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="p2_cls_fakeauction" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_goto" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2_proc_browser" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;page.goto(url)&lt;br&gt;&lt;/font&gt;Playwright 控制瀏覽器 (HTTP)">
+        <mxCell id="p2_e_goto" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2_proc_browser" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;page.goto(url)&lt;br&gt;&lt;/font&gt;Playwright 控制瀏覽器 (HTTP)">
           <mxGeometry relative="1" x="-0.0044" y="17" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p2_e_ws" edge="1" parent="1" source="p2_cls_indexvue" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#6ea8e0;strokeWidth=1.4;fontColor=#6ea8e0;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p2_cls_route" value="WebSocket&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…/auction-sniper&lt;/font&gt;">
+        <mxCell id="p2_e_ws" edge="1" parent="1" source="p2_cls_indexvue" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.4;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p2_cls_route" value="WebSocket&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…/auction-sniper&lt;/font&gt;">
           <mxGeometry relative="1" x="0.0596" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p2_e_driver_dom" edge="1" parent="1" source="p2_cls_driver" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="p2_cls_indexvue" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;getByTestId(&#39;sniper-status&#39;)&lt;/font&gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="p2_e_driver_dom" edge="1" parent="1" source="p2_cls_driver" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="p2_cls_indexvue" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;getByTestId(&#39;sniper-status&#39;)&lt;/font&gt;">
+          <mxGeometry relative="1" x="-0.0024" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="p2_e_spawn" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=#6ea8e0;strokeWidth=1.4;fontColor=#6ea8e0;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.89;exitY=-0.007;exitDx=0;exitDy=0;entryX=-0.004;entryY=0.157;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;exitPerimeter=0;" target="p2_proc_server" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;spawn(&#39;node&#39;, [&#39;.output/server/index.mjs&#39;])&lt;/font&gt;">
+        <mxCell id="p2_e_spawn" edge="1" parent="1" source="p2_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.4;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.89;exitY=-0.007;exitDx=0;exitDy=0;entryX=-0.004;entryY=0.157;entryDx=0;entryDy=0;entryPerimeter=0;edgeStyle=orthogonalEdgeStyle;exitPerimeter=0;" target="p2_proc_server" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;spawn(&#39;node&#39;, [&#39;.output/server/index.mjs&#39;])&lt;/font&gt;">
           <mxGeometry relative="1" x="0.1562" y="12" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
@@ -147,18 +149,18 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="p2_e_route_main" edge="1" parent="1" source="p2_cls_route" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;" target="p2_cls_main" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;Main.main()&lt;/font&gt;">
+        <mxCell id="p2_e_route_main" edge="1" parent="1" source="p2_cls_route" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;" target="p2_cls_main" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;Main.main()&lt;/font&gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_main_conn" edge="1" parent="1" source="p2_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;" target="p2_cls_xmppconn_server" value="">
+        <mxCell id="p2_e_main_conn" edge="1" parent="1" source="p2_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;" target="p2_cls_xmppconn_server" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p2_e_conn_prosody_sniper" edge="1" parent="1" source="p2_cls_xmppconn_server" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#6ea8e0;strokeWidth=1.4;fontColor=#6ea8e0;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p2_ext_prosody" value="XMPP over WebSocket (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…:5280/xmpp-websocket&lt;/font&gt;">
+        <mxCell id="p2_e_conn_prosody_sniper" edge="1" parent="1" source="p2_cls_xmppconn_server" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#9abfe4,#9abfe4);strokeWidth=1.4;fontColor=light-dark(#9abfe4,#9abfe4);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p2_ext_prosody" value="XMPP over WebSocket (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…:5280/xmpp-websocket&lt;/font&gt;">
           <mxGeometry relative="1" x="0.2548" y="-17" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p2_e_conn_prosody_auction" edge="1" parent="1" source="p2_cls_xmppconn_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#3d6690;strokeWidth=1.4;fontColor=#3d6690;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;startArrow=block;startFill=1;" target="p2_ext_prosody" value="XMPP over WebSocket (角色：拍賣方)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…:5280/xmpp-websocket&lt;/font&gt;">
+        <mxCell id="p2_e_conn_prosody_auction" edge="1" parent="1" source="p2_cls_xmppconn_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#377abe,#377abe);strokeWidth=1.4;fontColor=light-dark(#377abe,#377abe);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;startArrow=block;startFill=1;" target="p2_ext_prosody" value="XMPP over WebSocket (角色：拍賣方)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;ws://…:5280/xmpp-websocket&lt;/font&gt;">
           <mxGeometry relative="1" x="-0.0297" y="16" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -167,170 +169,177 @@
     </mxGraphModel>
   </diagram>
   <diagram name="goos-java production 架構" id="p3_java_prod">
-    <mxGraphModel dx="1019" dy="687" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="620" pageHeight="520" background="#12141a" math="0" shadow="0">
+    <mxGraphModel dx="1019" dy="687" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="620" pageHeight="498" background="light-dark(#12141a,#12141a)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="p3_java_prod_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#12141a;strokeColor=none;" value="" vertex="1">
-          <mxGeometry height="520" width="620" as="geometry" />
+        <mxCell id="p3_java_prod_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#12141A,#000000);strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="498" width="620" as="geometry" />
         </mxCell>
-        <mxCell id="p3_docker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2560ff;dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=#2560ff;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Docker" vertex="1">
-          <mxGeometry height="480" width="580" x="20" y="20" as="geometry" />
+        <mxCell id="p3_docker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#2560ff,#2560ff);dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=light-dark(#2560ff,#2560ff);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Docker" vertex="1">
+          <mxGeometry height="340" width="580" x="20" y="20" as="geometry" />
         </mxCell>
-        <mxCell id="p3_proc_jvm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e8935a;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#e8935a;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="JVM Process" vertex="1">
-          <mxGeometry height="420" width="540" x="40" y="60" as="geometry" />
+        <mxCell id="p3_proc_jvm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#eab18a,#eab18a);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#eab18a,#eab18a);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="JVM Process" vertex="1">
+          <mxGeometry height="220" width="540" x="40" y="60" as="geometry" />
         </mxCell>
-        <mxCell id="p3_thread_edt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e8935a;dashPattern=1 3;dashed=1;strokeWidth=1.2;verticalAlign=top;align=left;fontColor=#e8935a;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Swing EDT Thread" vertex="1">
-          <mxGeometry height="100" width="160" x="390" y="330" as="geometry" />
+        <mxCell id="p3_thread_edt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#eab18a,#eab18a);dashPattern=1 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#eab18a,#eab18a);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Swing EDT Thread" vertex="1">
+          <mxGeometry height="100" width="130" x="430" y="80" as="geometry" />
         </mxCell>
-        <mxCell id="p3_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main&lt;br&gt;(角色：sniper)" vertex="1">
-          <mxGeometry height="60" width="290" x="170" y="80" as="geometry" />
+        <mxCell id="p3_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main&lt;br&gt;(角色：sniper)" vertex="1">
+          <mxGeometry height="52" width="110" x="50" y="150" as="geometry" />
         </mxCell>
-        <mxCell id="p3_cls_xmppconn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(Smack library)" vertex="1">
-          <mxGeometry height="60" width="130" x="100" y="205" as="geometry" />
+        <mxCell id="p3_cls_xmppconn" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(Smack library)" vertex="1">
+          <mxGeometry height="52" width="130" x="430" y="202" as="geometry" />
         </mxCell>
-        <mxCell id="p3_cls_swingutil" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;SwingUtilities&lt;br&gt;(Swing UI library)" vertex="1">
-          <mxGeometry height="60" width="130" x="405" y="205" as="geometry" />
+        <mxCell id="p3_cls_swingutil" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;SwingUtilities&lt;br&gt;(Swing UI library)" vertex="1">
+          <mxGeometry height="52" width="110" x="213" y="90" as="geometry" />
         </mxCell>
-        <mxCell id="p3_cls_mainwindow" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;MainWindow" vertex="1">
-          <mxGeometry height="50" width="130" x="405" y="367" as="geometry" />
+        <mxCell id="p3_cls_mainwindow" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;MainWindow" vertex="1">
+          <mxGeometry height="50" width="100" x="445" y="117" as="geometry" />
         </mxCell>
-        <mxCell id="p3_note_run" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#a7adba;dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;docker/scripts/run-app.sh&lt;/font&gt;：&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;javac&lt;/font&gt; 編譯 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;src/&lt;/font&gt; 後&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;java -cp ... auctionsniper.Main&lt;/font&gt;" vertex="1">
-          <mxGeometry height="60" width="210" x="60" y="400" as="geometry" />
+        <mxCell id="p3_note_run" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#a7adba,#a7adba);dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=0;" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;docker/scripts/run-app.sh&lt;/font&gt;：&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;javac&lt;/font&gt; 編譯 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;src/&lt;/font&gt; 後&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;java -cp ... auctionsniper.Main&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="196" x="40" y="295" as="geometry" />
         </mxCell>
-        <mxCell id="p3_ext_openfire" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#a78bfa;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Openfire&lt;br&gt;XMPP Server" vertex="1">
-          <mxGeometry height="50" width="130" x="100" y="330" as="geometry" />
+        <mxCell id="p3_docker_openfire" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#2560ff,#2560ff);dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=light-dark(#2560ff,#2560ff);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Docker" vertex="1">
+          <mxGeometry height="100" width="130" x="430" y="380" as="geometry" />
         </mxCell>
-        <mxCell id="p3_e_main_conn" edge="1" parent="1" source="p3_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p3_cls_xmppconn" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;connection() → connect() / login()&lt;br&gt;joinAuction() → createChat()&lt;/font&gt;">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="p3_ext_openfire" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#a78bfa,#a78bfa);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Openfire&lt;br&gt;XMPP Server" vertex="1">
+          <mxGeometry height="50" width="100" x="446" y="416" as="geometry" />
         </mxCell>
-        <mxCell id="p3_e_main_swingutil" edge="1" parent="1" source="p3_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p3_cls_swingutil" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;invokeAndWait / invokeLater&lt;/font&gt;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="p3_e_swingutil_edt" edge="1" parent="1" source="p3_cls_swingutil" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=#e8935a;strokeWidth=1.4;fontColor=#e8935a;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p3_thread_edt" value="建立 / 更新 UI&lt;br&gt;(跨執行緒)">
-          <mxGeometry relative="1" x="-0.1735" as="geometry">
+        <mxCell id="p3_e_main_conn" edge="1" parent="1" source="p3_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="p3_cls_xmppconn" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;connection() → connect() / login()&lt;br&gt;joinAuction() → createChat()&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.0051" y="-14" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p3_e_conn_openfire" edge="1" parent="1" source="p3_cls_xmppconn" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#e8935a;strokeWidth=1.4;fontColor=#e8935a;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;startArrow=block;startFill=1;" target="p3_ext_openfire" value="XMPP over TCP (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;port 5222&lt;/font&gt;">
-          <mxGeometry relative="1" x="-0.0505" y="-1" as="geometry">
+        <mxCell id="p3_e_main_swingutil" edge="1" parent="1" source="p3_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="p3_cls_swingutil" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;invokeAndWait()&lt;br&gt;invokeLater()&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.1945" y="16" as="geometry">
             <mxPoint as="offset" />
-            <Array as="points">
-              <mxPoint x="165" y="310" />
-              <mxPoint x="165" y="310" />
-            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3_e_swingutil_edt" edge="1" parent="1" source="p3_cls_swingutil" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.4;fontColor=light-dark(#eab18a,#eab18a);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" value="建立 / 更新 UI&lt;br&gt;(跨執行緒)">
+          <mxGeometry relative="1" x="-0.0584" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="428.62" y="115.52" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3_e_conn_openfire" edge="1" parent="1" source="p3_cls_xmppconn" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.4;fontColor=light-dark(#eab18a,#eab18a);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p3_ext_openfire" value="XMPP over TCP (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;port 5222&lt;/font&gt;">
+          <mxGeometry relative="1" x="-0.171" as="geometry">
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
   <diagram name="goos-java E2E 測試架構" id="p4_java_e2e">
-    <mxGraphModel dx="1783" dy="1203" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1010" pageHeight="680" background="#12141a" math="0" shadow="0">
+    <mxGraphModel dx="1230" dy="830" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1010" pageHeight="750" background="light-dark(#12141a,#12141a)" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="p4_java_e2e_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#12141a;strokeColor=none;" value="" vertex="1">
-          <mxGeometry height="680" width="1010" as="geometry" />
+        <mxCell id="p4_java_e2e_bg" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#12141A,#000000);strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="750" width="1010" as="geometry" />
         </mxCell>
-        <mxCell id="p4_docker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#2560ff;dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=#2560ff;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Docker" vertex="1">
-          <mxGeometry height="640" width="970" x="20" y="20" as="geometry" />
+        <mxCell id="p4_docker" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#2560ff,#2560ff);dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=light-dark(#2560ff,#2560ff);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Docker" vertex="1">
+          <mxGeometry height="578" width="970" x="20" y="20" as="geometry" />
         </mxCell>
-        <mxCell id="p4_proc_jvm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e8935a;dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=#e8935a;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="JVM Process&lt;br&gt;（測試與 production 同一個 process）" vertex="1">
-          <mxGeometry height="500" width="930" x="40" y="60" as="geometry" />
+        <mxCell id="p4_proc_jvm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#eab18a,#eab18a);dashPattern=8 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#eab18a,#eab18a);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="JVM Process&lt;br&gt;（測試與 production 同一個 process）" vertex="1">
+          <mxGeometry height="440" width="930" x="40" y="60" as="geometry" />
         </mxCell>
-        <mxCell id="p4_thread_junit" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e8935a;dashPattern=1 3;dashed=1;strokeWidth=1.2;verticalAlign=top;align=left;fontColor=#e8935a;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="JUnit Main Thread" vertex="1">
+        <mxCell id="p4_thread_junit" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#eab18a,#eab18a);dashPattern=1 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#eab18a,#eab18a);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="JUnit Main Thread" vertex="1">
           <mxGeometry height="356" width="400" x="60" y="114" as="geometry" />
         </mxCell>
-        <mxCell id="p4_thread_testapp" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e8935a;dashPattern=1 3;dashed=1;strokeWidth=1.2;verticalAlign=top;align=left;fontColor=#e8935a;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Thread: &quot;Test Application&quot;" vertex="1">
+        <mxCell id="p4_thread_testapp" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#eab18a,#eab18a);dashPattern=1 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#eab18a,#eab18a);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Thread: &quot;Test Application&quot;" vertex="1">
           <mxGeometry height="230" width="210" x="540" y="150" as="geometry" />
         </mxCell>
-        <mxCell id="p4_thread_edt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e8935a;dashPattern=1 3;dashed=1;strokeWidth=1.2;verticalAlign=top;align=left;fontColor=#e8935a;fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=#12141a;" value="Swing EDT Thread" vertex="1">
-          <mxGeometry height="120" width="150" x="800" y="360" as="geometry" />
+        <mxCell id="p4_thread_edt" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#eab18a,#eab18a);dashPattern=1 4;dashed=1;strokeWidth=2.5;verticalAlign=top;align=left;fontColor=light-dark(#eab18a,#eab18a);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Swing EDT Thread" vertex="1">
+          <mxGeometry height="118" width="146" x="802" y="361" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«test»&lt;br&gt;AuctionSniperEndToEndTest&lt;br&gt;sniperJoinsAuctionUntilAuctionCloses" vertex="1">
+        <mxCell id="p4_cls_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«test»&lt;br&gt;AuctionSniperEndToEndTest&lt;br&gt;sniperJoinsAuctionUntilAuctionCloses" vertex="1">
           <mxGeometry height="60" width="265" x="127.5" y="150" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_fakeauction" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#8a5a35;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;FakeAuctionServer&lt;br&gt;(角色：auction-item-54321 拍賣方)" vertex="1">
+        <mxCell id="p4_cls_fakeauction" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#bc6a2f,#bc6a2f);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;FakeAuctionServer&lt;br&gt;(角色：auction-item-54321 拍賣方)" vertex="1">
           <mxGeometry height="60" width="195" x="77.5" y="230" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_apprunner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;ApplicationRunner" vertex="1">
+        <mxCell id="p4_cls_apprunner" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;ApplicationRunner" vertex="1">
           <mxGeometry height="60" width="150" x="290" y="230" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_driver" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;AuctionSniperDriver" vertex="1">
+        <mxCell id="p4_cls_driver" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;AuctionSniperDriver" vertex="1">
           <mxGeometry height="60" width="150" x="290" y="310" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_prober" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;AWTEventQueueProber&lt;br&gt;(WindowLicker library)" vertex="1">
+        <mxCell id="p4_cls_prober" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;AWTEventQueueProber&lt;br&gt;(WindowLicker library)" vertex="1">
           <mxGeometry height="60" width="150" x="290" y="390" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_xmppconn_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#8a5a35;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(Smack library)" vertex="1">
-          <mxGeometry height="60" width="195" x="77.5" y="390" as="geometry" />
+        <mxCell id="p4_cls_xmppconn_test" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#bc6a2f,#bc6a2f);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(Smack library)" vertex="1">
+          <mxGeometry height="60" width="120" x="152.5" y="390" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main&lt;br&gt;(角色：sniper)" vertex="1">
+        <mxCell id="p4_cls_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;Main&lt;br&gt;(角色：sniper)" vertex="1">
           <mxGeometry height="60" width="120" x="585" y="190" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_xmppconn_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(Smack library)" vertex="1">
+        <mxCell id="p4_cls_xmppconn_main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;XMPPConnection&lt;br&gt;(Smack library)" vertex="1">
           <mxGeometry height="60" width="120" x="585" y="300" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_swingutil" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;SwingUtilities&lt;br&gt;(Swing UI library)" vertex="1">
+        <mxCell id="p4_cls_swingutil" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;SwingUtilities&lt;br&gt;(Swing UI library)" vertex="1">
           <mxGeometry height="60" width="110" x="820" y="190" as="geometry" />
         </mxCell>
-        <mxCell id="p4_cls_mainwindow" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#e8935a;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;MainWindow" vertex="1">
-          <mxGeometry height="60" width="110" x="820" y="400" as="geometry" />
+        <mxCell id="p4_cls_mainwindow" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="«class»&lt;br&gt;MainWindow" vertex="1">
+          <mxGeometry height="60" width="110" x="820" y="401" as="geometry" />
         </mxCell>
-        <mxCell id="p4_ext_openfire" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1c1f27;strokeColor=#a78bfa;strokeWidth=1.5;fontColor=#eef0f3;fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Openfire&lt;br&gt;XMPP Server" vertex="1">
-          <mxGeometry height="60" width="120" x="480" y="480" as="geometry" />
+        <mxCell id="p4_docker_openfire" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#2560ff,#2560ff);dashPattern=9 3 2 3;dashed=1;strokeWidth=2;verticalAlign=top;align=left;fontColor=light-dark(#2560ff,#2560ff);fontSize=12;fontStyle=1;fontFamily=Helvetica;spacingLeft=8;spacingTop=6;labelBackgroundColor=light-dark(#12141a,#12141a);" value="Docker" vertex="1">
+          <mxGeometry height="110" width="160" x="565" y="620" as="geometry" />
         </mxCell>
-        <mxCell id="p4_note_run" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#a7adba;dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=0;spacingBottom=0;" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;docker/scripts/test.sh&lt;/font&gt; 呼叫 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;run-e2e-tests.sh&lt;/font&gt;：&lt;br&gt;編譯 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;src/&lt;/font&gt; 與 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;test/end-to-end/&lt;/font&gt;，&lt;br&gt;輪詢 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;curl http://localhost:9090 (&lt;/font&gt;Openfire) 就緒，&lt;br&gt;以 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;org.junit.runner.JUnitCore&lt;/font&gt; 執行測試" vertex="1">
-          <mxGeometry height="60" width="290" x="40" y="580" as="geometry" />
+        <mxCell id="p4_ext_openfire" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=light-dark(#1c1f27,#1c1f27);strokeColor=light-dark(#a78bfa,#a78bfa);strokeWidth=1.5;fontColor=light-dark(#eef0f3,#eef0f3);fontSize=12;fontFamily=Helvetica;verticalAlign=middle;align=center;spacing=2;" value="Openfire&lt;br&gt;XMPP Server" vertex="1">
+          <mxGeometry height="60" width="120" x="585" y="650" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_test_fakeauction" edge="1" parent="1" source="p4_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_fakeauction" value="">
+        <mxCell id="p4_note_run" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#a7adba,#a7adba);dashed=1;dashPattern=2 2;strokeWidth=1;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;align=left;verticalAlign=top;spacingLeft=6;spacingTop=0;spacingBottom=0;" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;docker/scripts/test.sh&lt;/font&gt;：&lt;br&gt;編譯 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;src/&lt;/font&gt; 與 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;test/end-to-end/&lt;/font&gt;，&lt;br&gt;輪詢 &lt;font face=&quot;Cascadia Code, monospace&quot;&gt;curl http://localhost:9090&lt;/font&gt;&amp;nbsp;(Openfire) 就緒，&lt;br&gt;以&amp;nbsp;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;JUnit&lt;/font&gt;&amp;nbsp;執行測試" vertex="1">
+          <mxGeometry height="60" width="268" x="40" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="p4_e_test_fakeauction" edge="1" parent="1" source="p4_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_fakeauction" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_apprunner_fakeauction" edge="1" parent="1" source="p4_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="p4_cls_fakeauction" value="">
+        <mxCell id="p4_e_apprunner_fakeauction" edge="1" parent="1" source="p4_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="p4_cls_fakeauction" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_apprunner_driver" edge="1" parent="1" source="p4_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_driver" value="">
+        <mxCell id="p4_e_apprunner_driver" edge="1" parent="1" source="p4_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_driver" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_test_apprunner" edge="1" parent="1" source="p4_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_apprunner" value="">
+        <mxCell id="p4_e_test_apprunner" edge="1" parent="1" source="p4_cls_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_apprunner" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_fakeauction_conn" edge="1" parent="1" source="p4_cls_fakeauction" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#8a5a35;strokeWidth=1.4;fontColor=#8a5a35;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_xmppconn_test" value="">
+        <mxCell id="p4_e_fakeauction_conn" edge="1" parent="1" source="p4_cls_fakeauction" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#bc6a2f,#bc6a2f);strokeWidth=1.4;fontColor=light-dark(#bc6a2f,#bc6a2f);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_xmppconn_test" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_apprunner_thread" edge="1" parent="1" source="p4_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=#e8935a;strokeWidth=1.4;fontColor=#e8935a;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.991;exitY=0.588;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitPerimeter=0;" target="p4_thread_testapp" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;new Thread().start()&lt;/font&gt;">
+        <mxCell id="p4_e_apprunner_thread" edge="1" parent="1" source="p4_cls_apprunner" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.4;fontColor=light-dark(#eab18a,#eab18a);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.991;exitY=0.588;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitPerimeter=0;" target="p4_thread_testapp" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;new Thread().start()&lt;/font&gt;">
           <mxGeometry relative="1" x="0.3023" y="-6" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p4_e_driver_prober" edge="1" parent="1" source="p4_cls_driver" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_prober" value="">
+        <mxCell id="p4_e_driver_prober" edge="1" parent="1" source="p4_cls_driver" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_prober" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_main_conn" edge="1" parent="1" source="p4_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_xmppconn_main" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;connection() → connect()/login()&lt;br&gt;joinAuction() → createChat()&lt;/font&gt;">
+        <mxCell id="p4_e_main_conn" edge="1" parent="1" source="p4_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_cls_xmppconn_main" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;connection() → connect()/login()&lt;br&gt;joinAuction() → createChat()&lt;/font&gt;">
           <mxGeometry relative="1" x="-0.2523" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p4_e_main_swingutil" edge="1" parent="1" source="p4_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#a7adba;strokeWidth=1.4;fontColor=#a7adba;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p4_cls_swingutil" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;invokeAndWait()&lt;/font&gt;&lt;div&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;/&lt;br&gt;invokeLater()&lt;/font&gt;&lt;/div&gt;">
+        <mxCell id="p4_e_main_swingutil" edge="1" parent="1" source="p4_cls_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#a7adba,#a7adba);strokeWidth=1.4;fontColor=light-dark(#a7adba,#a7adba);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p4_cls_swingutil" value="&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;invokeAndWait()&lt;/font&gt;&lt;div&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;/&lt;br&gt;invokeLater()&lt;/font&gt;&lt;/div&gt;">
           <mxGeometry relative="1" x="-0.036" y="23" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p4_e_swingutil_edt" edge="1" parent="1" source="p4_cls_swingutil" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=#e8935a;strokeWidth=1.4;fontColor=#e8935a;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_thread_edt" value="建立 / 更新 UI&lt;br&gt;(跨執行緒)">
+        <mxCell id="p4_e_swingutil_edt" edge="1" parent="1" source="p4_cls_swingutil" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.4;fontColor=light-dark(#eab18a,#eab18a);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="p4_thread_edt" value="建立 / 更新 UI&lt;br&gt;(跨執行緒)">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="p4_e_prober_edt" edge="1" parent="1" source="p4_cls_prober" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=#e8935a;strokeWidth=1.4;fontColor=#e8935a;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p4_thread_edt" value="輪詢 AWT Event Queue&lt;br&gt;讀取 UI 狀態 (跨執行緒)">
-          <mxGeometry relative="1" x="0.5167" y="16" as="geometry">
+        <mxCell id="p4_e_prober_edt" edge="1" parent="1" source="p4_cls_prober" style="html=1;endArrow=block;endFill=1;endSize=7;dashed=1;strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.4;fontColor=light-dark(#eab18a,#eab18a);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p4_thread_edt" value="輪詢 AWT Event Queue&lt;br&gt;讀取 UI 狀態 (跨執行緒)">
+          <mxGeometry relative="1" x="0.5613" y="17" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p4_e_conn_openfire_sniper" edge="1" parent="1" source="p4_cls_xmppconn_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#e8935a;strokeWidth=1.4;fontColor=#e8935a;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p4_ext_openfire" value="XMPP over TCP (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;port 5222&lt;/font&gt;">
-          <mxGeometry relative="1" x="0.4178" y="3" as="geometry">
+        <mxCell id="p4_e_conn_openfire_sniper" edge="1" parent="1" source="p4_cls_xmppconn_main" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#eab18a,#eab18a);strokeWidth=1.4;fontColor=light-dark(#eab18a,#eab18a);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="p4_ext_openfire" value="XMPP over TCP (角色：sniper)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;port 5222&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.3103" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="p4_e_conn_openfire_auction" edge="1" parent="1" source="p4_cls_xmppconn_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#8a5a35;strokeWidth=1.4;fontColor=#8a5a35;fontSize=10;fontFamily=Helvetica;labelBackgroundColor=#12141a;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;startArrow=block;startFill=1;" target="p4_ext_openfire" value="XMPP over TCP (角色：拍賣方)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;port 5222&lt;/font&gt;">
-          <mxGeometry relative="1" x="0.2228" y="16" as="geometry">
+        <mxCell id="p4_e_conn_openfire_auction" edge="1" parent="1" source="p4_cls_xmppconn_test" style="html=1;endArrow=block;endFill=1;endSize=7;strokeColor=light-dark(#bc6a2f,#bc6a2f);strokeWidth=1.4;fontColor=light-dark(#bc6a2f,#bc6a2f);fontSize=10;fontFamily=Helvetica;labelBackgroundColor=light-dark(#000000,#000000);rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.003;entryY=0.467;entryDx=0;entryDy=0;startArrow=block;startFill=1;entryPerimeter=0;" target="p4_ext_openfire" value="XMPP over TCP (角色：拍賣方)&lt;br&gt;&lt;font face=&quot;Cascadia Code, monospace&quot;&gt;port 5222&lt;/font&gt;">
+          <mxGeometry relative="1" x="-0.0607" y="6" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
