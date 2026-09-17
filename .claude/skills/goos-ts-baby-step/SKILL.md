@@ -62,6 +62,7 @@ description: 依 goos-java 的 TDD baby-step commit 序列，將對應邏輯以 
   - 不放決策細節本身
 
 - **議題文件**（依大分類主題命名，例如 `docs/xmpp.md`、`docs/e2e-testing.md`、`docs/realtime-communication.md`、`docs/naming-conventions.md`、`docs/directory-structure.md`、`docs/ui.md`）
+  - 只要 TS 實作跟對應的 Java 版能 1:1（沒有任何需要另外記錄的設計決策或落差，純粹逐字翻譯），就不記錄在議題文件中；只有出現需要記錄的設計決策或落差時，才需要寫入
   - 每個議題文件內有多個小標題，各自對應一個具體議題
   - 沒有任何不綁定 commit 的決策，每個小標題底下的結構由上而下只有兩層：
     - 尚未實作的決策：goos-ts 還沒有對應 commit 的決策，不論 goos-java 有沒有對應 commit 都算
