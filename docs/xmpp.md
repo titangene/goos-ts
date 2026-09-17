@@ -1,5 +1,14 @@
 # XMPP
 
+## AuctionMessageTranslator 設計
+
+對應 commit history（從新到舊）：
+
+- goos-ts [`8b5e444`](https://github.com/titangene/goos-ts/commit/8b5e444598265323563b9fe87a02089832738dfb)（對應 goos-java [`504d7ff`](https://github.com/titangene/goos-java/commit/504d7ff03461c8fbf2dbb75b22e1f30b67c2e6fa)）`red` ［12.3.2 p116］
+  - 決定 `UNUSED_CHAT` 用 `null as unknown as XMPPChat`，不用 `null!` non-null assertion
+    - 理由：明確表達「刻意的不安全轉型」，不是遺漏的 null 檢查
+  - 相關議題：[`docs/unit-testing.md`：測試框架與 mock 工具選擇](./unit-testing.md#測試框架與-mock-工具選擇)
+
 ## XMPP 連線參數
 
 對應 commit history（從新到舊）：
