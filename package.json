@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "nuxt typecheck && tsc --noEmit -p test/tsconfig.json && tsc --noEmit -p tools/tsconfig.json",
+    "test:unit": "vitest run --project unit",
     "test:e2e": "npm run build && playwright test",
     "fake-auction": "tsx --env-file=.env.dev.local tools/fake-auction.ts",
     "fake-auction:remote": "tsx --env-file=.env.production.local tools/fake-auction.ts",
@@ -40,6 +41,7 @@
     "prettier": "^3.9.6",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.11",
     "vue-tsc": "^3.3.9"
   },
   "volta": {
