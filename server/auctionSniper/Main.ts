@@ -16,7 +16,7 @@ export class Main {
     password: string,
     itemId: string,
     peer: Peer
-  ): Promise<void> {
+  ): Promise<XMPPConnection> {
     const main = new Main();
     const connection = await XMPPConnection.connect(
       serviceUrl,
@@ -25,6 +25,7 @@ export class Main {
       AUCTION_RESOURCE
     );
     await main.joinAuction(connection, itemId, peer);
+    return connection;
   }
 
   private async joinAuction(connection: XMPPConnection, itemId: string, peer: Peer): Promise<void> {
