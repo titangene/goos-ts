@@ -11,7 +11,7 @@ const UNUSED_CHAT = null as unknown as XMPPChat;
 describe('AuctionMessageTranslator', () => {
   test('notifies auction closed when close message received', () => {
     const listener = mock<AuctionEventListener>();
-    const translator = new AuctionMessageTranslator();
+    const translator = new AuctionMessageTranslator(listener);
 
     const message = new XMPPMessage('SOLVersion: 1.1; Event: CLOSE;');
 
