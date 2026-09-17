@@ -4,6 +4,13 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`0204ddd`](https://github.com/titangene/goos-ts/commit/0204dddc6d351185f2924ce416b5ee33ad09a679)（對應 goos-java [`41088f6`](https://github.com/titangene/goos-java/commit/41088f604b3f785785dc1b769801c5d5dba4093e)）`feat` ［12.4.2 p120］
+  - 決定 `HashMap<String, String>` 對應 `Map<string, string>`，不用 `Record<string, string>`，語意上跟 Java 的 `HashMap` 最接近
+  - 決定 `message.getBody()` 用 non-null assertion（`message.getBody()!`），跟 Java 版一樣 `message.getBody().split(";")` 沒做防呆
+  - 決定 `pair[0]`／`pair[1]` 也用 non-null assertion（`pair[0]!.trim()`），跟 Java 版一樣沒做防呆
+  - 決定在迴圈內跳過 `element.trim() === ''` 的空元素
+    - JS 的 `String.split(';')` 不會像 Java `String.split(regex)`（預設 limit 為 0）那樣自動丟棄結尾空字串，`"SOLVersion: 1.1; Event: CLOSE;"` 結尾的 `;` 在 TS 版會多切出一個空字串元素，若不跳過會在 `pair[1]!.trim()` 拋出錯誤
+  - 決定 `Integer.parseInt` 對應 `Number.parseInt(value, 10)`，明確帶 radix 10，跟 Java `Integer.parseInt(String)` 預設十進位一致
 - goos-ts [`da15b9e`](https://github.com/titangene/goos-ts/commit/da15b9eb8f60bb63d56ffcd69513a7bd8eac54d0)（對應 goos-java [`831e925`](https://github.com/titangene/goos-java/commit/831e925385245bd5f57e5b5526a73101c4b364bc)）`refactor` ［12.3.4 p118］
   - 決定 `Main` 的 `peer` 改用建構子注入（`constructor(private readonly peer: Peer)`），取代原本 `joinAuction()` 的參數
     - `AuctionEventListener.auctionClosed(): void` 沒有參數，需要在方法內部存取 `peer`，因此提升成 instance field，對應 Java 版 `this.ui` 的角色
