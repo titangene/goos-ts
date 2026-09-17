@@ -16,6 +16,11 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`c12b57a`](https://github.com/titangene/goos-ts/commit/c12b57ab4ed35f3a878991cbb08b71d3c1881f45)（對應 goos-java [`2e5880c`](https://github.com/titangene/goos-java/commit/2e5880c5f3d115a8358085ad160c02d4a949c533)）`feat` ［12.2.3 p111］
+  - 決定新增 `close(peer)` handler，斷開該連線建立的 XMPP 連線
+    - `Main.main()` 改回傳 `XMPPConnection`，`open(peer)` 存到 `peer.context.connection`，`close(peer)` 讀出來呼叫 `disconnect()`
+    - `peer.context` 型別是 `PeerContext extends Record<string, unknown>`，讀出時用 `as XMPPConnection` 轉型，沒有另外用 module augmentation 擴充 `PeerContext` 型別，因為目前只有這一個欄位
+    - 動機跟 goos-java 對應 commit 不同：goos-java 是為了讓同一個 JVM 內連續執行的 e2e 測項不要遇到 XMPP login conflict 錯誤，goos-ts 沒有這個問題（見 [`docs/e2e-testing.md`：ApplicationRunner 的 server 生命週期管理](./e2e-testing.md#applicationrunner-的-server-生命週期管理)），這裡是主動處理 production 端的連線洩漏疑慮：goos-ts 的 server process 長駐服務多個瀏覽器連線，不像 Java 桌面版每個 sniper 各自一個 process、關閉視窗前就已經對應到「這個連線再也不會被用到」
 - goos-ts [`149d80a`](https://github.com/titangene/goos-ts/commit/149d80aa86c77de83e3942198003a0e7d66d1979)（對應 goos-java [`fba009d1`](https://github.com/titangene/goos-java/commit/fba009d197e0039b7a8a1845b56606cdde124568)）`red` ［11.2.4 p100］
   - 決定 `Main.ts` 對應邏輯放在 `server/routes/` 的 WebSocket handler，而非 `server/plugins`
     - 理由：`nuxt.config.ts` 已開啟 `nitro.experimental.websocket`；WebSocket 的 `open(peer)` hook 每次新連線觸發一次，時機上對應 Java 版「每次啟動一個 sniper 實例 = 每個 session 各自建立一次連線」的語意，不對應「整個 server 開機做一次」的 `server/plugins`
