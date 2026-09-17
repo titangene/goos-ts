@@ -4,6 +4,10 @@
 
 對應 commit history（從新到舊）：
 
+- goos-ts [`da15b9e`](https://github.com/titangene/goos-ts/commit/da15b9eb8f60bb63d56ffcd69513a7bd8eac54d0)（對應 goos-java [`831e925`](https://github.com/titangene/goos-java/commit/831e925385245bd5f57e5b5526a73101c4b364bc)）`refactor` ［12.3.4 p118］
+  - 決定 `Main` 的 `peer` 改用建構子注入（`constructor(private readonly peer: Peer)`），取代原本 `joinAuction()` 的參數
+    - `AuctionEventListener.auctionClosed(): void` 沒有參數，需要在方法內部存取 `peer`，因此提升成 instance field，對應 Java 版 `this.ui` 的角色
+    - 賦值時機跟 Java 版不同：Java 在建構子內呼叫 `startUserInterface()` 內部建立 `ui`，TS 版的 `peer` 是外部呼叫 `Main.main()` 時就已經拿到的值，改用建構子參數直接注入，不用另外呼叫方法賦值
 - goos-ts [`744277e`](https://github.com/titangene/goos-ts/commit/744277e2508c1ef313f2d75937f620688b18fcce)（對應 goos-java [`4098f83`](https://github.com/titangene/goos-java/commit/4098f83411c2c08d6655b8f372dce557cf047e9e)）`green` ［12.3.2 p116］
   - 決定 `AuctionMessageTranslator` 建構子改用 `#server/...` path alias import `AuctionEventListener`，不用相對路徑 `../AuctionEventListener.ts`
     - production code 之間互相 import 原本都用相對路徑（例如 `./smack/XMPPChat.ts`），這裡改用跟 `test/e2e/`／`test/unit/` 一致的 `#server/...` 別名，是本步驟實際採用的寫法
