@@ -19,4 +19,17 @@ describe('AuctionMessageTranslator', () => {
 
     expect(listener.auctionClosed).toHaveBeenCalledExactlyOnceWith();
   });
+
+  test('notifies bid details when current price message received', () => {
+    const listener = mock<AuctionEventListener>();
+    const translator = new AuctionMessageTranslator(listener);
+
+    const message = new XMPPMessage(
+      'SOLVersion: 1.1; Event: PRICE; CurrentPrice: 192; Increment: 7; Bidder: Someone else;'
+    );
+
+    translator.processMessage(UNUSED_CHAT, message);
+
+    expect(listener.currentPrice).toHaveBeenCalledExactlyOnceWith(192, 7);
+  });
 });

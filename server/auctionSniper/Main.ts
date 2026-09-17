@@ -47,4 +47,6 @@ export class Main implements AuctionEventListener {
   auctionClosed(): void {
     this.peer.send(STATUS_LOST);
   }
+
+  currentPrice(_price: number, _increment: number): void {}
 }
