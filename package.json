@@ -42,6 +42,7 @@
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11",
+    "vitest-mock-extended": "^5.1.1",
     "vue-tsc": "^3.3.9"
   },
   "volta": {
